@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Activity, ArrowRight, BookMarked, Check, CheckCircle2, ChevronDown, ChevronRight, CircleHelp,
-  Clock3, Database, FileCode2, FileText, Files, FolderHeart, Heart, Image, FileImage, FileArchive, Film, Headphones, Calculator, Laptop,
+  Clock3, Database, FileCode2, FileText, Files, FolderHeart, Heart, Image, FileImage, FileArchive, Film, Headphones, Calculator, Laptop, Grid2X2,
   LayoutDashboard, Moon, Palette, Printer, Search, Settings2, ShieldCheck,
   Sparkles, Star, Sun, WandSparkles, X, Zap, QrCode, ScanBarcode, Type, Braces, Code2 } from 'lucide-react';
 import { tools as pdfTools } from '@local-tools/core';
