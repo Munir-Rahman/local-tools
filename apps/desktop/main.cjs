@@ -6,7 +6,7 @@ const offlineRoot=()=>app.isPackaged?path.join(process.resourcesPath,'web-dist')
 app.whenReady().then(async()=>{
   const dir=offlineRoot();if(!fs.existsSync(path.join(dir,'index.html'))){throw Error('Build the web app first: npm run build');}
   const local=await startServer(dir);server=local.server;
-  const mainWindow=new BrowserWindow({width:1440,height:960,minWidth:880,minHeight:600,show:false,title:'ToolNest — Private Tools',autoHideMenuBar:true,
+  const mainWindow=new BrowserWindow({width:1440,height:960,minWidth:880,minHeight:600,show:false,title:'ToolNest — Free Private Tools',backgroundColor:'#fffaf5',autoHideMenuBar:true,
     icon:path.join(__dirname,'assets/icon.png'),webPreferences:{contextIsolation:true,nodeIntegration:false,sandbox:true,webSecurity:true}});
   const localOrigin=local.url;
   // Never navigate app to arbitrary remote URLs.

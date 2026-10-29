@@ -24,7 +24,7 @@ export async function loadState():Promise<SavedState>{
     db.getAllAsync<{name:string;value:string}>('SELECT name,value FROM preferences')
   ]);
   const settings=Object.fromEntries(prefs.map(p=>[p.name,p.value]));
-  return {favorites:favs.map(f=>f.tool_id),recent:recent.map(r=>({id:r.id,toolId:r.tool_id,name:r.name,description:r.description,createdAt:r.created_at})),theme:settings.theme==='dark'||settings.theme==='system'?settings.theme:'light',accent:/^#[0-9a-f]{6}$/i.test(settings.accent||'')?settings.accent:'#4775F5',userName:(settings.userName||'').slice(0,80)};
+  return {favorites:favs.map(f=>f.tool_id),recent:recent.map(r=>({id:r.id,toolId:r.tool_id,name:r.name,description:r.description,createdAt:r.created_at})),theme:settings.theme==='dark'||settings.theme==='system'?settings.theme:'light',accent:/^#[0-9a-f]{6}$/i.test(settings.accent||'')?settings.accent:'#ef892c',userName:(settings.userName||'').slice(0,80)};
 }
 export async function setFavorite(id:string,on:boolean){const db=await database();if(on)await db.runAsync('INSERT OR IGNORE INTO favorites(tool_id) VALUES (?)',id);else await db.runAsync('DELETE FROM favorites WHERE tool_id=?',id);}
 export async function recordUse(toolId:string,name:string,description:string){const db=await database();await db.runAsync('INSERT INTO activity(tool_id,name,description,created_at) VALUES (?,?,?,?)',toolId,name,description.slice(0,140),Date.now());}
