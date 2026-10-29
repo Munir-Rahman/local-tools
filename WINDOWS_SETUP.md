@@ -87,3 +87,38 @@ $env:TMP='D:\DevTools\temp'
 ```
 
 `mobile:doctor` checks `function-bind` without modifying files. `mobile:repair` removes only a clearly incomplete `function-bind` directory and runs npm's mobile-workspace install, subject to a free-space check. Avoid deleting the complete `node_modules` directory unless targeted recovery fails and there is enough space for a fresh install. An APK already installed on your phone is unaffected by Metro's local dependency errors; you still need to build a new APK for native-app changes.
+
+## Desktop install failures: GitHub timeout, Electron ECONNRESET, Vite missing picomatch
+
+These are three independent errors, not a single source-code compilation issue.
+
+- `gh workflow run ... TLS handshake timeout`: local HTTPS connection to GitHub timed out. A retry on a stable connection or the GitHub Actions web interface is sufficient; this is not a GitHub authentication or Electron source error.
+- `node_modules/electron/install.js: read ECONNRESET`: the network connection closed while downloading the large Electron runtime. Electron's official guidance classifies this as a network error. Avoid repeated local installs on low-storage/unstable-network machines. Prefer the previously successful GitHub Actions NSIS installer artifact at https://github.com/Munir-Rahman/local-tools/actions/runs/40879651088 (artifacts expire).
+- `Cannot find ... node_modules/picomatch/index.js` while loading Vite: local dependencies are incomplete, probably after interrupted npm installs. `npm install` printing an "added packages" message does not guarantee every installed file is intact.
+- `EPERM` during npm cleanup usually means Windows prevented removal of an in-use directory. Close running Vite/Metro/Electron processes and editors before reinstalling; do not disable OS protection.
+
+To diagnose:
+
+```powershell
+cd D:\ToolNest
+Get-PSDrive D,E | Select-Object Name,@{n='FreeGB';e={[math]::Round($_.Free / 1GB,2)}}
+Test-Path .\node_modules\picomatch\index.js
+Test-Path .\node_modules\function-bind\implementation.js
+```
+
+To fix **multiple broken packages**, once enough storage is available and all project processes are closed, remove **only** `D:\ToolNest\node_modules`. It holds downloaded dependencies, not source code. If Windows reports EPERM, restart Windows and retry. Keep `apps/`, `packages/`, and `package.json` intact.
+
+```powershell
+cd D:\ToolNest
+New-Item -ItemType Directory -Force D:\DevTools\npm-cache,D:\DevTools\temp | Out-Null
+$env:npm_config_cache = 'D:\DevTools\npm-cache'
+$env:TEMP = 'D:\DevTools\temp'
+$env:TMP = 'D:\DevTools\temp'
+Remove-Item -LiteralPath .\node_modules -Recurse -Force
+npm.cmd install --workspace @local-tools/web --workspace @local-tools/mobile --workspace @local-tools/core --no-audit --no-fund
+node -e "require('function-bind'); require.resolve('picomatch'); console.log('Dependencies resolve')"
+npm.cmd run build
+```
+
+This intentionally installs web/mobile/core, **not Electron**. For Electron on Windows, use the GitHub-built EXE rather than forcing a large binary download across an unstable connection. For Android cloud builds without Git, see `apps/mobile/README.md` and use `EAS_NO_VCS=1` from `apps/mobile`.
+
