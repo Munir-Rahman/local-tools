@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Download, Film, Music2, TriangleAlert } from 'lucide-react';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
-import { fetchFile } from '@ffmpeg/util';
+import { fetchFile, toBlobURL } from '@ffmpeg/util';
 
 export const mediaTools = [
  {id:'mp4-to-webm',name:'MP4 to WebM',category:'Video',catalog:241,description:'Transcode MP4 videos to WebM.'},
@@ -82,7 +82,7 @@ export default function MediaWorkbench({id,onComplete}:{id:MediaId;onComplete:(n
     let timer:ReturnType<typeof setTimeout>|undefined;
     try{
       await Promise.race([
-        ffmpeg.load({coreURL,wasmURL}),
+        ffmpeg.load({coreURL: await toBlobURL(coreURL,'text/javascript'),wasmURL: await toBlobURL(wasmURL,'application/wasm')}),
         new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(Error('FFmpeg engine did not start within 90 seconds. Check your browser memory, /ffmpeg/*.wasm network response, and console errors.')),90000);})
       ]);
       setEngineReady(true);
