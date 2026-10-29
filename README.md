@@ -1,80 +1,67 @@
 # LocalTools
 
-**Offline-first, privacy-first PDF and image utilities** — a React web application with a future React Native app and Tauri desktop app planned in the same repository.
+**Local-first, no-file-upload document and utility suite** — React + TypeScript + Vite PWA; one monorepo for future React Native and Tauri apps.
 
-## What works today (web MVP)
+## Web v0.2 capabilities
 
-- **PDF:** merge, split into individual PDFs (ZIP), extract pages, remove pages, reorder pages, rotate, add ASCII text watermarks, add page numbers, images to PDF, PDF to PNG (ZIP), PDF metadata (JSON).
-- **Images:** JPG/PNG/WebP conversion, resize to a given width, JPEG/WebP quality-based re-encoding.
-- **Experience:** multi-file drag-and-drop, arrange the file order, validation, processing messages, ZIP outputs, responsive interface, offline PWA cache, installable web-app manifest.
+- **Dashboard:** dark / light / system theme, accent color, favorites, tool search, local recent activity, tool history, responsive navigation.
+- **Local persistence:** SQLite WASM (`sql.js`) exported to **IndexedDB**. Saves favorites, activity metadata (tool, input/output filenames, timestamp), preferences and saved CV/invoice drafts. **No input document data or converted file bytes are stored in the database**. Browser storage can be cleared or evicted; there is no cloud sync or account.
+- **PDF (11):** merge, split into individual PDFs (ZIP), extract, remove, reorder, rotate, watermark ASCII text, number pages, images to PDF, PDF to PNG (ZIP), inspect PDF metadata (JSON).
+- **Images (3):** convert JPG/PNG/WebP, resize images, re-encode for compression.
+- **Other utilities (8):** QR code generator (text, URL, Wi-Fi, vCard), Code 128 barcode, JSON validator/formatter/minifier, word count, case converter, Base64 text encode/decode, UUID v4 generator, SHA-256 text digest.
+- **Templates (2):** CV/resume builder (Modern, Classic, Minimal; editable personal sections, accent color, browser Print/Save to PDF); invoice generator with editable company, invoice and items, print to PDF. Local SQLite draft saving.
+- **480-action catalog:** search and browse all 480 proposed actions across 24 categories. Action-to-feature mappings are approximate where one implementation covers multiple related actions. Planned actions are **not implemented** and do not run.
 
-No conversion server is required. File bytes are read and transformed inside the browser with `pdf-lib`, PDF.js, Canvas, and JSZip. No analytics or third-party CDNs are included.
+**Important:** 24 working tool interfaces/builders, not 480 working converters. A successful CI build means the project compiles, not that every tool has undergone exhaustive real-file testing. Browser print output can vary. The CV form supports basic structured sections, not a WYSIWYG editor. Invoice currently has one line item. Recent activity metadata never contains downloadable copies of processed documents.
 
-**Important limits:** Office conversions, OCR, password-protected PDFs, cryptographic signatures, advanced PDF size optimization, video/audio conversion, React Native and desktop apps **are not implemented yet**. The UI only offers working or implemented tools, not fake buttons for future tools. Browser memory limits apply. Watermark text currently supports ASCII characters only. Re-encoding an image does not guarantee a smaller file.
+## Privacy and offline constraints
 
-## Requirements
+All conversions happen locally in the browser: documents are not uploaded to a server. The web app needs a network connection to download its code the first time; after offline assets are cached, most tools can run without network access. Cache may be evicted by the browser. No cloud conversion server, analytics or third-party CDN is used. The included content-security policy disallows external connections. The initial app's PDF size, page count and browser RAM limits still apply.
 
-- Node.js >=20.19 (22 LTS recommended)
-- npm >=10
-- Chrome, Firefox, Edge or Safari with modern Canvas support
+No absolute privacy or security guarantee is possible on a compromised device. Do not use the PDF watermark as secure redaction or assume PDF signatures are preserved after editing.
 
-## Run locally
+## Prerequisites
 
-```bash
-# Clone your PRIVATE repository using your own GitHub credentials
-git clone https://github.com/Munir-Rahman/local-tools.git
-cd local-tools
+Node.js >=20.19 and npm >=10. For a machine short on C: space, use a portable Node.js distribution on D: and configure the npm cache on D: before installing.
 
-npm install
-npm run dev
-# Open the local URL shown in the terminal
+## Develop
+
+```powershell
+cd D:\Github\local-tools-main
+npm.cmd install --no-audit --no-fund
+npm.cmd run dev
 ```
 
-## Build and preview the offline PWA
+Open the local URL printed by Vite (usually http://localhost:5173). To build:
 
-```bash
-npm run typecheck
-npm run build
-npm run preview
+```powershell
+npm.cmd run typecheck
+npm.cmd run build
+npm.cmd run preview
 ```
 
-Open the preview over `http://localhost` or HTTPS to permit service workers. Load it once online, allow all assets to install into the browser's storage, then disconnect and reload to test offline processing. The offline cache is browser-managed and may be evicted. A first-time visit cannot work offline. No file bytes are persisted by this app.
+The compiled application is in `apps/web/dist` and can be served statically over HTTPS. GitHub Actions runs type checking and a production build on each push to `main`.
 
-To deploy the production build, host `apps/web/dist/` as static files over HTTPS and configure your host to serve `index.html` for client-side paths. No Node.js backend is required for conversions. **Do not put external trackers, analytics, CDNs, or uploads on the site if you intend to keep the privacy promise.**
+To update a ZIP-downloaded copy without Git, download the new repository ZIP and replace source files (not `node_modules`), then re-run `npm.cmd install` if dependencies changed.
 
-## Structure
+## Source layout
 
 ```text
-local-tools/
-├── apps/
-│   └── web/                   # Vite + React + TypeScript + PWA
-├── packages/
-│   └── core/                  # Shared tool catalog and TypeScript contracts
-└── .github/workflows/        # Build/typecheck CI
+apps/web/src/App.tsx           Dashboard, favorites, recent activity, catalog, settings
+apps/web/src/dashboard.css     Dashboard styling and themes
+apps/web/src/PdfWorkspace.tsx  Embedded PDF/image tool workspace
+apps/web/src/conversion.ts    PDF/image engine
+apps/web/src/Utilities.tsx     Text, JSON, QR, barcode and developer utilities
+apps/web/src/Templates.tsx     CV and invoice builders
+apps/web/src/localDb.ts       SQLite WASM + IndexedDB persistence
+apps/web/src/catalog.ts       All 480 user-supplied roadmap actions
+packages/core/src/index.ts    Original shared PDF/image tool definitions
 ```
 
-Future modules: `apps/mobile` (React Native), `apps/desktop` (React + Tauri), and additional platform-specific processing engines. Shared catalog and contracts can be reused across all platforms, but React DOM components cannot be pasted unchanged into React Native.
+## Not implemented yet
 
-## File safety / privacy
+DOCX/XLSX/PPTX full-fidelity conversion, AI/OCR, advanced PDF compression, signing/encryption, video/audio codecs, WYSIWYG CV editing, many business templates, mobile/desktop apps, cloud login/sync, file history re-download, automated real-file test suite. These require separate investigation and testing.
 
-- The selected documents do **not** go to your servers or third-party conversion services.
-- Content Security Policy disallows connections to origins other than the site's own origin. This app does not issue conversion network requests.
-- Files are held in in-memory JavaScript `File`/`Blob` objects, not in IndexedDB/localStorage.
-- Local memory limits: 80 MB per input, 160 MB per batch, up to 32 inputs; split and render are limited to 120 pages per batch. Large or malformed documents can still exceed device memory.
-- PDF parser libraries process untrusted files; keep dependencies patched. Do not promise absolute security in a compromised browser or device.
-- No remote fonts, trackers, cookies, ad code or cloud AI are bundled.
+## Licenses
 
-## Limitations to understand
-
-- PDF-to-PNG performs **rasterization**; text will not remain selectable in PNG.
-- Image-to-PDF uses A4 pages and rasterizes JPG, PNG, and WebP images to PNG internally; PDFs with lots of photos may become large.
-- Watermarks and page-number stamps are overlays, not cryptographic marks or guaranteed sanitization/redaction.
-- PDF page numbering can overlap content on documents with small margins.
-- Image transparency is replaced with white when encoding JPEG.
-- Converting an image using Canvas may strip image metadata and color-profile information.
-- Tools that alter PDFs do not preserve digital signatures.
-- Unsupported or encrypted PDFs may fail. No file is changed in place; save the result explicitly.
-
-## Licensing
-
-The repository has not been assigned an application-source license. Review third-party dependency licenses before commercial distribution, especially when adding desktop/mobile native engines.
+Check the licenses and distribution obligations of all dependencies before publishing the app or bundling native engines. The project's private repository does not yet include a separately selected application license.
