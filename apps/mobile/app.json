@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "LocalTools",
+    "slug": "localtools",
+    "scheme": "localtools",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#F5F7FB",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.localtools.private"
+    },
+    "android": {
+      "package": "com.localtools.private",
+      "edgeToEdgeEnabled": true,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1B2B53"
+      }
+    },
+    "plugins": [
+      "expo-document-picker",
+      "expo-sqlite"
+    ],
+    "extra": {
+      "privacy": "All document processing runs on the device"
+    },
+    "icon": "./assets/icon.png"
+  }
+}

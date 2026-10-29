@@ -1,0 +1,38 @@
+{
+  "name": "@local-tools/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "typecheck": "tsc --noEmit",
+    "check": "expo install --check",
+    "test:catalog": "node scripts-check-catalog.mjs"
+  },
+  "dependencies": {
+    "expo": "~58.0.0",
+    "react": "19.3.0",
+    "react-native": "0.88.1",
+    "@expo/vector-icons": "^15.0.0",
+    "expo-clipboard": "~58.0.4",
+    "expo-document-picker": "~58.0.4",
+    "expo-file-system": "~58.0.12",
+    "expo-image-manipulator": "~58.0.15",
+    "expo-print": "~58.0.7",
+    "expo-sharing": "~58.0.19",
+    "expo-sqlite": "~58.0.14",
+    "react-native-safe-area-context": "^5.6.0",
+    "react-native-svg": "^15.12.1",
+    "pdf-lib": "^1.17.1",
+    "jszip": "^3.10.1",
+    "qrcode": "^1.5.4",
+    "expo-crypto": "~58.0.7"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/qrcode": "^1.5.5",
+    "typescript": "^5.9.0"
+  }
+}

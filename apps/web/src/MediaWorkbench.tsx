@@ -59,19 +59,35 @@ export default function MediaWorkbench({id,onComplete}:{id:MediaId;onComplete:(n
  const [files,setFiles]=useState<File[]>([]);
  const [start,setStart]=useState('0');const [duration,setDuration]=useState('10');const [quality,setQuality]=useState(8);
  const [busy,setBusy]=useState(false);const [progress,setProgress]=useState('');const [error,setError]=useState('');
+ const [engineReady,setEngineReady]=useState(false);
  const [output,setOutput]=useState<{name:string;url:string}|null>(null);
  useEffect(()=>()=>{if(engine.current){engine.current.terminate();engine.current=null;}},[]);
  useEffect(()=>()=>{if(output)URL.revokeObjectURL(output.url)},[output]);
  const select=(newFiles:FileList|null)=>{setFiles(Array.from(newFiles||[]).slice(0,2));setError('');setOutput(null)};
  async function run(){
   if(!files.length)return;
-  setBusy(true);setError('');setProgress('Loading local WebAssembly conversion engine (~32 MB on first load)…');
+  setBusy(true);setError('');setProgress('Checking local FFmpeg files…');
   try{
    const total=files.reduce((a,f)=>a+f.size,0);if(total>64*1024*1024)throw Error('Total inputs must be 64 MB or less to limit browser memory use.');
    for(const file of files){const ext=file.name.split('.').pop()?.toLowerCase()||'';if(!allowedVideo.has(ext))throw Error('Unsupported input format: '+ext);}
    if(id==='image-audio-mp4'&&files.length!==2)throw Error('Select one image and one audio file.');
-   if(!engine.current){const ffmpeg=new FFmpeg();engine.current=ffmpeg;ffmpeg.on('log',({message})=>{if(message.includes('time='))setProgress(message.slice(-160));});
-    await ffmpeg.load({coreURL:'/ffmpeg/ffmpeg-core.js',wasmURL:'/ffmpeg/ffmpeg-core.wasm'});
+   if(!engine.current){
+    const coreURL=`${import.meta.env.BASE_URL}ffmpeg/ffmpeg-core.js`;
+    const wasmURL=`${import.meta.env.BASE_URL}ffmpeg/ffmpeg-core.wasm`;
+    const ffmpeg=new FFmpeg();engine.current=ffmpeg;
+    ffmpeg.on('log',({message})=>{if(message.includes('time='))setProgress(message.slice(-160));});
+    const check=await fetch(coreURL,{method:'HEAD'});
+    if(!check.ok)throw Error(`Local FFmpeg script is missing (HTTP ${check.status}). Run npm install and restart the development server; the predev script must copy the FFmpeg core files.`);
+    setProgress('Loading local FFmpeg engine (~32 MB, first-time load can be slower)…');
+    let timer:ReturnType<typeof setTimeout>|undefined;
+    try{
+      await Promise.race([
+        ffmpeg.load({coreURL,wasmURL}),
+        new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(Error('FFmpeg engine did not start within 90 seconds. Check your browser memory, /ffmpeg/*.wasm network response, and console errors.')),90000);})
+      ]);
+      setEngineReady(true);
+    }catch(e){ffmpeg.terminate();engine.current=null;setEngineReady(false);throw e;}
+    finally{if(timer)clearTimeout(timer);}
    }
    const ffmpeg=engine.current!;
    const first=files[0];const ext=first.name.split('.').pop()?.toLowerCase()||'bin';const input=`input.${ext}`;
@@ -111,6 +127,6 @@ export default function MediaWorkbench({id,onComplete}:{id:MediaId;onComplete:(n
      {id==='video-compress'&&<label className="v2-field">Compression quality (2 = high, 20 = low)<input type="range" min="2" max="20" value={quality} onChange={e=>setQuality(Number(e.target.value))}/>{quality}</label>}
      <button className="v2-primary" disabled={busy||!files.length} type="button" onClick={()=>void run()}><Film size={17}/>{busy?'Processing…':'Convert on this device'}</button>
      <p className="v2-hint"><TriangleAlert size={16}/> Media decoding is CPU-intensive; some codec combinations cannot run in this FFmpeg build. Maximum input size 64 MB.</p>
-   </section><section className="v2-panel"><h2><Music2 size={17}/> Output</h2>{progress&&<p role="status" className="v2-hint">{progress}</p>}{error&&<div className="v2-error" role="alert">{error}</div>}{output&&<a className="v2-primary" href={output.url} download={output.name}><Download size={17}/> Download {output.name}</a>}<p className="v2-hint">Local FFmpeg WebAssembly is bundled with this app. It requires an initial download to cache (~32 MB) and significant browser memory. Output is not sent to a server.</p></section></div>
+   </section><section className="v2-panel"><h2><Music2 size={17}/> Output</h2>{progress&&<p role="status" className="v2-hint">{progress}</p>}{error&&<div className="v2-error" role="alert">{error}</div>}{output&&<a className="v2-primary" href={output.url} download={output.name}><Download size={17}/> Download {output.name}</a>}{engineReady&&<p className="v2-hint" style={{color:'#16a34a'}}>FFmpeg engine ready on this device.</p>}<p className="v2-hint">Local FFmpeg WebAssembly is bundled with this app. It requires an initial download to cache (~32 MB) and significant browser memory. Output is not sent to a server.</p></section></div>
  </div>;
 }

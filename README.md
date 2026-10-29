@@ -1,3 +1,17 @@
+# LocalTools v0.5 — Web and Native Mobile
+
+**Projects:** `apps/web` (React/Vite PWA), `apps/mobile` (Expo SDK 58 / React Native 0.88). A future desktop application can reuse browser UI but needs native conversion engines. The app is local-first and deliberately makes no file-content upload API.
+
+## Mobile (new)
+
+See [apps/mobile/README.md](apps/mobile/README.md) for offline mobile PDF/image tools, native SQLite, favorites, recent activity, QR, and CV/invoice generators. The 480-entry roadmap is searchable but not all actions run natively. React Native cannot directly reuse the browser's FFmpeg WebAssembly worker; mobile media transcoding requires a separate native engine. No signed APK/iOS binary has been produced.
+
+## Web FFmpeg startup fix
+
+For Vite, the FFmpeg core is now copied from `@ffmpeg/core/dist/esm`. Before launching, the web tool verifies its own FFmpeg asset and reports a 90-second startup timeout instead of spinning indefinitely. Run `npm install` followed by `npm run dev` to recopy FFmpeg, then verify the `ffmpeg-core.js` and `.wasm` URLs load from localhost. A browser smoke test runs WAV → MP3 in CI.
+
+---
+
 # LocalTools — Offline-First Web Utilities (v0.4 browser preview)
 
 This repository contains a React + TypeScript + Vite PWA for client-side file processing, with a SQLite WebAssembly database saved in browser IndexedDB for optional local preferences, favorites, activity metadata and template drafts.

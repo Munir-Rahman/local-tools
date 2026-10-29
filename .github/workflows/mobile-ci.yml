@@ -1,0 +1,35 @@
+name: Mobile CI
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/mobile/**'
+      - 'packages/core/**'
+      - '.github/workflows/mobile-ci.yml'
+      - 'package.json'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/mobile/**'
+      - 'packages/core/**'
+      - '.github/workflows/mobile-ci.yml'
+jobs:
+  validate-mobile:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Expo / React Native dependencies
+        run: npm install --workspace @local-tools/mobile --workspace @local-tools/core --include-workspace-root --no-audit --no-fund
+      - name: Validate all 480 catalog entries
+        run: npm run test:catalog --workspace @local-tools/mobile
+      - name: Typecheck native mobile source
+        run: npm run typecheck --workspace @local-tools/mobile
+      - name: Validate Expo configuration
+        run: npx --workspace @local-tools/mobile expo config --json > /tmp/localtools-expo-config.json
+      - name: Bundle offline Android JavaScript
+        run: cd apps/mobile && npx expo export --platform android --output-dir /tmp/localtools-mobile-export
