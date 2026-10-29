@@ -1,0 +1,16 @@
+# Files not needed by EAS Build when using EAS_NO_VCS=1.
+# Keep sources, app.json, eas.json, package.json, and assets in the archive.
+node_modules/
+.expo/
+android/
+ios/
+dist/
+build/
+coverage/
+*.apk
+*.aab
+*.ipa
+*.log
+*.tmp
+.DS_Store
+eas-archive/
