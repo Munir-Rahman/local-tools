@@ -53,7 +53,7 @@ const allTools:ToolItem[]=[
   ...mediaTools.map(t=>({id:t.id,name:t.name,description:t.description,category:t.category,featured:false})),
   ...officeTools.map(t=>({id:t.id,name:t.name,description:t.description,category:'Office',featured:false}))
 ];
-const starterFeatured=['merge-pdf','image-convert','json-tool','word-counter','qr-generator','barcode-generator','cv-builder','sticker-studio'];
+const starterFeatured=['merge-pdf','image-convert','json-tool','word-counter','qr-generator','barcode-generator','cv-builder','sticker-studio','unit-length-km-mi','unit-storage-GiB-MB'];
 const groups=['All','PDF','Images','File','Spreadsheets','Developer','Text','Calculators','Design','QR & Barcode','Templates','Computer','Physics','Chemistry','Electrical','Engineering','Converters','Video','Audio','Office'];
 const toolIcons:Record<string,typeof Files>={
   'merge-pdf':Files,'split-pdf':FileText,'pdf-to-png':Image,'images-to-pdf':Image,
@@ -237,7 +237,7 @@ export default function App(){
           <div className="tn-trust-band"><div><ShieldCheck size={24}/><span><strong>Private by default</strong><small>Files stay in local processing engines</small></span></div><div><Zap size={24}/><span><strong>Offline-capable tools</strong><small>Use supported cached tools without internet</small></span></div><div><Heart size={24}/><span><strong>Free and practical</strong><small>No credits or account required</small></span></div></div>
           <div className="tn-section-intro"><div><span className="tn-eyebrow">FIND THE RIGHT TOOL</span><h2>Browse by category</h2><p>Pick a category to explore compatible utilities.</p></div><button onClick={()=>go('all')}>View all tools <ArrowRight size={16}/></button></div>
           <div className="tn-category-tiles">{[
-            ['PDF','PDF tools',FileText,'Organize PDF documents'],['Images','Image tools',Image,'Resize and convert'],['Office','Office tools',BookMarked,'Documents & spreadsheets'],['Video','Video tools',Film,'Edit and extract'],['Audio','Audio tools',Headphones,'Audio conversion'],['Templates','Templates',Sparkles,'CVs, invoices and more']
+            ['PDF','PDF tools',FileText,'Organize PDF documents'],['Images','Image tools',Image,'Resize and convert'],['Office','Office tools',BookMarked,'Documents & spreadsheets'],['Video','Video tools',Film,'Edit and extract'],['Audio','Audio tools',Headphones,'Audio conversion'],['Templates','Templates',Sparkles,'CVs, invoices and more'],['Converters','Unit converters',Calculator,'1,500+ working conversions']
           ].map(([cat,label,Icon,note])=>{const TileIcon=Icon as typeof FileText;return <button key={cat as string} className="tn-category-tile" onClick={()=>{go('all');setGroup(cat as string)}}><TileIcon size={29}/><strong>{label as string}</strong><span>{note as string}</span></button>})}</div>
           <AdSlot placement="leaderboard"/>
           <div className="v2-searchwrap"><Search size={20}/><input value={search} ref={searchRef} onChange={e=>setSearch(e.target.value)} onFocus={()=>{}} placeholder="Search tools like 'Merge PDF', 'QR code' or 'Resume'..."/><kbd>Ctrl K</kbd></div>
