@@ -24,7 +24,7 @@ export const tools:MobileTool[] = [
   {id:'flatten-pdf-forms',name:'Flatten PDF form fields',subtitle:'Make form fields static',kind:'pdf',icon:'layers-outline',color:'#EF5660'},
   {id:'pdf-set-title',name:'Set PDF title',subtitle:'Edit PDF title metadata',kind:'pdf',icon:'create-outline',color:'#EF5660'},
   {id:'pdf-set-author',name:'Set PDF author',subtitle:'Edit PDF author metadata',kind:'pdf',icon:'person-outline',color:'#EF5660'},
-  {id:'pdf-stamp-date',name:'Date-stamp PDF',subtitle:'Add today's date to pages',kind:'pdf',icon:'calendar-outline',color:'#EF5660'},
+  {id:'pdf-stamp-date',name:'Date-stamp PDF',subtitle:'Add the current date to pages',kind:'pdf',icon:'calendar-outline',color:'#EF5660'},
   {id:'merge-pdf',name:'Merge PDF',subtitle:'Combine PDF documents',kind:'pdf',icon:'documents-outline',catalog:1,popular:true,color:'#EF5660'},
   {id:'split-pdf',name:'Split PDF',subtitle:'One PDF per page in ZIP',kind:'pdf',icon:'git-branch-outline',catalog:3,color:'#EF5660'},
   {id:'extract-pages',name:'Extract pages',subtitle:'Keep selected PDF pages',kind:'pdf',icon:'cut-outline',catalog:9,color:'#EF5660'},
