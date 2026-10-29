@@ -3,7 +3,7 @@ export type ToolId =
   | 'merge-pdf'|'split-pdf'|'extract-pages'|'rotate-pdf'|'number-pdf'|'watermark-pdf'|'images-to-pdf'|'pdf-info'
   | 'resize-image'|'compress-image'|'convert-image'|'rotate-image'|'flip-image'
   | 'json-format'|'word-count'|'text-case'|'text-clean'|'url-encode'|'uuid-generator'
-  | 'qr-generator'|'cv-builder'|'invoice-builder';
+  | 'qr-generator'|'cv-builder'|'invoice-builder'|'sticker-maker';
 export type MobileTool = {id:ToolId;name:string;subtitle:string;kind:ToolKind;icon:string;catalog?:number;popular?:boolean;color:string};
 export const tools:MobileTool[] = [
   {id:'merge-pdf',name:'Merge PDF',subtitle:'Combine PDF documents',kind:'pdf',icon:'documents-outline',catalog:1,popular:true,color:'#EF5660'},
