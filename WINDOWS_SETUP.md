@@ -59,3 +59,31 @@ If even `New-Item` fails, npm cannot repair the underlying Windows filesystem pr
 The mobile app uses Expo SDK 58. The primary document picker requests a cache copy; a separate **Android system picker** is available for provider-specific problems. Generated files are now written into the app's persistent Documents directory before sharing. **Neither route has been verified on your physical Android phone**. A previously installed APK/Expo Go binary may use older native code; rebuild and install the new version to test changes. A real-device test must cover Android version, documents provider, one-page PDF import, rotation, save to Downloads via SAF, and share sheet.
 
 The app does not require `READ_EXTERNAL_STORAGE` to access a document selected through the system file picker on modern Android. Do not add broad storage permissions merely to mask a URI-grant problem.
+
+
+## Expo Android bundling fails: `Cannot find module './implementation'`
+
+When the Metro terminal reports `node_modules/function-bind/index.js` cannot find `./implementation`, the local npm installation is incomplete. An unrelated warning about failing to deserialize Metro's cache is normally recoverable; fix the missing dependency first.
+
+From the **monorepo root** (e.g. `D:\ToolNest`), stop Expo with Ctrl+C, then use:
+
+```powershell
+cd D:\ToolNest
+Get-PSDrive D | Select-Object Name, @{N='FreeGB';E={[math]::Round($_.Free/1GB,2)}}
+Test-Path .\node_modules\function-bind\implementation.js
+npm.cmd run mobile:doctor
+# Only if the doctor reports a broken dependency:
+npm.cmd run mobile:repair
+npm.cmd run start:clean --workspace @local-tools/mobile
+```
+
+Before repair, set npm's cache and Windows TEMP/TMP to a drive with room if necessary:
+
+```powershell
+New-Item -ItemType Directory -Force D:\DevTools\npm-cache,D:\DevTools\temp | Out-Null
+$env:npm_config_cache='D:\DevTools\npm-cache'
+$env:TEMP='D:\DevTools\temp'
+$env:TMP='D:\DevTools\temp'
+```
+
+`mobile:doctor` checks `function-bind` without modifying files. `mobile:repair` removes only a clearly incomplete `function-bind` directory and runs npm's mobile-workspace install, subject to a free-space check. Avoid deleting the complete `node_modules` directory unless targeted recovery fails and there is enough space for a fresh install. An APK already installed on your phone is unaffected by Metro's local dependency errors; you still need to build a new APK for native-app changes.
