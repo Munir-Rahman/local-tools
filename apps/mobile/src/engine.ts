@@ -82,6 +82,39 @@ async function pdfTask(id:ToolId,files:PickedFile[],o:EngineOptions):Promise<Eng
   }
   const doc=await PDFDocument.load(await getBytes(files[0]));
   if(doc.getPageCount()>MAX_PAGES)throw Error('This mobile release supports up to 100 pages per PDF.');
+
+  if(['remove-pdf-pages','reverse-pdf-pages','reorder-pdf-pages','duplicate-pdf-pages','odd-pdf-pages','even-pdf-pages'].includes(id)){
+    const count=doc.getPageCount();let order:number[]=[];
+    if(id==='reverse-pdf-pages')order=Array.from({length:count},(_,i)=>count-i-1);
+    else if(id==='odd-pdf-pages'||id==='even-pdf-pages')order=Array.from({length:count},(_,i)=>i).filter(i=>id==='odd-pdf-pages'?i%2===0:i%2===1);
+    else if(id==='remove-pdf-pages'){
+      const removed=new Set(pageIndices(o.pages,count));order=Array.from({length:count},(_,i)=>i).filter(i=>!removed.has(i));
+    }else if(id==='reorder-pdf-pages'){
+      order=pageIndices(o.pages,count);
+      if(order.length!==count||new Set(order).size!==count)throw Error('Include each PDF page exactly once in the new order.');
+    }else order=[...Array.from({length:count},(_,i)=>i),...pageIndices(o.pages,count)];
+    if(!order.length)throw Error('Cannot create an empty PDF.');
+    if(order.length>MAX_PAGES)throw Error('Result exceeds 100 pages.');
+    const target=await PDFDocument.create();
+    const pages=await target.copyPages(doc,order);pages.forEach(page=>target.addPage(page));
+    return store(resultName(id,'pdf'),new Uint8Array(await target.save()),'application/pdf');
+  }
+  if(id==='blank-pdf-page'){
+    const first=doc.getPage(0);doc.insertPage(0,[first.getWidth(),first.getHeight()]);
+  }
+  if(id==='pdf-set-title'||id==='pdf-set-author'){
+    if(!o.watermark.trim())throw Error('Enter title or author first.');
+    if(id==='pdf-set-title')doc.setTitle(o.watermark.trim());else doc.setAuthor(o.watermark.trim());
+  }
+  if(id==='flatten-pdf-forms'){
+    const form=doc.getForm();if(!form.getFields().length)throw Error('This PDF has no fillable form fields.');
+    form.flatten();
+  }
+  if(id==='pdf-stamp-date'){
+    const font=await doc.embedFont(StandardFonts.HelveticaBold);
+    const stamp=new Date().toISOString().slice(0,10);
+    for(const page of doc.getPages())page.drawText(stamp,{x:18,y:Math.max(14,page.getHeight()-24),font,size:10,color:rgb(.25,.35,.55)});
+  }
   if(id==='pdf-info'){
     return {kind:'text',text:`File: ${files[0].name}\nPages: ${doc.getPageCount()}\nTitle: ${doc.getTitle()||'Not set'}\nAuthor: ${doc.getAuthor()||'Not set'}\nSubject: ${doc.getSubject()||'Not set'}\nFirst page: ${doc.getPages()[0]?.getWidth().toFixed(1)} × ${doc.getPages()[0]?.getHeight().toFixed(1)} pt`};
   }
@@ -141,7 +174,7 @@ export function runTextTool(id:ToolId,o:EngineOptions):string{
   }
 }
 export async function processTool(id:ToolId,files:PickedFile[],o:EngineOptions):Promise<EngineOutput>{
-  if(['merge-pdf','split-pdf','extract-pages','rotate-pdf','number-pdf','watermark-pdf','images-to-pdf','pdf-info'].includes(id))return pdfTask(id,files,o);
+  if(['merge-pdf','split-pdf','extract-pages','rotate-pdf','number-pdf','watermark-pdf','images-to-pdf','pdf-info','remove-pdf-pages','reverse-pdf-pages','reorder-pdf-pages','duplicate-pdf-pages','blank-pdf-page','odd-pdf-pages','even-pdf-pages','flatten-pdf-forms','pdf-set-title','pdf-set-author','pdf-stamp-date'].includes(id))return pdfTask(id,files,o);
   if(['resize-image','compress-image','convert-image','rotate-image','flip-image'].includes(id))return imageTask(id,files,o);
   return {kind:'text',text:runTextTool(id,o)};
 }

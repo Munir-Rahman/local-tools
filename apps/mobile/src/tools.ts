@@ -1,12 +1,24 @@
 export type ToolKind = 'pdf'|'image'|'text'|'qr'|'template';
 export type ToolId =
   | 'merge-pdf'|'split-pdf'|'extract-pages'|'rotate-pdf'|'number-pdf'|'watermark-pdf'|'images-to-pdf'|'pdf-info'
+  | 'remove-pdf-pages'|'reverse-pdf-pages'|'reorder-pdf-pages'|'duplicate-pdf-pages'|'blank-pdf-page'|'odd-pdf-pages'|'even-pdf-pages'|'flatten-pdf-forms'|'pdf-set-title'|'pdf-set-author'|'pdf-stamp-date'
   | 'resize-image'|'compress-image'|'convert-image'|'rotate-image'|'flip-image'
   | 'json-format'|'word-count'|'text-case'|'text-clean'|'url-encode'|'uuid-generator'
   | 'qr-generator'|'cv-builder'|'invoice-builder'|'sticker-maker'
   | 'json-validate'|'json-minify'|'text-lowercase'|'text-titlecase'|'text-camel'|'text-snake'|'text-kebab'|'text-trim'|'text-unique'|'text-sort'|'text-reverse'|'text-normalize'|'text-accents'|'text-line-numbers'|'url-decode'|'html-encode'|'html-decode'|'text-slug'|'safe-filename'|'number-base'|'storage-convert'|'percentage-calc'|'discount-calc'|'temp-convert'|'date-difference'|'csv-json'|'json-csv'|'text-frequency'|'text-to-binary'|'binary-to-text';
 export type MobileTool = {id:ToolId;name:string;subtitle:string;kind:ToolKind;icon:string;catalog?:number;popular?:boolean;color:string};
 export const tools:MobileTool[] = [
+  {id:'remove-pdf-pages',name:'Remove PDF pages',subtitle:'Remove pages by range',kind:'pdf',icon:'trash-outline',color:'#EF5660'},
+  {id:'reverse-pdf-pages',name:'Reverse PDF pages',subtitle:'Reverse all pages',kind:'pdf',icon:'swap-vertical-outline',color:'#EF5660'},
+  {id:'reorder-pdf-pages',name:'Reorder PDF pages',subtitle:'Specify new page order',kind:'pdf',icon:'reorder-three-outline',color:'#EF5660'},
+  {id:'duplicate-pdf-pages',name:'Duplicate PDF pages',subtitle:'Append selected pages',kind:'pdf',icon:'copy-outline',color:'#EF5660'},
+  {id:'blank-pdf-page',name:'Insert blank PDF page',subtitle:'Add a first blank page',kind:'pdf',icon:'add-circle-outline',color:'#EF5660'},
+  {id:'odd-pdf-pages',name:'Keep odd PDF pages',subtitle:'Pages 1, 3, 5…',kind:'pdf',icon:'list-outline',color:'#EF5660'},
+  {id:'even-pdf-pages',name:'Keep even PDF pages',subtitle:'Pages 2, 4, 6…',kind:'pdf',icon:'list-outline',color:'#EF5660'},
+  {id:'flatten-pdf-forms',name:'Flatten PDF form fields',subtitle:'Make form fields static',kind:'pdf',icon:'layers-outline',color:'#EF5660'},
+  {id:'pdf-set-title',name:'Set PDF title',subtitle:'Edit PDF title metadata',kind:'pdf',icon:'create-outline',color:'#EF5660'},
+  {id:'pdf-set-author',name:'Set PDF author',subtitle:'Edit PDF author metadata',kind:'pdf',icon:'person-outline',color:'#EF5660'},
+  {id:'pdf-stamp-date',name:'Date-stamp PDF',subtitle:'Add today's date to pages',kind:'pdf',icon:'calendar-outline',color:'#EF5660'},
   {id:'merge-pdf',name:'Merge PDF',subtitle:'Combine PDF documents',kind:'pdf',icon:'documents-outline',catalog:1,popular:true,color:'#EF5660'},
   {id:'split-pdf',name:'Split PDF',subtitle:'One PDF per page in ZIP',kind:'pdf',icon:'git-branch-outline',catalog:3,color:'#EF5660'},
   {id:'extract-pages',name:'Extract pages',subtitle:'Keep selected PDF pages',kind:'pdf',icon:'cut-outline',catalog:9,color:'#EF5660'},
