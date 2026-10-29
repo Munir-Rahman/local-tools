@@ -1,19 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
-import { ArrowRight, BookOpen, ChevronDown, FileText, FileImage, Film, Headphones, Grid2X2, Heart, Info, Menu, Moon, Search, Settings2, ShieldCheck, Sparkles, Sun, UserRound, X } from 'lucide-react';
+import { ArrowRight, BookOpen, ChevronDown, FileText, FileImage, Film, Headphones, Grid2X2, Heart, Menu, Moon, Search, Settings2, ShieldCheck, Sparkles, Sun, UserRound } from 'lucide-react';
 import './toolnest-refresh.css';
 
 type ToolLink = { id:string; name:string; category:string; description:string };
 type MenuId='documents'|'images'|'media'|'more'|'account';
-type BrowseGroup = { label:string; group:string; icon:typeof FileText; note:string };
-const browseGroups:BrowseGroup[]=[
-  {label:'PDF tools',group:'PDF',icon:FileText,note:'Merge, split, reorganize'},
-  {label:'Images & design',group:'Images',icon:FileImage,note:'Resize, crop and export'},
-  {label:'Audio tools',group:'Audio',icon:Headphones,note:'Convert and compress'},
-  {label:'Video tools',group:'Video',icon:Film,note:'Edit and extract media'},
-  {label:'Developer tools',group:'Developer',icon:Grid2X2,note:'JSON, base64 and hashes'},
-  {label:'Templates',group:'Templates',icon:BookOpen,note:'CVs, invoices, forms'},
-];
 const menus:{id:MenuId;label:string;headline:string;description:string;categories:string[];keywords:string[]}[]=[
   {id:'documents',label:'Document tools',headline:'Work with documents',description:'PDF, Office and file conversion tools you can use privately.',categories:['PDF','Office','File','Spreadsheets'],keywords:['merge','split','compress','convert','pdf','excel','word','extract']},
   {id:'images',label:'Image tools',headline:'Create and edit images',description:'Resize, convert, compress and create visual assets.',categories:['Images','Design','QR & Barcode'],keywords:['image','resize','compress','qr','barcode','crop','sticker']},
@@ -38,7 +29,7 @@ export default function ToolNestHeader({tools,onOpenTool,onCategory,onPage,onTog
   const searched=useMemo(()=>query.trim()?tools.filter(t=>`${t.name} ${t.category} ${t.description}`.toLowerCase().includes(query.trim().toLowerCase())).slice(0,7):[],[query,tools]);
   const selected=menus.find(m=>m.id===menu);
   function navigate(fn:()=>void){fn();setMenu(null);setSearchOpen(false);setQuery('');}
-  function onMenuKey(e:ReactKeyboardEvent<HTMLDivElement>){if(e.key==='Escape'){setMenu(null);(e.currentTarget.querySelector('[aria-expanded="true"]') as HTMLElement|null)?.focus()}}
+  function onMenuKey(e:ReactKeyboardEvent<HTMLElement>){if(e.key==='Escape'){setMenu(null);(e.currentTarget.querySelector('[aria-expanded="true"]') as HTMLElement|null)?.focus()}}
   return <header className="tn-sitehead no-print" ref={root} onKeyDown={onMenuKey} onMouseLeave={()=>setMenu(null)}>
     <div className="tn-sitehead-inner">
       <button className="tn-header-mobile" aria-label="Open navigation" onClick={onOpenMobile}><Menu size={23}/></button>
