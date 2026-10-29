@@ -5,8 +5,10 @@ on:
     paths:
       - 'apps/mobile/**'
       - 'packages/core/**'
+      - 'scripts/mobile-doctor.cjs'
       - '.github/workflows/mobile-ci.yml'
       - 'package.json'
+      - 'scripts/mobile-doctor.cjs'
   pull_request:
     branches: [main]
     paths:
@@ -25,6 +27,8 @@ jobs:
           node-version: '22'
       - name: Install Expo / React Native dependencies
         run: npm install --workspace @local-tools/mobile --workspace @local-tools/core --include-workspace-root --no-audit --no-fund
+      - name: Run npm dependency integrity doctor
+        run: npm run mobile:doctor
       - name: Validate mobile catalog metadata
         run: npm run test:catalog --workspace @local-tools/mobile
       - name: Test additional offline text converters
