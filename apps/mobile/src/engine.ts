@@ -94,10 +94,10 @@ async function pdfTask(id:ToolId,files:PickedFile[],o:EngineOptions):Promise<Eng
 async function imageTask(id:ToolId,files:PickedFile[],o:EngineOptions):Promise<EngineOutput>{
   validate(files,['jpeg','jpg','png','webp','heic','heif']);
   const source=files[0];
-  const ctx=ImageManipulator.ImageManipulator.manipulate(source.uri,{maxWidth:6000,maxHeight:6000});
+  const ctx=ImageManipulator.ImageManipulator.manipulate(source.uri);
   if(id==='resize-image'){
     if(!Number.isFinite(o.width)||o.width<16||o.width>6000)throw Error('Width must be between 16 and 6000 pixels.');
-    ctx.resize({width:o.width,height:null});
+    ctx.resize({width:o.width});
   }
   if(id==='rotate-image')ctx.rotate(o.angle);
   if(id==='flip-image')ctx.flip(ImageManipulator.FlipType.Horizontal);
