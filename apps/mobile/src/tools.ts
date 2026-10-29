@@ -1,13 +1,19 @@
-export type ToolKind = 'pdf'|'image'|'text'|'qr'|'template';
+export type ToolKind = 'pdf'|'file'|'image'|'text'|'qr'|'template';
 export type ToolId =
   | 'merge-pdf'|'split-pdf'|'extract-pages'|'rotate-pdf'|'number-pdf'|'watermark-pdf'|'images-to-pdf'|'pdf-info'
   | 'remove-pdf-pages'|'reverse-pdf-pages'|'reorder-pdf-pages'|'duplicate-pdf-pages'|'blank-pdf-page'|'odd-pdf-pages'|'even-pdf-pages'|'flatten-pdf-forms'|'pdf-set-title'|'pdf-set-author'|'pdf-stamp-date'
+  | 'zip-files'|'zip-inspect'|'file-info'|'file-hex'|'compare-files'
   | 'resize-image'|'compress-image'|'convert-image'|'rotate-image'|'flip-image'
   | 'json-format'|'word-count'|'text-case'|'text-clean'|'url-encode'|'uuid-generator'
   | 'qr-generator'|'cv-builder'|'invoice-builder'|'sticker-maker'
   | 'json-validate'|'json-minify'|'text-lowercase'|'text-titlecase'|'text-camel'|'text-snake'|'text-kebab'|'text-trim'|'text-unique'|'text-sort'|'text-reverse'|'text-normalize'|'text-accents'|'text-line-numbers'|'url-decode'|'html-encode'|'html-decode'|'text-slug'|'safe-filename'|'number-base'|'storage-convert'|'percentage-calc'|'discount-calc'|'temp-convert'|'date-difference'|'csv-json'|'json-csv'|'text-frequency'|'text-to-binary'|'binary-to-text';
 export type MobileTool = {id:ToolId;name:string;subtitle:string;kind:ToolKind;icon:string;catalog?:number;popular?:boolean;color:string};
 export const tools:MobileTool[] = [
+  {id:'zip-files',name:'Create ZIP archive',subtitle:'Compress files into ZIP',kind:'file',icon:'archive-outline',color:'#2595CF'},
+  {id:'zip-inspect',name:'List ZIP contents',subtitle:'Show file names inside ZIP',kind:'file',icon:'list-outline',color:'#2595CF'},
+  {id:'file-info',name:'File information',subtitle:'Size, extension and bytes',kind:'file',icon:'information-circle-outline',color:'#2595CF'},
+  {id:'file-hex',name:'Hex file preview',subtitle:'Inspect first 256 bytes',kind:'file',icon:'code-slash-outline',color:'#2595CF'},
+  {id:'compare-files',name:'Compare file bytes',subtitle:'Check if two files match',kind:'file',icon:'git-compare-outline',color:'#2595CF'},
   {id:'remove-pdf-pages',name:'Remove PDF pages',subtitle:'Remove pages by range',kind:'pdf',icon:'trash-outline',color:'#EF5660'},
   {id:'reverse-pdf-pages',name:'Reverse PDF pages',subtitle:'Reverse all pages',kind:'pdf',icon:'swap-vertical-outline',color:'#EF5660'},
   {id:'reorder-pdf-pages',name:'Reorder PDF pages',subtitle:'Specify new page order',kind:'pdf',icon:'reorder-three-outline',color:'#EF5660'},
@@ -74,4 +80,4 @@ export const tools:MobileTool[] = [
   {id:'invoice-builder',name:'Invoice maker',subtitle:'Create a printable invoice',kind:'template',icon:'receipt-outline',catalog:421,color:'#D18A32'}
 ];
 export const byId = (id:string): MobileTool|undefined => tools.find(tool=>tool.id===id);
-export const categories=[{id:'all',label:'All',icon:'apps-outline'},{id:'pdf',label:'PDF',icon:'document-text-outline'},{id:'image',label:'Images',icon:'images-outline'},{id:'text',label:'Text & Dev',icon:'code-outline'},{id:'qr',label:'QR',icon:'qr-code-outline'},{id:'template',label:'Templates',icon:'create-outline'}] as const;
+export const categories=[{id:'all',label:'All',icon:'apps-outline'},{id:'pdf',label:'PDF',icon:'document-text-outline'},{id:'file',label:'Files & ZIP',icon:'archive-outline'},{id:'image',label:'Images',icon:'images-outline'},{id:'text',label:'Text & Dev',icon:'code-outline'},{id:'qr',label:'QR',icon:'qr-code-outline'},{id:'template',label:'Templates',icon:'create-outline'}] as const;

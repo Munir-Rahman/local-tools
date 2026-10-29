@@ -173,9 +173,45 @@ export function runTextTool(id:ToolId,o:EngineOptions):string{
     default:return extendedText(id,s);
   }
 }
+
+const nativeFileIds=['zip-files','zip-inspect','file-info','file-hex','compare-files'];
+async function nativeFileTask(id:ToolId,files:PickedFile[]):Promise<EngineOutput>{
+ if(!files.length)throw Error('Select a file first.');
+ if(files.length>20)throw Error('Select no more than 20 files.');
+ if(files.reduce((n,f)=>n+(f.size||0),0)>35*1024*1024)throw Error('Combined inputs must not exceed 35 MB.');
+ if(id==='zip-files'){
+  const zip=new JSZip();
+  for(const file of files){
+    const safe=file.name.replace(/[\\/:*?"<>|\x00-\x1f]/g,'_').replace(/^\.+/,'file').slice(0,100)||'file';
+    zip.file(safe,await getBytes(file));
+  }
+  const archive=await zip.generateAsync({type:'uint8array',compression:'DEFLATE',compressionOptions:{level:6}});
+  return store(resultName('archive','zip'),new Uint8Array(archive),'application/zip');
+ }
+ if(id==='zip-inspect'){
+  validate(files,['zip']);
+  const zip=await JSZip.loadAsync(await getBytes(files[0]));
+  const names=Object.values(zip.files).filter(file=>!file.dir).map(file=>file.name);
+  if(names.length>300)throw Error('Too many ZIP entries.');
+  return {kind:'text',text:names.join('\n')||'No files in ZIP.'};
+ }
+ if(id==='file-info'||id==='file-hex'){
+  const data=await getBytes(files[0]);const hex=Array.from(data.slice(0,id==='file-hex'?256:16)).map(x=>x.toString(16).padStart(2,'0')).join(' ');
+  return {kind:'text',text:id==='file-hex'?hex:`File: ${files[0].name}\nSize: ${data.length} bytes\nExtension: ${ext(files[0])||'none'}\nHeader: ${hex}`};
+ }
+ if(id==='compare-files'){
+  if(files.length!==2)throw Error('Select exactly two files.');
+  const first=await getBytes(files[0]),second=await getBytes(files[1]);let same=first.length===second.length;
+  if(same)for(let i=0;i<first.length;i++){if(first[i]!==second[i]){same=false;break;}}
+  return {kind:'text',text:`${same?'Identical':'Different'} bytes: ${files[0].name} and ${files[1].name}.`};
+ }
+ throw Error('Unsupported file action.');
+}
+
 export async function processTool(id:ToolId,files:PickedFile[],o:EngineOptions):Promise<EngineOutput>{
   if(['merge-pdf','split-pdf','extract-pages','rotate-pdf','number-pdf','watermark-pdf','images-to-pdf','pdf-info','remove-pdf-pages','reverse-pdf-pages','reorder-pdf-pages','duplicate-pdf-pages','blank-pdf-page','odd-pdf-pages','even-pdf-pages','flatten-pdf-forms','pdf-set-title','pdf-set-author','pdf-stamp-date'].includes(id))return pdfTask(id,files,o);
   if(['resize-image','compress-image','convert-image','rotate-image','flip-image'].includes(id))return imageTask(id,files,o);
+  if(nativeFileIds.includes(id))return nativeFileTask(id,files);
   return {kind:'text',text:runTextTool(id,o)};
 }
 export async function generateQr(text:string,color:string){

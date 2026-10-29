@@ -117,20 +117,21 @@ function Main(){
   const done=async(id:string,name:string,description:string)=>{try{await recordUse(id,name,description);const state=await loadState();setRecent(state.recent);}catch(e){Alert.alert('History could not be saved',String(e));}};
   const choose=async(systemPicker=false)=>{
     if(!tool)return;
-    const multiple=['merge-pdf','images-to-pdf'].includes(tool.id);
+    const multiple=['merge-pdf','images-to-pdf','zip-files','compare-files'].includes(tool.id);
     const image=tool.kind==='image'||tool.id==='images-to-pdf';
+    const mime=image?'image/*':tool.kind==='file'?'*/*':'application/pdf';
     try{
       if(systemPicker&&Platform.OS==='android'){
         // Android alternative: Expo's own SAF picker for provider-specific URI problems.
         const picked=multiple
-          ? await NativeFile.pickFileAsync({mimeTypes:image?'image/*':'application/pdf',multipleFiles:true})
-          : await NativeFile.pickFileAsync({mimeTypes:image?'image/*':'application/pdf'});
+          ? await NativeFile.pickFileAsync({mimeTypes:mime,multipleFiles:true})
+          : await NativeFile.pickFileAsync({mimeTypes:mime});
         if(picked.canceled)return;
         const selected=Array.isArray(picked.result)?picked.result:[picked.result];
         const files=await Promise.all(selected.map(async file=>({uri:await importPickedFile(file.uri,file.name),name:file.name,size:file.size||undefined})));
         setSelectedFiles(files);setResult(null);setError('');return;
       }
-      const picked=await DocumentPicker.getDocumentAsync({type:image?'image/*':'application/pdf',multiple,copyToCacheDirectory:true});
+      const picked=await DocumentPicker.getDocumentAsync({type:mime,multiple,copyToCacheDirectory:true});
       if(picked.canceled)return;
       const files=await Promise.all(picked.assets.map(async a=>({uri:await importPickedFile(a.uri,a.name),name:a.name,size:a.size,mimeType:a.mimeType||undefined})));setSelectedFiles(files);setResult(null);setError('');
     }catch(e){Alert.alert('File picker error',String(e));}
@@ -158,7 +159,7 @@ function Main(){
   const saveProfile=async()=>{try{await savePreference('userName',profileName.trim().slice(0,80));Alert.alert('Saved on this device','Your display name was saved locally.');}catch(e){Alert.alert('Could not save name',String(e));}};
   const changeTheme=(next:ThemeSetting)=>{setTheme(next);void savePreference('theme',next).catch(e=>Alert.alert('Theme not saved',String(e)));};
   const changeAccent=(next:string)=>{setAccent(next);void savePreference('accent',next).catch(e=>Alert.alert('Accent not saved',String(e)));};
-  const pdfOrImage=tool&&(tool.kind==='pdf'||tool.kind==='image');
+  const pdfOrImage=tool&&(tool.kind==='pdf'||tool.kind==='image'||tool.kind==='file');
   const textTool=tool?.kind==='text';
   return <SafeAreaView style={{flex:1,backgroundColor:p.background}} edges={['top','bottom']}>
     <StatusBar barStyle={darkMode?'light-content':'dark-content'}/>
@@ -178,7 +179,7 @@ function Main(){
       {tool? <>
         <View style={s.toolHeading}><View style={[s.largeIcon,{backgroundColor:tool.color+'20'}]}><Glyph name={tool.icon} size={27} color={tool.color}/></View><View style={{flex:1}}><Text style={[s.eyebrow,{color:accent}]}>{tool.kind.toUpperCase()} · 100% LOCAL</Text><Text style={[s.toolTitle,{color:p.text}]}>{tool.name}</Text><Text style={[s.subtitle,{color:p.muted}]}>{tool.subtitle}</Text></View><Pressable accessibilityLabel="Toggle favorite" onPress={()=>void favorite(tool.id)} style={[s.roundButton,{backgroundColor:p.surface}]}><Glyph name={favorites.includes(tool.id)?'star':'star-outline'} color={favorites.includes(tool.id)?'#EFAB41':p.muted}/></Pressable></View>
         <View style={[s.panel,{backgroundColor:p.surface,borderColor:p.border}]}>
-          {pdfOrImage&&<><Text style={[s.panelHeading,{color:p.text}]}>1. Select your {tool.kind==='pdf'?'documents':'image'}</Text>
+          {pdfOrImage&&<><Text style={[s.panelHeading,{color:p.text}]}>1. Select your {tool.kind==='pdf'?'PDF documents':tool.kind==='file'?'files':'image'}</Text>
             <Pressable accessibilityRole="button" onPress={()=>void choose()} style={[s.dropzone,{borderColor:accent+'80',backgroundColor:p.subtle}]}><View style={[s.uploadCircle,{backgroundColor:accent+'18'}]}><Glyph name="cloud-upload-outline" color={accent} size={28}/></View><Text style={{color:p.text,fontWeight:'800',fontSize:14}}>Choose files from device</Text><Text style={{color:p.muted,fontSize:12,marginTop:5}}>No uploads · Files are processed locally</Text></Pressable>
             {Platform.OS==='android'&&<View style={{marginBottom:12}}><SecondaryButton label="Try alternate Android file picker" icon="folder-open-outline" p={p} accent={accent} onPress={()=>void choose(true)}/></View>}
             {selectedFiles.map((f,i)=><View key={f.uri+i} style={[s.pickedFile,{borderColor:p.border}]}><Glyph name="document-attach-outline" color={accent}/><View style={{flex:1}}><Text style={{color:p.text,fontWeight:'700',fontSize:12}} numberOfLines={1}>{f.name}</Text><Text style={{color:p.muted,fontSize:10}}>{f.size?`${(f.size/1024/1024).toFixed(2)} MB`: 'Selected file'}</Text></View></View>)}
