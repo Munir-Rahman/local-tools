@@ -44,3 +44,23 @@ The app does not implement analytics or a file-upload API. Chosen files are copi
 ## Development/build validation
 
 `npm run typecheck --workspace @local-tools/mobile` validates TS source. `npx expo export --platform android` bundles JavaScript but does not prove native module compatibility on real Android/iOS devices. Always test document selection, persistence, PDF processing, printing and file sharing on physical devices before calling this mobile app production-ready.
+
+## Build an APK on Windows without installing Git
+
+A missing Git executable causes EAS CLI's `build:configure` and `build` to fail before submitting a build. GitHub CLI (`gh`) is not Git.
+
+Expo officially supports a No VCS workflow. Run these commands **from apps/mobile**, not the monorepo root:
+
+```powershell
+cd D:\ToolNest\apps\mobile
+$env:EAS_NO_VCS = '1'
+$env:npm_config_cache = 'D:\DevTools\npm-cache'
+npx.cmd --yes eas-cli@latest whoami
+npx.cmd --yes eas-cli@latest build:configure --platform android
+npx.cmd --yes eas-cli@latest build --platform android --profile preview
+```
+
+The `preview` profile in `eas.json` requests an installable APK. Initial configuration may ask you to choose an Expo owner and set up Android signing credentials. No VCS archives the current project directory rather than using a Git checkout; `apps/mobile/.easignore` excludes local caches and artifacts from uploads. An internet connection is still required to send the project to EAS Build.
+
+See Expo's official instructions: https://docs.expo.dev/build-reference/project-upload/ and https://docs.expo.dev/build-reference/build-with-monorepos/.
+
