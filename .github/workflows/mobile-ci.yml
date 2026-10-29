@@ -8,12 +8,12 @@ on:
       - 'scripts/mobile-doctor.cjs'
       - '.github/workflows/mobile-ci.yml'
       - 'package.json'
-      - 'scripts/mobile-doctor.cjs'
   pull_request:
     branches: [main]
     paths:
       - 'apps/mobile/**'
       - 'packages/core/**'
+      - 'scripts/mobile-doctor.cjs'
       - '.github/workflows/mobile-ci.yml'
 jobs:
   validate-mobile:
