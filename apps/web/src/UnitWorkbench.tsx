@@ -5,11 +5,11 @@ export default function UnitWorkbench({id,onSwap,onComplete}:{id:string;onSwap:(
  const spec=getConversion(id);
  const [input,setInput]=useState('1');const [digits,setDigits]=useState(9);const [copied,setCopied]=useState(false);
  const state=useMemo(()=>{try{
-  if(!spec)throw Error('Unknown conversion');
+  const current=getConversion(id);if(!current)throw Error('Unknown conversion');
   if(!input.trim())return {result:'',error:''};
   const value=Number(input);const n=convertUnit(id,value);
   return {result:Number(n.toPrecision(digits)).toString(),error:''};
- }catch(e){return {result:'',error:e instanceof Error?e.message:String(e)};}},[id,input,digits,spec]);
+ }catch(e){return {result:'',error:e instanceof Error?e.message:String(e)};}},[id,input,digits]);
  if(!spec)return <div role="alert">Unsupported unit conversion.</div>;
  function record(){if(state.result)onComplete(spec.name,state.result+' '+spec.to.label);}
  async function copy(){if(!state.result)return;try{await navigator.clipboard.writeText(state.result);setCopied(true);}catch{setCopied(false);}}
