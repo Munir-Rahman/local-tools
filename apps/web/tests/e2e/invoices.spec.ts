@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test('invoice supports multiple editable line items and remembers the prior page',async ({page})=>{
   await page.goto('/');
-  await page.getByRole('button',{name:'Templates',exact:true}).click();
+  await page.getByRole('navigation',{name:'Main workspace'}).getByRole('button',{name:'Templates'}).click();
   await page.getByRole('button',{name:'Open Invoice Generator'}).click();
   await expect(page.getByRole('heading',{name:'Invoice Generator'})).toBeVisible();
   await page.getByRole('button',{name:/Add item/}).click();
