@@ -37,6 +37,7 @@ export default function ToolNestHeader({tools,onOpenTool,onCategory,onPage,onTog
       <nav className="tn-header-navigation" aria-label="Main navigation">
         <button onClick={()=>navigate(()=>onPage('all'))}>All tools</button>
         <button onClick={()=>navigate(()=>onPage('templates'))}>Templates</button>
+        <button className="tn-roadmap-link" onClick={()=>navigate(()=>onPage('catalog'))}>5,000-action catalog</button>
         {menus.map(item=><div className="tn-nav-entry" key={item.id} onMouseEnter={()=>{setMenu(item.id);setSearchOpen(false)}} onMouseLeave={()=>{}}><button className={menu===item.id?'open':''} aria-haspopup="true" aria-expanded={menu===item.id} aria-controls="tn-mega-panel" onFocus={()=>setMenu(item.id)} onClick={()=>setMenu(x=>x===item.id?null:item.id)}>{item.label}<ChevronDown size={15}/></button></div>)}
       </nav>
       <div className="tn-header-tools">
