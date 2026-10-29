@@ -5,6 +5,7 @@ on:
     paths:
       - 'apps/mobile/**'
       - 'packages/core/**'
+      - 'packages/catalog/**'
       - 'scripts/mobile-doctor.cjs'
       - '.github/workflows/mobile-ci.yml'
       - 'package.json'
@@ -13,6 +14,7 @@ on:
     paths:
       - 'apps/mobile/**'
       - 'packages/core/**'
+      - 'packages/catalog/**'
       - 'scripts/mobile-doctor.cjs'
       - '.github/workflows/mobile-ci.yml'
 jobs:
@@ -31,6 +33,8 @@ jobs:
         run: npm run mobile:doctor
       - name: Validate mobile catalog metadata
         run: npm run test:catalog --workspace @local-tools/mobile
+      - name: Verify 5000 records inside standalone mobile project
+        run: npm run test:full-catalog --workspace @local-tools/mobile
       - name: Test additional offline text converters
         run: node --experimental-strip-types --test apps/mobile/tests/textEngines.test.mjs
       - name: Typecheck native mobile source
