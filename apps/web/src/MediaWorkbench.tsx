@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Download, Film, Music2, TriangleAlert } from 'lucide-react';
+import { Download, Film, Music2, TriangleAlert, Clock3, HardDrive, FileCheck2 } from 'lucide-react';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
 
@@ -58,15 +58,36 @@ export default function MediaWorkbench({id,onComplete}:{id:MediaId;onComplete:(n
  const engine=useRef<FFmpeg|null>(null);
  const [files,setFiles]=useState<File[]>([]);const [targetMB,setTargetMB]=useState('');const [durationOverride,setDurationOverride]=useState('');const [outputBytes,setOutputBytes]=useState<number|null>(null);
  const [start,setStart]=useState('0');const [duration,setDuration]=useState('10');const [quality,setQuality]=useState(8);
+ const [trimSeconds,setTrimSeconds]=useState('');const [sourceDuration,setSourceDuration]=useState<number|null>(null);const [outputLength,setOutputLength]=useState<number|null>(null);
  const [busy,setBusy]=useState(false);const [progress,setProgress]=useState('');const [error,setError]=useState('');
  const [engineReady,setEngineReady]=useState(false);
  const [output,setOutput]=useState<{name:string;url:string}|null>(null);
  useEffect(()=>()=>{if(engine.current){engine.current.terminate();engine.current=null;}},[]);
  useEffect(()=>()=>{if(output)URL.revokeObjectURL(output.url)},[output]);
- const select=(newFiles:FileList|null)=>{setFiles(Array.from(newFiles||[]).slice(0,2));setError('');setOutput(null);setOutputBytes(null)};
+ const select=(newFiles:FileList|null)=>{
+  setFiles(Array.from(newFiles||[]).slice(0,2));setError('');setOutput(null);setOutputBytes(null);setOutputLength(null);setSourceDuration(null);
+ };
+ async function detectDuration(file:File):Promise<number>{
+   const objectUrl=URL.createObjectURL(file);
+   try{
+     return await new Promise<number>((resolve,reject)=>{
+       const media=document.createElement(file.type.startsWith('audio/') || /\.(mp3|wav|m4a|ogg|flac)$/i.test(file.name)?'audio':'video');
+       let settled=false;
+       const timer=setTimeout(()=>finish(Error('Timed out reading media duration')),9000);
+       function finish(error?:Error,seconds?:number){
+         if(settled)return;settled=true;clearTimeout(timer);media.removeAttribute('src');media.load();
+         if(error)reject(error);else resolve(seconds!);
+       }
+       media.preload='metadata';
+       media.onloadedmetadata=()=>Number.isFinite(media.duration)&&media.duration>0?finish(undefined,media.duration):finish(Error('Unknown media duration'));
+       media.onerror=()=>finish(Error('Unable to read media duration in this browser'));
+       media.src=objectUrl;
+     });
+   }finally{URL.revokeObjectURL(objectUrl)}
+ }
  async function run(){
   if(!files.length)return;
-  setBusy(true);setError('');setProgress('Checking local FFmpeg files…');
+  setBusy(true);setError('');setOutput(null);setOutputBytes(null);setOutputLength(null);setProgress('Checking local FFmpeg files…');
   try{
    const total=files.reduce((a,f)=>a+f.size,0);if(total>64*1024*1024)throw Error('Total inputs must be 64 MB or less to limit browser memory use.');
    for(const file of files){const ext=file.name.split('.').pop()?.toLowerCase()||'';if(!allowedVideo.has(ext))throw Error('Unsupported input format: '+ext);}
@@ -91,9 +112,22 @@ export default function MediaWorkbench({id,onComplete}:{id:MediaId;onComplete:(n
    }
    const ffmpeg=engine.current!;
    const first=files[0];const ext=first.name.split('.').pop()?.toLowerCase()||'bin';const input=`input.${ext}`;
+   const compressing=id==='video-compress'||id==='audio-compress';
+   let measuredSeconds:number|null=null;
+   if(compressing){
+     try{measuredSeconds=await detectDuration(first);setSourceDuration(measuredSeconds);}
+     catch{setSourceDuration(null);}
+   }
+   const requestedTrim=Number(trimSeconds);
+   if(compressing && trimSeconds.trim() && (!Number.isFinite(requestedTrim)||requestedTrim<=0))throw Error('Trim duration must be greater than zero.');
+   if(compressing&&measuredSeconds!==null&&trimSeconds.trim()&&requestedTrim>measuredSeconds)throw Error('Requested trim duration is longer than the source video/audio.');
+   const actualSeconds=compressing?(trimSeconds.trim()?requestedTrim:measuredSeconds):null;
+   if(compressing&&actualSeconds!==null)setOutputLength(actualSeconds);
    for(const file of files){const fileExtension=file.name.split('.').pop()?.toLowerCase()||'bin';if(!fileExtension||!allowedVideo.has(fileExtension))throw Error('Unsupported extension');}
    await ffmpeg.writeFile(input,await fetchFile(first));
-   const resultExt=EXT[id];const outputName=`localtools-result.${resultExt}`;let args:string[];
+   const resultExt=EXT[id];
+   const safeName=first.name.replace(/\.[^.]+$/,'').replace(/[^a-zA-Z0-9_-]/g,'-').slice(0,45)||'media';
+   const outputName=`${safeName}-ToolNest.${resultExt}`;let args:string[];
    let secondName='';
    if(id==='image-audio-mp4'){
     const image=files.find(f=>/^image\//.test(f.type));const audio=files.find(f=>/^audio\//.test(f.type));
@@ -104,35 +138,47 @@ export default function MediaWorkbench({id,onComplete}:{id:MediaId;onComplete:(n
     args=['-loop','1','-framerate','1','-i',imgName,'-i',secondName,'-vf','scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2','-c:v','mpeg4','-q:v','7','-c:a','aac','-shortest','-pix_fmt','yuv420p',outputName];
 
    }else args=commands(id,input,outputName,start,duration,quality);
-   if(targetMB.trim() && (id==='video-compress'||id==='audio-compress')){
-     const mb=Number(targetMB);if(!Number.isFinite(mb)||mb<=0||mb>500)throw Error('Enter a target between 0.1 and 500 MB.');
-     let length=Number(durationOverride);
-     if(!length || !Number.isFinite(length)){
-       const url=URL.createObjectURL(first);
-       try{length=await new Promise<number>((resolve,reject)=>{const probe=document.createElement(id==='audio-compress'?'audio':'video');probe.preload='metadata';probe.onloadedmetadata=()=>resolve(probe.duration);probe.onerror=()=>reject(Error('Cannot read media duration. Enter the duration manually.'));probe.src=url;setTimeout(()=>reject(Error('Metadata probe timed out. Enter duration manually.')),5000);});}
-       finally{URL.revokeObjectURL(url)}
+   if(targetMB.trim() && compressing){
+     const mb=Number(targetMB);
+     if(!Number.isFinite(mb)||mb<0.1||mb>500)throw Error('Enter a target size between 0.1 and 500 MB.');
+     let length=actualSeconds;
+     if(!length){
+       // Fallback is used only when metadata cannot be decoded. It never trims output.
+       const fallback=Number(durationOverride);
+       if(!Number.isFinite(fallback)||fallback<=0)throw Error('Cannot read source duration. Enter the actual source length in fallback duration.');
+       length=fallback;
+       if(trimSeconds.trim())length=requestedTrim;
      }
-     if(!Number.isFinite(length)||length<=0)throw Error('Enter a valid media duration in seconds.');
-     const overallKbps=(mb*1024*1024*8*.92)/(length*1000);
+     // 0.85 safety margin accounts for container overhead and encoder bitrate variation.
+     const overallKbps=(mb*1024*1024*8*.85)/(length*1000);
      if(id==='audio-compress'){
-       const kbps=Math.min(320,Math.floor(overallKbps));if(kbps<24)throw Error('Target too small for playable audio at this duration.');
+       const kbps=Math.min(320,Math.floor(overallKbps));
+       if(kbps<24)throw Error('Target size too small for playable audio at this length.');
        args=['-i',input,'-vn','-c:a','libmp3lame','-b:a',`${kbps}k`,outputName];
      }else{
        const audioKbps=overallKbps>160?96:48;
        const videoKbps=Math.floor(overallKbps-audioKbps);
-       if(videoKbps<90)throw Error('Target too small for playable video at this duration.');
-       args=['-i',input,'-vf','scale=-2:480','-c:v','mpeg4','-b:v',`${videoKbps}k`,'-c:a','aac','-b:a',`${audioKbps}k`,outputName];
+       if(videoKbps<90)throw Error('Target size too small for playable video. Use a larger size, shorter clip, or lower resolution.');
+       args=['-i',input,'-vf','scale=-2:480','-c:v','mpeg4','-b:v',`${videoKbps}k`,'-c:a','aac','-b:a',`${audioKbps}k`,'-pix_fmt','yuv420p',outputName];
      }
    }
+   // A compression target controls size, not time. Only this separate option changes length.
+   if(compressing && trimSeconds.trim()){
+     args.splice(args.length-1,0,'-t',String(requestedTrim));
+   }
+   // Metadata branding is nonvisual and does not alter the user's video frames or audio samples.
+   if(['mp4','webm','mp3'].includes(resultExt)){
+     args.splice(args.length-1,0,'-metadata','comment=Processed locally with ToolNest');
+   }
    setProgress('Converting locally…');
-   const code=await ffmpeg.exec(args,120000);
+   const code=await ffmpeg.exec(args,600000);
    if(code!==0)throw Error(`FFmpeg could not perform this conversion (exit ${code}); the codec may not be available.`);
    const data=await ffmpeg.readFile(outputName);
    if(!(data instanceof Uint8Array))throw Error('Unexpected output format');
    const bytes=new Uint8Array(data);
    if(!bytes.length)throw Error('Converter returned an empty file.');
    const url=URL.createObjectURL(new Blob([bytes],{type:outputMime(resultExt)}));
-   setOutput({name:outputName,url});setOutputBytes(bytes.length);setProgress('Complete. Save the file to your device.');onComplete(spec.name,outputName);
+   setOutput({name:outputName,url});setOutputBytes(bytes.length);setProgress('Complete. Download your file.');onComplete(spec.name,outputName);
    await ffmpeg.deleteFile(outputName);
    try{await ffmpeg.deleteFile(input);}catch{/* Input already removed */}
    if(secondName)try{await ffmpeg.deleteFile(secondName)}catch{/* optional */}
@@ -140,14 +186,22 @@ export default function MediaWorkbench({id,onComplete}:{id:MediaId;onComplete:(n
   }catch(e){const msg=e instanceof Error?e.message:String(e);setError(msg);setProgress('');console.error('Local media conversion failed:',e);}
   finally{setBusy(false);}
  }
- return <div className="v2-toolview"><div className="v2-pagehead"><div><span className="v2-kicker">MEDIA PROCESSING · FULLY LOCAL</span><h1>{spec.name}</h1><p>{spec.description}</p></div></div>
+ return <div className="v2-toolview"><div className="v2-pagehead"><div><span className="v2-kicker">MEDIA PROCESSING · FULLY LOCAL</span><h1 style={{display:'flex',alignItems:'center',gap:12}}><img src="/brand-icon.png" width={42} height={42} alt="ToolNest"/>{spec.name}</h1><p>{spec.description}</p><p className="v2-hint">ToolNest processes supported media on this device. Compression size and playback duration are independent settings.</p></div></div>
    <div className="utility-layout"><section className="v2-panel"><h2>Choose file{ id==='image-audio-mp4'?'s':'' }</h2><label className="v2-field">Select {id==='image-audio-mp4'?'image and audio':'media file'}<input type="file" accept={id==='image-audio-mp4'?'image/*,audio/*':'video/*,audio/*,.mkv,.flac,.avi,.mov'} multiple={id==='image-audio-mp4'} onChange={e=>select(e.target.files)}/></label>
      {files.map(f=><p className="v2-hint" key={f.name}>{f.name} · {(f.size/1024/1024).toFixed(2)} MB</p>)}
      {['video-trim','video-gif','audio-trim'].includes(id)&&<><label className="v2-field">Start at seconds<input type="number" min="0" value={start} onChange={e=>setStart(e.target.value)}/></label><label className="v2-field">Duration in seconds<input type="number" min="0.1" value={duration} onChange={e=>setDuration(e.target.value)}/></label></>}
-     {id==='video-compress'&&<label className="v2-field">Compression quality (2 = high, 20 = low)<input type="range" min="2" max="20" value={quality} onChange={e=>setQuality(Number(e.target.value))}/>{quality}</label>}
-     {(id==='video-compress'||id==='audio-compress')&&<><label className="v2-field">Optional target size (MB)<input type="number" min="0.1" max="500" step="0.1" value={targetMB} onChange={e=>setTargetMB(e.target.value)} placeholder="e.g. 5"/></label>{targetMB.trim()&&<label className="v2-field">Duration in seconds (optional; auto-detected when blank)<input type="number" min="0.1" value={durationOverride} onChange={e=>setDurationOverride(e.target.value)} placeholder="Auto detect"/></label>}<p className="v2-hint">The target is approximate. Content complexity, codec and metadata can cause output to exceed it. This tool does not guarantee an exact byte count.</p></>}
+     {id==='video-compress'&&<label className="v2-field">Compression quality · {quality<=6?'High quality / larger file':quality<=12?'Balanced':'Smaller file / lower quality'}<input type="range" min="2" max="20" value={quality} onChange={e=>setQuality(Number(e.target.value))}/>Level {quality} of 20. Used when no target size is specified.</label>}
+     {(id==='video-compress'||id==='audio-compress')&&<div className="tn-media-options">
+       <label className="v2-field"><HardDrive size={16}/> Target maximum size (MB, approximate)<input type="number" min="0.1" max="500" step="0.1" value={targetMB} onChange={e=>setTargetMB(e.target.value)} placeholder="Optional, e.g. 2"/></label>
+       <label className="v2-field"><Clock3 size={16}/> Trim to first N seconds (optional)<input type="number" min="0.1" step="0.1" value={trimSeconds} onChange={e=>setTrimSeconds(e.target.value)} placeholder="Leave blank to keep full length"/></label>
+       <label className="v2-field">Fallback source duration (seconds) · only if automatic detection fails<input type="number" min="0.1" step="0.1" value={durationOverride} onChange={e=>setDurationOverride(e.target.value)} placeholder="Normally leave blank"/></label>
+       <p className="v2-hint">{sourceDuration!==null?`Detected source length: ${sourceDuration.toFixed(1)} seconds. `:''}Size compression does not shorten playback. Set trim duration only when you want to cut the recording. Target size is an estimate, not a guarantee.</p>
+     </div>}
      <button className="v2-primary" disabled={busy||!files.length} type="button" onClick={()=>void run()}><Film size={17}/>{busy?'Processing…':'Convert on this device'}</button>
      <p className="v2-hint"><TriangleAlert size={16}/> Media decoding is CPU-intensive; some codec combinations cannot run in this FFmpeg build. Maximum input size 64 MB.</p>
-   </section><section className="v2-panel"><h2><Music2 size={17}/> Output</h2>{progress&&<p role="status" className="v2-hint">{progress}</p>}{error&&<div className="v2-error" role="alert">{error}</div>}{outputBytes!==null&&<p className="v2-hint">Output size: {(outputBytes/1024/1024).toFixed(2)} MB {targetMB&&Number(targetMB)>0&&outputBytes>Number(targetMB)*1024*1024?'· Above target; a smaller bitrate may be required.':''}</p>}{output&&<a className="v2-primary" href={output.url} download={output.name}><Download size={17}/> Download {output.name}</a>}{engineReady&&<p className="v2-hint" style={{color:'#16a34a'}}>FFmpeg engine ready on this device.</p>}<p className="v2-hint">Local FFmpeg WebAssembly is bundled with this app. It requires an initial download to cache (~32 MB) and significant browser memory. Output is not sent to a server.</p></section></div>
+   </section><section className="v2-panel"><h2><img src="/brand-icon.png" width={29} height={29} alt=""/> <Music2 size={18}/> Result · ToolNest</h2>{progress&&<p role="status" className="v2-hint">{progress}</p>}{error&&<div className="v2-error" role="alert">{error}</div>}{outputBytes!==null&&<p className="v2-hint">Output size: {(outputBytes/1024/1024).toFixed(2)} MB {targetMB&&Number(targetMB)>0&&outputBytes>Number(targetMB)*1024*1024?'· Above target; a smaller bitrate may be required.':''}</p>}{output&&<div className="tn-media-result"><p className="v2-hint"><FileCheck2 size={17}/> Ready: {output.name}</p>
+    {['mp4','webm'].includes(EXT[id])?<video controls preload="metadata" src={output.url} style={{maxWidth:'100%',width:'100%',borderRadius:12,background:'#13131b'}}/>:EXT[id]==='mp3'||EXT[id]==='wav'?<audio controls preload="metadata" src={output.url} style={{width:'100%'}}/>:null}
+    {outputLength!==null&&<p className="v2-hint">Expected length {outputLength.toFixed(1)} seconds; your media player's actual duration is authoritative.</p>}
+    <a className="v2-primary" href={output.url} download={output.name}><Download size={17}/> Download {output.name}</a></div>}{engineReady&&<p className="v2-hint" style={{color:'#16a34a'}}>FFmpeg engine ready on this device.</p>}<p className="v2-hint">Local FFmpeg WebAssembly is bundled with this app. It requires an initial download to cache (~32 MB) and significant browser memory. Output is not sent to a server.</p></section></div>
  </div>;
 }
