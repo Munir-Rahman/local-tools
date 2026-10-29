@@ -30,7 +30,7 @@ async function readSnapshot(): Promise<Uint8Array | undefined> {
     return await new Promise((resolve, reject) => {
       const tx = storage.transaction(STORE, 'readonly');
       const req = tx.objectStore(STORE).get(DB_KEY);
-      req.onsuccess = () => resolve(req.result instanceof Uint8Array ? req.result : undefined);
+      req.onsuccess = () => resolve(req.result instanceof Uint8Array ? new Uint8Array(req.result) : req.result instanceof ArrayBuffer ? new Uint8Array(req.result) : undefined);
       req.onerror = () => reject(req.error);
     });
   } finally { storage.close(); }
@@ -74,8 +74,18 @@ function run(db: Database, sql: string, params: (string | number)[]): void {
 function mutate(operation: (db: Database) => void): Promise<void> {
   const next = writeSequence.then(async () => {
     const db = await getDatabase();
-    operation(db);
-    await persistSnapshot(db.export());
+    // Snapshot first: if IndexedDB writes fail, restore an internally consistent DB.
+    const before = db.export();
+    try {
+      operation(db);
+      await persistSnapshot(db.export());
+    } catch (error) {
+      db.close();
+      connection = undefined;
+      try { await persistSnapshot(before); } catch { /* Preserve the actual original error. */ }
+      console.error("LocalTools SQLite persistence failed:",error);
+      throw error;
+    }
   });
   writeSequence = next.catch(() => undefined);
   return next;
@@ -118,3 +128,23 @@ export function saveDocument(key:string,value:unknown):Promise<void> {
   return mutate(db => run(db,'INSERT OR REPLACE INTO documents(key,json,updated_at) VALUES (?,?,?)',[key,JSON.stringify(value),Date.now()]));
 }
 export function deleteDocument(key:string):Promise<void> { return mutate(db => run(db,'DELETE FROM documents WHERE key=?',[key])); }
+
+/** Explicit persistence smoke test. Never stores user documents. */
+export async function verifyLocalDatabase():Promise<void>{
+  const id=`storage-test-${Date.now()}`;
+  await setPreference(id,'persisted');
+  const raw=await readSnapshot();
+  if(!raw)throw Error('IndexedDB did not return a SQLite snapshot.');
+  const SQL=await initSqlJs({locateFile:()=>sqliteWasmUrl});
+  const reopened=new SQL.Database(raw);
+  try{const result=select<{value:string}>(reopened,'SELECT value FROM preferences WHERE key=?',[id]);
+    if(result[0]?.value!=='persisted')throw Error('SQLite snapshot verification failed.');
+  }finally{reopened.close();}
+  await mutate(db=>run(db,'DELETE FROM preferences WHERE key=?',[id]));
+}
+export async function exportDatabaseSnapshot():Promise<Blob>{
+  await writeSequence;
+  const db=await getDatabase();
+  const bytes=db.export();
+  return new Blob([new Uint8Array(bytes)],{type:'application/vnd.sqlite3'});
+}

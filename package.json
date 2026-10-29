@@ -1,13 +1,19 @@
 {
   "name": "local-tools",
   "private": true,
-  "version": "0.1.0",
-  "workspaces": ["apps/*", "packages/*"],
+  "version": "0.4.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "npm run dev --workspace @local-tools/web",
     "build": "npm run build --workspace @local-tools/web",
     "preview": "npm run preview --workspace @local-tools/web",
-    "typecheck": "npm run typecheck --workspace @local-tools/web"
+    "typecheck": "npm run typecheck --workspace @local-tools/web",
+    "test": "node --experimental-strip-types --test apps/web/tests/*.test.mjs"
   },
-  "engines": { "node": ">=20.19.0" }
+  "engines": {
+    "node": ">=20.19.0"
+  }
 }

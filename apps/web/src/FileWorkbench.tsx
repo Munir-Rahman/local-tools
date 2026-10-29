@@ -1,0 +1,41 @@
+import {useState} from 'react';
+import {ArrowLeft,Download,FolderArchive,ShieldCheck} from 'lucide-react';
+import JSZip from 'jszip';
+import {catalog} from './catalog';
+export const fileActionNumbers=[361,362,366,367,368,369,370,371,372,373,374,375,376,377,378,379,380];
+type Result={blob:Blob;name:string};
+const maxSize=30*1024*1024;
+const hex=(bytes:Uint8Array)=>[...bytes].map(v=>v.toString(16).padStart(2,'0')).join('');
+const hash=async(data:ArrayBuffer)=>hex(new Uint8Array(await crypto.subtle.digest('SHA-256',data)));
+const clean=(name:string)=>name.replace(/[\\/:*?"<>|\x00-\x1f]/g,'_').replace(/\.\.+/g,'.').replace(/^\.+/,'file').slice(0,180)||'file';
+const outText=(text:string,name:string):Result=>({blob:new Blob([text],{type:'text/plain;charset=utf-8'}),name});
+const mime=(b:Uint8Array)=>{if(b.length>=5&&new TextDecoder().decode(b.slice(0,5))==='%PDF-')return 'application/pdf';if(hex(b.slice(0,4))==='89504e47')return 'image/png';if(hex(b.slice(0,3))==='ffd8ff')return 'image/jpeg';if(hex(b.slice(0,4))==='504b0304')return 'application/zip';if(hex(b.slice(0,2))==='1f8b')return 'application/gzip';if(new TextDecoder().decode(b.slice(0,4))==='GIF8')return 'image/gif';if(new TextDecoder().decode(b.slice(0,4))==='RIFF'&&new TextDecoder().decode(b.slice(8,12))==='WEBP')return 'image/webp';return 'unknown';};
+export default function FileWorkbench({number,onBack,onCompleted}:{number:number;onBack:()=>void;onCompleted:(name:string,result:string)=>void}){
+ const [files,setFiles]=useState<File[]>([]),[text,setText]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false),[results,setResults]=useState<{url:string;name:string}[]>([]);
+ const title=catalog[number-1].name;
+ const noFile=[374,378].includes(number);
+ function clear(){for(const item of results)URL.revokeObjectURL(item.url);setResults([]);}
+ async function run(){setError('');clear();setBusy(true);try{
+  if(!noFile&&!files.length)throw Error('Select at least one file');if(files.length>20||files.some(f=>f.size>maxSize)||files.reduce((s,f)=>s+f.size,0)>100e6)throw Error('Limit 20 files, 30 MB each, 100 MB total');
+  let output:Result[]=[];
+  if(number===374){const bytes=Number(text);if(!Number.isFinite(bytes)||bytes<0)throw Error('Enter nonnegative byte count');const units=['B','KiB','MiB','GiB','TiB'];let v=bytes,i=0;while(v>=1024&&i<units.length-1){v/=1024;i++;}output=[outText(`${v.toFixed(2)} ${units[i]}`,'formatted-size.txt')];}
+  else if(number===378){const raw=atob(text.trim());if(raw.length>maxSize)throw Error('Decoded file exceeds 30 MB');output=[{blob:new Blob([new Uint8Array(Uint8Array.from(raw,c=>c.charCodeAt(0)))]),name:'decoded-file.bin'}];}
+  else if(number===361){const zip=new JSZip();for(const f of files)zip.file(clean(f.name),f);output=[{blob:await zip.generateAsync({type:'blob',compression:'DEFLATE'}),name:'localtools-archive.zip'}];}
+  else if(number===362){const file=files[0];if(file.size>15e6)throw Error('ZIP file exceeds the 15 MB safe extraction limit');const zip=await JSZip.loadAsync(await file.arrayBuffer());let total=0;for(const entry of Object.values(zip.files)){if(entry.dir)continue;const path=entry.name;if(path.includes('..')||path.startsWith('/')||path.includes('\\'))throw Error('Unsafe ZIP path');const metadata=(entry as unknown as {_data?:{uncompressedSize?:number}})._data;const anticipated=metadata?.uncompressedSize;if(anticipated===undefined||anticipated<0||anticipated>20e6||total+anticipated>100e6)throw Error('ZIP entry is too large or has missing decompressed-size metadata');const blob=await entry.async('blob');total+=blob.size;if(total>100e6||output.length>=60)throw Error('Archive exceeds the safe 100MB / 60 file extraction limit');output.push({blob,name:clean(path.replaceAll('/','_'))});}if(!output.length)throw Error('Archive contains no files');}
+  else if(number===366||number===367){const stream=number===366?files[0].stream().pipeThrough(new CompressionStream('gzip')):files[0].stream().pipeThrough(new DecompressionStream('gzip'));const response=new Response(stream);const blob=await response.blob();if(blob.size>100e6)throw Error('Output exceeds 100MB');output=[{blob,name:number===366?clean(files[0].name)+'.gz':clean(files[0].name.replace(/\.gz$/i,''))}];}
+  else if(number===368||number===369){const values=await Promise.all(files.map(async f=>({file:f.name,sha256:await hash(await f.arrayBuffer())})));const comparison=number===369&&values.length>1?`\nAll identical: ${values.every(x=>x.sha256===values[0].sha256)}`:'';output=[outText(values.map(v=>v.file+'   '+v.sha256).join('\n')+comparison,'checksums.txt')];}
+  else if(number===370||number===371){const prefix=number===370?clean(text||'renamed-'):'';const zip=new JSZip();for(let i=0;i<files.length;i++){const f=files[i],name=number===370?`${prefix}-${String(i+1).padStart(3,'0')}${f.name.includes('.')?'.'+f.name.split('.').pop():''}`:clean(f.name);zip.file(name,f);}output=[{blob:await zip.generateAsync({type:'blob'}),name:'renamed-files.zip'}];}
+  else if(number===372){const seen=new Map<string,string>(),duplicates=[];for(const f of files){const value=await hash(await f.arrayBuffer());if(seen.has(value))duplicates.push(`${f.name} is identical to ${seen.get(value)}`);else seen.set(value,f.name);}output=[outText(duplicates.length?duplicates.join('\n'):'No identical file contents detected.','duplicates.txt')];}
+  else if(number===373||number===380){const list=await Promise.all(files.map(async f=>`${f.name}: ${mime(new Uint8Array(await f.slice(0,32).arrayBuffer()))} | ${hex(new Uint8Array(await f.slice(0,16).arrayBuffer()))}`));output=[outText(list.join('\n'),'file-types.txt')];}
+  else if(number===375||number===376){const bytes=new Uint8Array(await files[0].slice(0,4096).arrayBuffer());const h=number===376?hex(bytes):[...bytes].reduce((rows,v,i)=>rows+(i%16===0?'\n'+i.toString(16).padStart(8,'0')+': ':'')+v.toString(16).padStart(2,'0')+' ','');output=[outText(h.trim(),'file-hex.txt')];}
+  else if(number===377){const bytes=new Uint8Array(await files[0].arrayBuffer());if(bytes.length>10e6)throw Error('Base64 export limited to 10 MB');let s='';for(let i=0;i<bytes.length;i+=8192)s+=String.fromCharCode(...bytes.slice(i,i+8192));output=[outText(btoa(s),clean(files[0].name)+'.base64.txt')];}
+  else if(number===379){const bodies=await Promise.all(files.map(f=>f.text()));const header=bodies[0].split(/\r?\n/)[0];if(bodies.some(x=>x.split(/\r?\n/)[0]!==header))throw Error('CSV headers differ');output=[outText([header,...bodies.flatMap(body=>body.split(/\r?\n/).slice(1).filter(Boolean))].join('\r\n'),'merged.csv')];}
+  else throw Error('Not implemented');
+  if(!output.length)throw Error('No output produced');setResults(output.map(item=>({name:item.name,url:URL.createObjectURL(item.blob)})));onCompleted(title,output.length+' file(s)');
+ }catch(e){setError(e instanceof Error?e.message:'File operation failed');}finally{setBusy(false);}}
+ return <div className="v2-toolview"><button className="v2-link" onClick={onBack}><ArrowLeft size={16}/> Catalog</button><div className="v2-pagehead"><div><span className="v2-kicker">FILES & ARCHIVES · #{number}</span><h1>{title}</h1><p>Files stay on your device. ZIP extraction creates individual download links.</p></div><span className="v2-private"><ShieldCheck size={16}/> Browser only</span></div>
+  <div className="utility-layout"><section className="v2-panel v2-utility">{!noFile&&<label className="v2-field"><span>Choose file(s)</span><input type="file" multiple={![362,366,367,375,376,377].includes(number)} onChange={e=>{setFiles([...e.target.files||[]]);clear();}}/></label>}
+  {[370,374,378].includes(number)&&<label className="v2-field"><span>{number===370?'Filename prefix':number===374?'Byte count':'Base64 contents'}</span><textarea value={text} rows={number===378?8:2} onChange={e=>setText(e.target.value)}/></label>}
+  <button className="v2-primary" disabled={busy} onClick={()=>void run()}><FolderArchive size={16}/>{busy?'Working…':'Process locally'}</button>{error&&<p className="v2-error" role="alert">{error}</p>}</section>
+  <section className="v2-panel v2-result"><h2>Results</h2>{results.length?results.map(r=><a key={r.url} className="v2-secondary v3-file-download" href={r.url} download={r.name}><Download size={16}/> {r.name}</a>):<p>Downloads appear here after processing.</p>}</section></div></div>;
+}

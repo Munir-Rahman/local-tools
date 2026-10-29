@@ -16,6 +16,10 @@ jobs:
           node-version: '22'
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: Test offline utility engines
+        run: npm test
+      - name: Test local utility engine
+        run: node --experimental-strip-types --test apps/web/tests/extraEngine.test.mjs
       - name: Type-check
         run: npm run typecheck
       - name: Build offline web application
@@ -25,6 +29,10 @@ jobs:
           test -f apps/web/dist/index.html
           test -f apps/web/dist/sw.js
           test -f apps/web/dist/manifest.webmanifest
+      - name: Install Chromium for browser persistence tests
+        run: npx playwright install --with-deps chromium
+      - name: Test browser SQLite, favorites and theme
+        run: npx playwright test
       - name: Upload web build
         uses: actions/upload-artifact@v4
         with:

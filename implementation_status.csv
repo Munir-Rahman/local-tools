@@ -1,0 +1,481 @@
+number,name,category,status,route
+1,Merge PDFs,PDF — Organize and Page Layout,implemented-preview,merge-pdf
+2,Split PDF by page range,PDF — Organize and Page Layout,implemented-preview,pdf-2
+3,Split PDF into individual pages,PDF — Organize and Page Layout,implemented-preview,split-pdf
+4,Split PDF by target file size,PDF — Organize and Page Layout,planned,
+5,Split PDF by bookmarks,PDF — Organize and Page Layout,planned,
+6,Split PDF by matching text,PDF — Organize and Page Layout,planned,
+7,Reorder PDF pages,PDF — Organize and Page Layout,implemented-preview,reorder-pages
+8,Delete PDF pages,PDF — Organize and Page Layout,implemented-preview,remove-pages
+9,Extract selected PDF pages,PDF — Organize and Page Layout,implemented-preview,extract-pages
+10,Duplicate PDF pages,PDF — Organize and Page Layout,implemented-preview,pdf-10
+11,Insert blank PDF pages,PDF — Organize and Page Layout,implemented-preview,pdf-11
+12,Insert pages from another PDF,PDF — Organize and Page Layout,implemented-preview,pdf-12
+13,Merge PDFs and images together,PDF — Organize and Page Layout,planned,
+14,Alternate pages from multiple PDFs,PDF — Organize and Page Layout,implemented-preview,pdf-14
+15,Rotate PDF pages,PDF — Organize and Page Layout,implemented-preview,rotate-pdf
+16,Flip or mirror PDF pages,PDF — Organize and Page Layout,planned,
+17,Crop PDF pages,PDF — Organize and Page Layout,implemented-preview,pdf-17
+18,Resize PDF page dimensions,PDF — Organize and Page Layout,implemented-preview,pdf-18
+19,Arrange multiple PDF pages per sheet,PDF — Organize and Page Layout,planned,
+20,Create booklet from PDF,PDF — Organize and Page Layout,planned,
+21,Add text to PDF,"PDF — Edit, Annotate, and Forms",implemented-preview,pdf-21
+22,Edit existing PDF text,"PDF — Edit, Annotate, and Forms",planned,
+23,Insert image into PDF,"PDF — Edit, Annotate, and Forms",planned,
+24,Replace image in PDF,"PDF — Edit, Annotate, and Forms",planned,
+25,Draw shapes on PDF,"PDF — Edit, Annotate, and Forms",planned,
+26,Draw freehand on PDF,"PDF — Edit, Annotate, and Forms",planned,
+27,Highlight PDF text,"PDF — Edit, Annotate, and Forms",planned,
+28,Underline PDF text,"PDF — Edit, Annotate, and Forms",planned,
+29,Strike through PDF text,"PDF — Edit, Annotate, and Forms",planned,
+30,Add sticky-note comments,"PDF — Edit, Annotate, and Forms",planned,
+31,Add or edit PDF hyperlinks,"PDF — Edit, Annotate, and Forms",planned,
+32,Add text watermark to PDF,"PDF — Edit, Annotate, and Forms",implemented-preview,watermark-pdf
+33,Add image watermark to PDF,"PDF — Edit, Annotate, and Forms",planned,
+34,Add page numbers to PDF,"PDF — Edit, Annotate, and Forms",implemented-preview,number-pages
+35,Add PDF headers and footers,"PDF — Edit, Annotate, and Forms",implemented-preview,pdf-35
+36,Add PDF page backgrounds,"PDF — Edit, Annotate, and Forms",planned,
+37,Overlay one PDF onto another,"PDF — Edit, Annotate, and Forms",planned,
+38,Fill PDF form fields,"PDF — Edit, Annotate, and Forms",implemented-preview,pdf-38
+39,Create fillable PDF forms,"PDF — Edit, Annotate, and Forms",planned,
+40,Flatten PDF form fields,"PDF — Edit, Annotate, and Forms",implemented-preview,pdf-40
+41,Compress PDF,"PDF — Optimize, OCR, and Security",planned,
+42,Compress PDF to target size,"PDF — Optimize, OCR, and Security",planned,
+43,Optimize PDF for fast web viewing,"PDF — Optimize, OCR, and Security",planned,
+44,Convert PDF to grayscale,"PDF — Optimize, OCR, and Security",planned,
+45,Convert PDF to PDF/A,"PDF — Optimize, OCR, and Security",planned,
+46,Validate PDF/A compliance,"PDF — Optimize, OCR, and Security",planned,
+47,Repair damaged PDF,"PDF — Optimize, OCR, and Security",planned,
+48,Rasterize PDF pages,"PDF — Optimize, OCR, and Security",planned,
+49,Password-protect PDF,"PDF — Optimize, OCR, and Security",planned,
+50,Unlock PDF with known password,"PDF — Optimize, OCR, and Security",planned,
+51,Set PDF printing/copying permissions,"PDF — Optimize, OCR, and Security",planned,
+52,Edit PDF document metadata,"PDF — Optimize, OCR, and Security",implemented-preview,pdf-52
+53,Remove PDF metadata,"PDF — Optimize, OCR, and Security",implemented-preview,pdf-53
+54,Permanently redact PDF content,"PDF — Optimize, OCR, and Security",planned,
+55,Search and redact sensitive text in PDF,"PDF — Optimize, OCR, and Security",planned,
+56,Add handwritten e-signature,"PDF — Optimize, OCR, and Security",planned,
+57,Apply certificate-based digital signature,"PDF — Optimize, OCR, and Security",planned,
+58,Verify PDF digital signatures,"PDF — Optimize, OCR, and Security",planned,
+59,OCR scanned PDF to searchable PDF,"PDF — Optimize, OCR, and Security",planned,
+60,Compare two PDF documents,"PDF — Optimize, OCR, and Security",planned,
+61,PDF to DOCX,PDF — Conversion and Extraction,implemented-preview,pdf-to-docx-basic
+62,PDF to XLSX,PDF — Conversion and Extraction,implemented-preview,pdf-to-xlsx-basic
+63,PDF to PPTX,PDF — Conversion and Extraction,implemented-preview,pdf-to-pptx-basic
+64,PDF to plain text,PDF — Conversion and Extraction,implemented-preview,pdf-64
+65,PDF to HTML,PDF — Conversion and Extraction,planned,
+66,PDF to Markdown,PDF — Conversion and Extraction,planned,
+67,PDF to RTF,PDF — Conversion and Extraction,planned,
+68,PDF to SVG,PDF — Conversion and Extraction,planned,
+69,PDF to JPG pages,PDF — Conversion and Extraction,implemented-preview,pdf-69
+70,PDF to PNG pages,PDF — Conversion and Extraction,implemented-preview,pdf-to-png
+71,PDF to TIFF pages,PDF — Conversion and Extraction,planned,
+72,PDF to EPUB,PDF — Conversion and Extraction,planned,
+73,PDF pages to ZIP of images,PDF — Conversion and Extraction,planned,
+74,Extract embedded images from PDF,PDF — Conversion and Extraction,planned,
+75,DOCX to PDF,PDF — Conversion and Extraction,implemented-preview,docx-to-pdf-basic
+76,XLSX to PDF,PDF — Conversion and Extraction,implemented-preview,xlsx-to-pdf-basic
+77,PPTX to PDF,PDF — Conversion and Extraction,implemented-preview,pptx-to-pdf-basic
+78,HTML to PDF,PDF — Conversion and Extraction,planned,
+79,JPG to PDF,PDF — Conversion and Extraction,implemented-preview,images-to-pdf
+80,SVG to PDF,PDF — Conversion and Extraction,planned,
+81,DOC to DOCX,Word and Office Documents,planned,
+82,DOCX to DOC,Word and Office Documents,planned,
+83,DOCX to ODT,Word and Office Documents,planned,
+84,ODT to DOCX,Word and Office Documents,planned,
+85,WordPerfect WPD to DOCX,Word and Office Documents,planned,
+86,WordPerfect WPD to PDF,Word and Office Documents,planned,
+87,RTF to DOCX,Word and Office Documents,planned,
+88,TXT to DOCX,Word and Office Documents,planned,
+89,HTML to DOCX,Word and Office Documents,planned,
+90,Markdown to DOCX,Word and Office Documents,planned,
+91,DOCX to Markdown,Word and Office Documents,planned,
+92,DOCX to HTML,Word and Office Documents,planned,
+93,DOCX to TXT,Word and Office Documents,planned,
+94,Generate DOCX from a template,Word and Office Documents,planned,
+95,Extract tables from DOCX,Word and Office Documents,planned,
+96,Extract images from DOCX,Word and Office Documents,planned,
+97,Remove comments from DOCX,Word and Office Documents,planned,
+98,Accept or reject tracked changes,Word and Office Documents,planned,
+99,Compare two Word documents,Word and Office Documents,planned,
+100,Count words in DOCX,Word and Office Documents,planned,
+101,CSV to XLSX,Spreadsheets and Tabular Data,implemented-preview,csv-to-xlsx-basic
+102,XLSX to CSV,Spreadsheets and Tabular Data,implemented-preview,xlsx-to-csv-basic
+103,XLS to XLSX,Spreadsheets and Tabular Data,planned,
+104,XLSX to XLS,Spreadsheets and Tabular Data,planned,
+105,ODS to XLSX,Spreadsheets and Tabular Data,planned,
+106,XLSX to ODS,Spreadsheets and Tabular Data,planned,
+107,JSON to XLSX,Spreadsheets and Tabular Data,planned,
+108,XLSX to JSON,Spreadsheets and Tabular Data,planned,
+109,Merge Excel workbooks,Spreadsheets and Tabular Data,planned,
+110,Split workbook into worksheets,Spreadsheets and Tabular Data,planned,
+111,Export every worksheet as CSV,Spreadsheets and Tabular Data,planned,
+112,Remove duplicate spreadsheet rows,Spreadsheets and Tabular Data,planned,
+113,Normalize column headings,Spreadsheets and Tabular Data,implemented-preview,csv-113
+114,Replace Excel formulas with values,Spreadsheets and Tabular Data,planned,
+115,Split large CSV by rows,Spreadsheets and Tabular Data,implemented-preview,csv-115
+116,Filter CSV rows,Spreadsheets and Tabular Data,implemented-preview,csv-116
+117,Sort CSV records,Spreadsheets and Tabular Data,implemented-preview,csv-117
+118,Compare spreadsheet versions,Spreadsheets and Tabular Data,implemented-preview,csv-118
+119,Create pivot summaries,Spreadsheets and Tabular Data,planned,
+120,XLSX to HTML table,Spreadsheets and Tabular Data,planned,
+121,PPT to PPTX,"Slides, E-books, and Publishing",planned,
+122,PPTX to ODP,"Slides, E-books, and Publishing",planned,
+123,ODP to PPTX,"Slides, E-books, and Publishing",planned,
+124,PPTX slides to images,"Slides, E-books, and Publishing",planned,
+125,Images to PPTX slideshow,"Slides, E-books, and Publishing",planned,
+126,PPTX to HTML slideshow,"Slides, E-books, and Publishing",planned,
+127,PPTX to video,"Slides, E-books, and Publishing",planned,
+128,Extract PowerPoint speaker notes,"Slides, E-books, and Publishing",planned,
+129,Extract text from presentation slides,"Slides, E-books, and Publishing",planned,
+130,Merge slide decks,"Slides, E-books, and Publishing",planned,
+131,Split presentation into decks,"Slides, E-books, and Publishing",planned,
+132,Extract images from PPTX,"Slides, E-books, and Publishing",planned,
+133,EPUB to MOBI,"Slides, E-books, and Publishing",planned,
+134,MOBI to EPUB,"Slides, E-books, and Publishing",planned,
+135,EPUB to PDF,"Slides, E-books, and Publishing",planned,
+136,EPUB to TXT,"Slides, E-books, and Publishing",planned,
+137,Markdown to EPUB,"Slides, E-books, and Publishing",planned,
+138,HTML to EPUB,"Slides, E-books, and Publishing",planned,
+139,Edit EPUB metadata,"Slides, E-books, and Publishing",planned,
+140,Generate e-book cover,"Slides, E-books, and Publishing",planned,
+141,JPG to PNG,Image Conversion and Format Changes,implemented-preview,image-convert
+142,PNG to JPG,Image Conversion and Format Changes,implemented-preview,image-convert
+143,JPG to WebP,Image Conversion and Format Changes,implemented-preview,image-convert
+144,PNG to WebP,Image Conversion and Format Changes,implemented-preview,image-convert
+145,WebP to JPG,Image Conversion and Format Changes,implemented-preview,image-convert
+146,WebP to PNG,Image Conversion and Format Changes,implemented-preview,image-convert
+147,HEIC to JPG,Image Conversion and Format Changes,planned,
+148,HEIC to PNG,Image Conversion and Format Changes,planned,
+149,AVIF to JPG,Image Conversion and Format Changes,planned,
+150,AVIF to PNG,Image Conversion and Format Changes,planned,
+151,TIFF to PNG,Image Conversion and Format Changes,planned,
+152,BMP to JPG,Image Conversion and Format Changes,planned,
+153,GIF to PNG frames,Image Conversion and Format Changes,planned,
+154,SVG to PNG,Image Conversion and Format Changes,planned,
+155,PNG to vector SVG,Image Conversion and Format Changes,planned,
+156,ICO to PNG,Image Conversion and Format Changes,planned,
+157,PNG to ICO,Image Conversion and Format Changes,planned,
+158,Camera RAW to JPG,Image Conversion and Format Changes,planned,
+159,PSD to PNG,Image Conversion and Format Changes,planned,
+160,PNG to AVIF,Image Conversion and Format Changes,planned,
+161,Resize an image,Image Editing and Optimization,implemented-preview,image-161
+162,Crop an image,Image Editing and Optimization,implemented-preview,image-162
+163,Rotate an image,Image Editing and Optimization,implemented-preview,image-163
+164,Flip image horizontally,Image Editing and Optimization,implemented-preview,image-164
+165,Flip image vertically,Image Editing and Optimization,implemented-preview,image-165
+166,Compress a JPEG,Image Editing and Optimization,implemented-preview,image-166
+167,Compress image to target KB,Image Editing and Optimization,implemented-preview,image-167
+168,Batch-compress images,Image Editing and Optimization,implemented-preview,image-168
+169,Change image aspect ratio,Image Editing and Optimization,implemented-preview,image-169
+170,Extend image canvas,Image Editing and Optimization,implemented-preview,image-170
+171,Add text to image,Image Editing and Optimization,implemented-preview,image-171
+172,Watermark image,Image Editing and Optimization,implemented-preview,image-172
+173,Remove image background,Image Editing and Optimization,planned,
+174,Replace image background,Image Editing and Optimization,planned,
+175,Blur image,Image Editing and Optimization,implemented-preview,image-175
+176,Sharpen image,Image Editing and Optimization,implemented-preview,image-176
+177,Apply image filters,Image Editing and Optimization,implemented-preview,image-177
+178,Adjust image brightness,Image Editing and Optimization,implemented-preview,image-178
+179,Adjust image contrast,Image Editing and Optimization,implemented-preview,image-179
+180,Build an image collage,Image Editing and Optimization,implemented-preview,image-180
+181,Scan document with camera,"Scanning, OCR, and Photo Documents",planned,
+182,Detect document edges,"Scanning, OCR, and Photo Documents",planned,
+183,Correct perspective of a scan,"Scanning, OCR, and Photo Documents",planned,
+184,Straighten skewed scan,"Scanning, OCR, and Photo Documents",planned,
+185,Remove scan shadows,"Scanning, OCR, and Photo Documents",planned,
+186,Denoise scanned images,"Scanning, OCR, and Photo Documents",planned,
+187,Combine scanned pages,"Scanning, OCR, and Photo Documents",planned,
+188,Convert scan to black and white,"Scanning, OCR, and Photo Documents",planned,
+189,OCR printed text from image,"Scanning, OCR, and Photo Documents",planned,
+190,OCR handwritten image,"Scanning, OCR, and Photo Documents",planned,
+191,Select OCR recognition language,"Scanning, OCR, and Photo Documents",planned,
+192,OCR image to TXT,"Scanning, OCR, and Photo Documents",planned,
+193,OCR image to DOCX,"Scanning, OCR, and Photo Documents",planned,
+194,Scan multipage document to PDF,"Scanning, OCR, and Photo Documents",planned,
+195,Make passport-size photos,"Scanning, OCR, and Photo Documents",planned,
+196,Combine front/back ID card on page,"Scanning, OCR, and Photo Documents",planned,
+197,Extract signature from image,"Scanning, OCR, and Photo Documents",planned,
+198,Draw and export transparent signature PNG,"Scanning, OCR, and Photo Documents",planned,
+199,Remove EXIF/GPS from photographs,"Scanning, OCR, and Photo Documents",implemented-preview,image-199
+200,Set image print DPI metadata,"Scanning, OCR, and Photo Documents",planned,
+201,Generate URL QR code,QR Code Tools,implemented-preview,qr-generator
+202,Generate plain-text QR code,QR Code Tools,implemented-preview,qr-generator
+203,Generate Wi-Fi QR code,QR Code Tools,implemented-preview,qr-generator
+204,Generate vCard contact QR code,QR Code Tools,implemented-preview,qr-generator
+205,Generate email QR code,QR Code Tools,implemented-preview,qr-generator
+206,Generate SMS QR code,QR Code Tools,implemented-preview,qr-generator
+207,Generate telephone QR code,QR Code Tools,implemented-preview,qr-generator
+208,Generate geolocation QR code,QR Code Tools,implemented-preview,qr-generator
+209,Generate WhatsApp chat QR code,QR Code Tools,implemented-preview,qr-generator
+210,Generate calendar event QR code,QR Code Tools,planned,
+211,Generate app-download QR code,QR Code Tools,implemented-preview,qr-generator
+212,Generate restaurant-menu URL QR code,QR Code Tools,implemented-preview,qr-generator
+213,Generate payment-data QR code,QR Code Tools,planned,
+214,Generate dynamic redirect QR code,QR Code Tools,planned,
+215,Add logo to QR code,QR Code Tools,implemented-preview,qr-generator
+216,Customize QR code colors,QR Code Tools,implemented-preview,qr-generator
+217,Export QR as PNG/SVG,QR Code Tools,implemented-preview,qr-generator
+218,Generate QR codes in bulk from CSV,QR Code Tools,planned,
+219,Decode QR code from image,QR Code Tools,planned,
+220,Scan QR code with camera,QR Code Tools,planned,
+221,Generate Code 128 barcode,Barcode and Product Labels,implemented-preview,barcode-generator
+222,Generate Code 39 barcode,Barcode and Product Labels,implemented-preview,barcode-generator
+223,Generate EAN-13 barcode,Barcode and Product Labels,implemented-preview,barcode-generator
+224,Generate EAN-8 barcode,Barcode and Product Labels,implemented-preview,barcode-generator
+225,Generate UPC-A barcode,Barcode and Product Labels,implemented-preview,barcode-generator
+226,Generate UPC-E barcode,Barcode and Product Labels,planned,
+227,Generate ITF-14 barcode,Barcode and Product Labels,implemented-preview,barcode-generator
+228,Generate Code 93 barcode,Barcode and Product Labels,planned,
+229,Generate Codabar barcode,Barcode and Product Labels,planned,
+230,Generate MSI barcode,Barcode and Product Labels,implemented-preview,barcode-generator
+231,Generate GS1-128 barcode,Barcode and Product Labels,planned,
+232,Generate GS1 DataMatrix barcode,Barcode and Product Labels,planned,
+233,Generate standard Data Matrix code,Barcode and Product Labels,planned,
+234,Generate PDF417 barcode,Barcode and Product Labels,planned,
+235,Generate Aztec code,Barcode and Product Labels,planned,
+236,Generate GS1 DataBar,Barcode and Product Labels,planned,
+237,Generate ISBN book barcode,Barcode and Product Labels,planned,
+238,Generate ISSN serial barcode,Barcode and Product Labels,planned,
+239,Generate barcodes in bulk from CSV,Barcode and Product Labels,planned,
+240,Scan barcode with camera,Barcode and Product Labels,planned,
+241,MP4 to WebM,Video and GIF Tools,implemented-preview,mp4-to-webm
+242,WebM to MP4,Video and GIF Tools,implemented-preview,webm-to-mp4
+243,MP4 to MOV,Video and GIF Tools,planned,
+244,MOV to MP4,Video and GIF Tools,implemented-preview,mov-to-mp4
+245,MKV to MP4,Video and GIF Tools,implemented-preview,mkv-to-mp4
+246,AVI to MP4,Video and GIF Tools,implemented-preview,avi-to-mp4
+247,Compress video,Video and GIF Tools,implemented-preview,video-compress
+248,Trim video,Video and GIF Tools,implemented-preview,video-trim
+249,Split video into clips,Video and GIF Tools,planned,
+250,Merge video clips,Video and GIF Tools,planned,
+251,Rotate video,Video and GIF Tools,planned,
+252,Crop video frame,Video and GIF Tools,planned,
+253,Resize video resolution,Video and GIF Tools,planned,
+254,Change video playback speed,Video and GIF Tools,planned,
+255,Remove audio from video,Video and GIF Tools,implemented-preview,video-remove-audio
+256,Extract audio from video,Video and GIF Tools,implemented-preview,video-extract-mp3
+257,Add soundtrack to video,Video and GIF Tools,planned,
+258,Add text overlay to video,Video and GIF Tools,planned,
+259,Burn subtitles into video,Video and GIF Tools,planned,
+260,Convert video to animated GIF,Video and GIF Tools,implemented-preview,video-gif
+261,MP3 to WAV,Audio and Speech Tools,implemented-preview,mp3-to-wav
+262,WAV to MP3,Audio and Speech Tools,implemented-preview,wav-to-mp3
+263,FLAC to MP3,Audio and Speech Tools,implemented-preview,flac-to-mp3
+264,M4A to MP3,Audio and Speech Tools,implemented-preview,m4a-to-mp3
+265,OGG to MP3,Audio and Speech Tools,implemented-preview,ogg-to-mp3
+266,Compress audio file,Audio and Speech Tools,implemented-preview,audio-compress
+267,Trim audio,Audio and Speech Tools,implemented-preview,audio-trim
+268,Merge audio clips,Audio and Speech Tools,planned,
+269,Split audio into segments,Audio and Speech Tools,planned,
+270,Normalize audio volume,Audio and Speech Tools,implemented-preview,audio-normalize
+271,Change audio playback speed,Audio and Speech Tools,implemented-preview,audio-speed
+272,Change audio pitch,Audio and Speech Tools,planned,
+273,Remove silent sections,Audio and Speech Tools,planned,
+274,Reduce background noise,Audio and Speech Tools,planned,
+275,Extract vocal track,Audio and Speech Tools,planned,
+276,Remove vocal track,Audio and Speech Tools,planned,
+277,Record microphone audio,Audio and Speech Tools,planned,
+278,Display audio waveform,Audio and Speech Tools,planned,
+279,Edit ID3/audio metadata,Audio and Speech Tools,planned,
+280,Transcribe speech to text,Audio and Speech Tools,planned,
+281,Count words,Text and Writing Utilities,implemented-preview,action-281
+282,Count characters,Text and Writing Utilities,implemented-preview,action-282
+283,Count lines,Text and Writing Utilities,implemented-preview,action-283
+284,Estimate reading time,Text and Writing Utilities,implemented-preview,action-284
+285,Convert text to UPPERCASE,Text and Writing Utilities,implemented-preview,action-285
+286,Convert text to lowercase,Text and Writing Utilities,implemented-preview,action-286
+287,Convert text to Title Case,Text and Writing Utilities,implemented-preview,action-287
+288,Convert text to camelCase,Text and Writing Utilities,implemented-preview,action-288
+289,Convert text to snake_case,Text and Writing Utilities,implemented-preview,action-289
+290,Convert text to kebab-case,Text and Writing Utilities,implemented-preview,action-290
+291,Remove extra whitespace,Text and Writing Utilities,implemented-preview,action-291
+292,Trim leading/trailing spaces,Text and Writing Utilities,implemented-preview,action-292
+293,Remove duplicate lines,Text and Writing Utilities,implemented-preview,action-293
+294,Sort lines alphabetically,Text and Writing Utilities,implemented-preview,action-294
+295,Find and replace text,Text and Writing Utilities,implemented-preview,action-295
+296,Compare two text blocks,Text and Writing Utilities,implemented-preview,action-296
+297,Reverse text,Text and Writing Utilities,implemented-preview,action-297
+298,Normalize Unicode characters,Text and Writing Utilities,implemented-preview,action-298
+299,Remove accents/diacritics,Text and Writing Utilities,implemented-preview,action-299
+300,Add line numbers to text,Text and Writing Utilities,implemented-preview,action-300
+301,Format JSON,Data and Markup Converters,implemented-preview,action-301
+302,Validate JSON,Data and Markup Converters,implemented-preview,action-302
+303,Minify JSON,Data and Markup Converters,implemented-preview,action-303
+304,JSON to YAML,Data and Markup Converters,planned,
+305,YAML to JSON,Data and Markup Converters,planned,
+306,JSON to XML,Data and Markup Converters,implemented-preview,action-306
+307,XML to JSON,Data and Markup Converters,implemented-preview,action-307
+308,Format XML,Data and Markup Converters,implemented-preview,action-308
+309,Validate XML,Data and Markup Converters,implemented-preview,action-309
+310,CSV to SQL INSERT statements,Data and Markup Converters,implemented-preview,action-310
+311,SQL query results to JSON,Data and Markup Converters,planned,
+312,Encode Base64 text,Data and Markup Converters,implemented-preview,action-312
+313,Decode Base64 text,Data and Markup Converters,implemented-preview,action-313
+314,URL-encode text,Data and Markup Converters,implemented-preview,action-314
+315,URL-decode text,Data and Markup Converters,implemented-preview,action-315
+316,HTML-encode entities,Data and Markup Converters,implemented-preview,action-316
+317,HTML-decode entities,Data and Markup Converters,implemented-preview,action-317
+318,Markdown to HTML,Data and Markup Converters,implemented-preview,action-318
+319,HTML to Markdown,Data and Markup Converters,implemented-preview,action-319
+320,JSON to TypeScript types,Data and Markup Converters,implemented-preview,action-320
+321,Generate UUID,Developer and Security Utilities,implemented-preview,action-321
+322,Generate ULID,Developer and Security Utilities,implemented-preview,action-322
+323,Generate secure password,Developer and Security Utilities,implemented-preview,action-323
+324,Generate random passphrase,Developer and Security Utilities,planned,
+325,Calculate SHA-256 file/text hash,Developer and Security Utilities,implemented-preview,action-325
+326,Calculate HMAC signature,Developer and Security Utilities,implemented-preview,action-326
+327,Encrypt text with AES,Developer and Security Utilities,implemented-preview,action-327
+328,Decrypt AES-encrypted text,Developer and Security Utilities,implemented-preview,action-328
+329,Decode JWT token,Developer and Security Utilities,implemented-preview,action-329
+330,Sign JWT locally,Developer and Security Utilities,implemented-preview,action-330
+331,Verify JWT signature locally,Developer and Security Utilities,implemented-preview,action-331
+332,Test regular expressions,Developer and Security Utilities,implemented-preview,action-332
+333,Parse cron expression,Developer and Security Utilities,implemented-preview,action-333
+334,Generate cron expression,Developer and Security Utilities,implemented-preview,action-334
+335,Convert Unix timestamp,Developer and Security Utilities,implemented-preview,action-335
+336,Convert ISO 8601 date/time,Developer and Security Utilities,implemented-preview,action-336
+337,Compare JSON objects,Developer and Security Utilities,implemented-preview,action-337
+338,Build HTTP request examples,Developer and Security Utilities,implemented-preview,action-338
+339,Parse HTTP response headers,Developer and Security Utilities,implemented-preview,action-339
+340,Parse user-agent string,Developer and Security Utilities,planned,
+341,Pick color from image,"Web, Color, Design, and SEO",implemented-preview,image-341
+342,Convert HEX to RGB,"Web, Color, Design, and SEO",implemented-preview,action-342
+343,Convert HEX to HSL,"Web, Color, Design, and SEO",implemented-preview,action-343
+344,Generate color palette,"Web, Color, Design, and SEO",implemented-preview,action-344
+345,Generate CSS gradient,"Web, Color, Design, and SEO",implemented-preview,action-345
+346,Check color contrast accessibility,"Web, Color, Design, and SEO",implemented-preview,action-346
+347,Generate CSS box shadow,"Web, Color, Design, and SEO",implemented-preview,action-347
+348,Generate CSS border radius,"Web, Color, Design, and SEO",implemented-preview,action-348
+349,Generate CSS clip-path,"Web, Color, Design, and SEO",implemented-preview,action-349
+350,Generate CSS Grid code,"Web, Color, Design, and SEO",implemented-preview,action-350
+351,Generate CSS Flexbox code,"Web, Color, Design, and SEO",implemented-preview,action-351
+352,Generate Tailwind color scale,"Web, Color, Design, and SEO",implemented-preview,action-352
+353,Preview font combinations,"Web, Color, Design, and SEO",planned,
+354,Generate favicon files,"Web, Color, Design, and SEO",implemented-preview,image-354
+355,Generate app icons,"Web, Color, Design, and SEO",implemented-preview,image-355
+356,Create social Open Graph image,"Web, Color, Design, and SEO",implemented-preview,image-356
+357,Generate HTML meta tags,"Web, Color, Design, and SEO",implemented-preview,action-357
+358,Generate JSON-LD structured data,"Web, Color, Design, and SEO",implemented-preview,action-358
+359,Generate XML sitemap,"Web, Color, Design, and SEO",implemented-preview,action-359
+360,Generate robots.txt,"Web, Color, Design, and SEO",implemented-preview,action-360
+361,Create ZIP archive,"File, Archive, and Metadata Tools",implemented-preview,file-361
+362,Extract ZIP archive,"File, Archive, and Metadata Tools",implemented-preview,file-362
+363,Extract 7z archive,"File, Archive, and Metadata Tools",planned,
+364,Create TAR archive,"File, Archive, and Metadata Tools",planned,
+365,Extract TAR archive,"File, Archive, and Metadata Tools",planned,
+366,GZIP-compress file,"File, Archive, and Metadata Tools",implemented-preview,file-366
+367,GZIP-decompress file,"File, Archive, and Metadata Tools",implemented-preview,file-367
+368,Calculate file checksum,"File, Archive, and Metadata Tools",implemented-preview,file-368
+369,Compare file checksums,"File, Archive, and Metadata Tools",implemented-preview,file-369
+370,Batch-rename files,"File, Archive, and Metadata Tools",implemented-preview,file-370
+371,Sanitize filenames,"File, Archive, and Metadata Tools",implemented-preview,file-371
+372,Detect duplicate files by hash,"File, Archive, and Metadata Tools",implemented-preview,file-372
+373,Detect file MIME type,"File, Archive, and Metadata Tools",implemented-preview,file-373
+374,Format bytes as KB/MB/GB,"File, Archive, and Metadata Tools",implemented-preview,file-374
+375,View file contents as hex,"File, Archive, and Metadata Tools",implemented-preview,file-375
+376,Convert binary to hexadecimal,"File, Archive, and Metadata Tools",implemented-preview,file-376
+377,Encode file as Base64,"File, Archive, and Metadata Tools",implemented-preview,file-377
+378,Decode Base64 to file,"File, Archive, and Metadata Tools",implemented-preview,file-378
+379,Merge CSV files,"File, Archive, and Metadata Tools",implemented-preview,file-379
+380,Inspect file magic bytes,"File, Archive, and Metadata Tools",implemented-preview,file-380
+381,Percentage calculator,Calculators and Everyday Generators,implemented-preview,action-381
+382,Discount calculator,Calculators and Everyday Generators,implemented-preview,action-382
+383,VAT/tax calculator,Calculators and Everyday Generators,implemented-preview,action-383
+384,Loan EMI calculator,Calculators and Everyday Generators,implemented-preview,action-384
+385,Compound-interest calculator,Calculators and Everyday Generators,implemented-preview,action-385
+386,Currency converter with manual rates,Calculators and Everyday Generators,implemented-preview,action-386
+387,Age calculator,Calculators and Everyday Generators,implemented-preview,action-387
+388,Date-difference calculator,Calculators and Everyday Generators,implemented-preview,action-388
+389,Add/subtract days from date,Calculators and Everyday Generators,implemented-preview,action-389
+390,Time-zone converter,Calculators and Everyday Generators,implemented-preview,action-390
+391,Length unit converter,Calculators and Everyday Generators,implemented-preview,action-391
+392,Weight unit converter,Calculators and Everyday Generators,implemented-preview,action-392
+393,Temperature converter,Calculators and Everyday Generators,implemented-preview,action-393
+394,Area unit converter,Calculators and Everyday Generators,implemented-preview,action-394
+395,Volume unit converter,Calculators and Everyday Generators,implemented-preview,action-395
+396,BMI calculator,Calculators and Everyday Generators,implemented-preview,action-396
+397,Aspect-ratio calculator,Calculators and Everyday Generators,implemented-preview,action-397
+398,File-storage size calculator,Calculators and Everyday Generators,implemented-preview,action-398
+399,Random-number generator,Calculators and Everyday Generators,implemented-preview,action-399
+400,Lorem ipsum text generator,Calculators and Everyday Generators,implemented-preview,action-400
+401,Create blank PDF,PDF — Additional Formats and Publishing,implemented-preview,pdf-401
+402,Capture webpage URL as PDF,PDF — Additional Formats and Publishing,planned,
+403,Markdown to PDF,PDF — Additional Formats and Publishing,planned,
+404,TXT to PDF,PDF — Additional Formats and Publishing,planned,
+405,ODT to PDF,PDF — Additional Formats and Publishing,planned,
+406,ODS to PDF,PDF — Additional Formats and Publishing,planned,
+407,ODP to PDF,PDF — Additional Formats and Publishing,planned,
+408,HEIC to PDF,PDF — Additional Formats and Publishing,planned,
+409,WebP to PDF,PDF — Additional Formats and Publishing,planned,
+410,TIFF to PDF,PDF — Additional Formats and Publishing,planned,
+411,Print PDF preview,PDF — Additional Formats and Publishing,planned,
+412,Create PDF bookmarks,PDF — Additional Formats and Publishing,planned,
+413,Remove PDF bookmarks,PDF — Additional Formats and Publishing,planned,
+414,Generate PDF table of contents,PDF — Additional Formats and Publishing,planned,
+415,Extract PDF attachments,PDF — Additional Formats and Publishing,planned,
+416,Embed files into PDF,PDF — Additional Formats and Publishing,planned,
+417,Add Bates numbering to PDF,PDF — Additional Formats and Publishing,implemented-preview,pdf-417
+418,Customize PDF page labels,PDF — Additional Formats and Publishing,planned,
+419,Inspect PDF layers,PDF — Additional Formats and Publishing,planned,
+420,Set PDF viewer preferences,PDF — Additional Formats and Publishing,planned,
+421,Create invoice PDF,"Business Documents, Templates, and Labels",implemented-preview,invoice-builder
+422,Create quotation/estimate PDF,"Business Documents, Templates, and Labels",implemented-preview,quote-template
+423,Create receipt PDF,"Business Documents, Templates, and Labels",implemented-preview,receipt-template
+424,Create purchase order PDF,"Business Documents, Templates, and Labels",implemented-preview,purchase-template
+425,Create delivery note PDF,"Business Documents, Templates, and Labels",implemented-preview,delivery-template
+426,Create pro forma invoice,"Business Documents, Templates, and Labels",planned,
+427,Create credit note PDF,"Business Documents, Templates, and Labels",planned,
+428,Create packing slip PDF,"Business Documents, Templates, and Labels",planned,
+429,Create expense report PDF,"Business Documents, Templates, and Labels",planned,
+430,Create timesheet PDF,"Business Documents, Templates, and Labels",implemented-preview,timesheet-template
+431,Create employee ID badge,"Business Documents, Templates, and Labels",implemented-preview,id-card-template
+432,Generate business cards,"Business Documents, Templates, and Labels",implemented-preview,business-card-template
+433,Build resume/CV document,"Business Documents, Templates, and Labels",implemented-preview,cv-builder
+434,Generate cover letter,"Business Documents, Templates, and Labels",implemented-preview,letter-template
+435,Generate certificate PDF,"Business Documents, Templates, and Labels",implemented-preview,certificate-template
+436,Create invitation card,"Business Documents, Templates, and Labels",planned,
+437,Create printable event tickets,"Business Documents, Templates, and Labels",planned,
+438,Design product price labels,"Business Documents, Templates, and Labels",implemented-preview,label-template
+439,Create mailing address labels,"Business Documents, Templates, and Labels",planned,
+440,Generate document cover sheet,"Business Documents, Templates, and Labels",planned,
+441,Summarize PDF using AI,AI Document Intelligence and Accessibility,planned,
+442,Chat with PDF content,AI Document Intelligence and Accessibility,planned,
+443,Answer questions about a local document,AI Document Intelligence and Accessibility,planned,
+444,Translate PDF document,AI Document Intelligence and Accessibility,planned,
+445,Extract key points from documents,AI Document Intelligence and Accessibility,planned,
+446,Detect named entities in text,AI Document Intelligence and Accessibility,planned,
+447,Generate quizzes from documents,AI Document Intelligence and Accessibility,planned,
+448,Classify uploaded documents,AI Document Intelligence and Accessibility,planned,
+449,Detect tables in scanned pages,AI Document Intelligence and Accessibility,planned,
+450,Extract scanned tables to spreadsheet,AI Document Intelligence and Accessibility,planned,
+451,OCR receipts into structured data,AI Document Intelligence and Accessibility,planned,
+452,OCR invoices into structured data,AI Document Intelligence and Accessibility,planned,
+453,Extract structured JSON from PDF,AI Document Intelligence and Accessibility,planned,
+454,Detect personal data in document,AI Document Intelligence and Accessibility,planned,
+455,Auto-tag pages by topic,AI Document Intelligence and Accessibility,planned,
+456,Generate image alt text,AI Document Intelligence and Accessibility,planned,
+457,Generate video subtitles from speech,AI Document Intelligence and Accessibility,planned,
+458,Text-to-speech from PDF,AI Document Intelligence and Accessibility,planned,
+459,Semantically compare two documents,AI Document Intelligence and Accessibility,planned,
+460,Build local semantic document search,AI Document Intelligence and Accessibility,planned,
+461,Batch-compress multiple PDFs,Batch Processing and Workflow Tools,planned,
+462,Batch-watermark PDF folder,Batch Processing and Workflow Tools,planned,
+463,Batch-add page numbers,Batch Processing and Workflow Tools,planned,
+464,Rename PDFs by extracted text,Batch Processing and Workflow Tools,planned,
+465,Generate printable QR sheet,Batch Processing and Workflow Tools,planned,
+466,Generate barcode label sheet,Batch Processing and Workflow Tools,planned,
+467,Batch-resize photographs,Batch Processing and Workflow Tools,planned,
+468,Batch-convert files by format,Batch Processing and Workflow Tools,planned,
+469,Batch-extract PDF text,Batch Processing and Workflow Tools,planned,
+470,Batch-OCR scanned documents,Batch Processing and Workflow Tools,planned,
+471,Create multi-step PDF pipeline,Batch Processing and Workflow Tools,planned,
+472,Export processing presets,Batch Processing and Workflow Tools,planned,
+473,Import processing presets,Batch Processing and Workflow Tools,planned,
+474,Undo and redo processing steps,Batch Processing and Workflow Tools,planned,
+475,Compare before/after output visually,Batch Processing and Workflow Tools,planned,
+476,Queue many files for processing,Batch Processing and Workflow Tools,planned,
+477,Import folder by drag and drop,Batch Processing and Workflow Tools,planned,
+478,Detect corrupted files in batch,Batch Processing and Workflow Tools,implemented-preview,pdf-478
+479,Auto-rotate scanned PDF pages,Batch Processing and Workflow Tools,planned,
+480,Combine PDFs using filename patterns,Batch Processing and Workflow Tools,implemented-preview,pdf-480

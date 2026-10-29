@@ -44,3 +44,18 @@
   #print-document{box-shadow:none!important;border:0!important;padding:0!important;width:100%!important;min-height:0!important;margin:0!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}
   #print-document section{break-inside:avoid}
 }
+/* LocalTools v0.4: refined typography and accessible light theme */
+.v2{font-family:Inter,'Segoe UI Variable','Segoe UI',ui-sans-serif,system-ui,sans-serif;font-size:15px;line-height:1.58}
+.v2-light{--v2-bg:#f5f7fb;--v2-card:#ffffff;--v2-text:#16243b;--v2-muted:#52647e;--v2-border:#dbe3ef;--v2-overlay:#eaf0fa;--v2-fade:#f0f4fa;--v2-field:#fff}
+.v2 .v2-card h3{font-size:15px}.v2 .v2-card p,.v2 .v2-pagehead p,.v2 .v2-headingrow p,.v2 .v2-field,.v2 .v2-navlink{font-size:13px}
+.v2 .v2-cardfoot,.v2 .v2-navcaption,.v2 .v2-kicker,.v2 .v2-overview small,.v2 .v2-hint{font-size:12px}
+.v2 .v2-field input,.v2 .v2-field textarea,.v2 .v2-field select{font-size:14px;min-height:43px}
+.v4-output{border:1px solid var(--v2-border);border-radius:12px;padding:22px;background:var(--v2-fade);display:grid;gap:16px;overflow-wrap:anywhere}
+.v4-output>strong{font-size:clamp(17px,2vw,23px);line-height:1.5}
+.v4-template-paper{background:white;color:#243044;padding:38px;min-height:550px;border-top:7px solid var(--document-accent,#2563eb);font-size:13px;line-height:1.6;white-space:pre-wrap}
+.v4-template-paper h1{font-size:28px;letter-spacing:-.5px;margin:0 0 22px;color:var(--document-accent,#2563eb)}
+.v4-template-paper h2{font-size:17px;margin:16px 0 6px}.v4-template-paper p{margin:6px 0}
+.v4-template-paper .v4-issuer{font-size:15px;font-weight:750}
+.v4-template-paper .v4-footer{margin-top:65px;border-top:1px solid #b9c4d4;padding-top:12px;font-size:11px;color:#647389}
+.v4-simple-table{width:100%;border-collapse:collapse;margin:25px 0}.v4-simple-table th,.v4-simple-table td{padding:9px;border-bottom:1px solid #dbe3ed;text-align:left}
+@media print{.v4-template-paper{box-shadow:none!important;border:0!important;min-height:0!important;padding:6mm!important}}

@@ -23,7 +23,8 @@ export default function Utilities({id,onBack,onCompleted}:{id:UtilityId;onBack:(
   const [mode,setMode]=useState('format');
   const [output,setOutput]=useState('');
   const [error,setError]=useState('');
-  const [qrKind,setQrKind]=useState<'text'|'url'|'wifi'|'vcard'>('text');
+  const [qrKind,setQrKind]=useState<'text'|'url'|'wifi'|'vcard'|'email'|'sms'|'phone'|'geo'|'whatsapp'|'calendar'|'app'|'menu'>('text');
+  const [barcodeFormat,setBarcodeFormat]=useState('CODE128');
   const [extra,setExtra]=useState('');
   const [qrImage,setQrImage]=useState('');
   const [barcodeSvg,setBarcodeSvg]=useState('');
@@ -60,15 +61,25 @@ export default function Utilities({id,onBack,onCompleted}:{id:UtilityId;onBack:(
       }
       else if(id==='qr-generator') {
         if(!input.trim())throw new Error('Enter content to encode.');
-        const value=qrKind==='wifi'?`WIFI:T:WPA;S:${input.replaceAll(';','\\;')};P:${extra.replaceAll(';','\\;')};;`:
-        qrKind==='vcard'?`BEGIN:VCARD\nVERSION:3.0\nFN:${input}\nTEL:${extra}\nEND:VCARD`:input;
+        const escaped=(v:string)=>v.replace(/[\\;,:]/g,c=>'\\'+c);
+        const value=qrKind==='wifi'?`WIFI:T:WPA;S:${escaped(input)};P:${escaped(extra)};;`:
+        qrKind==='vcard'?`BEGIN:VCARD\nVERSION:3.0\nFN:${input}\nTEL:${extra}\nEND:VCARD`:
+        qrKind==='email'?`mailto:${input.trim()}`:
+        qrKind==='sms'?`sms:${input.trim()}${extra?'?body='+encodeURIComponent(extra):''}`:
+        qrKind==='phone'?`tel:${input.trim()}`:
+        qrKind==='geo'?`geo:${input.trim()}`:
+        qrKind==='whatsapp'?`https://wa.me/${input.replace(/[^0-9]/g,'')}${extra?'?text='+encodeURIComponent(extra):''}`:
+        qrKind==='calendar'?`BEGIN:VEVENT\nSUMMARY:${input}\nDESCRIPTION:${extra}\nEND:VEVENT`:
+        input;
+        if(['url','app','menu'].includes(qrKind)){const u=new URL(value);if(!['http:','https:'].includes(u.protocol))throw new Error('Enter an HTTP(S) URL.');}
+        if(qrKind==='geo'&&!/^-?\d{1,2}\.?(?:\d*)?,-?\d{1,3}\.?(?:\d*)?$/.test(input))throw new Error('Enter latitude,longitude coordinates.');
         const data=await QRCode.toDataURL(value,{errorCorrectionLevel:'H',width:640,margin:2,color:{dark:color,light:bgColor}});
         setQrImage(data);result='QR code generated. Download the image below.';
       }
       else if(id==='barcode-generator') {
         if(!input.trim())throw new Error('Enter a barcode value.');
         const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-        JsBarcode(svg,input,{format:'CODE128',displayValue:true,background:bgColor,lineColor:color,margin:14,height:92});
+        JsBarcode(svg,input,{format:barcodeFormat,displayValue:true,background:bgColor,lineColor:color,margin:14,height:92});
         const str=new XMLSerializer().serializeToString(svg);setBarcodeSvg(str);result='Barcode generated. Download SVG below.';
       }
       setOutput(result);onCompleted(definition.name,id==='qr-generator'?'qr-code.png':id==='barcode-generator'?'barcode.svg':'Text result');
@@ -83,10 +94,11 @@ export default function Utilities({id,onBack,onCompleted}:{id:UtilityId;onBack:(
       {id==='json-tool' && <div className="v2-field"><label>Action</label><select value={mode} onChange={e=>setMode(e.target.value)}><option value="format">Prettify JSON</option><option value="validate">Validate JSON</option><option value="minify">Minify JSON</option></select></div>}
       {id==='text-case' && <div className="v2-field"><label>Case style</label><select value={mode} onChange={e=>setMode(e.target.value)}>{['upper','lower','title','camel','snake','kebab'].map(k=><option key={k} value={k}>{k}</option>)}</select></div>}
       {id==='base64-tool' && <div className="v2-field"><label>Operation</label><select value={mode} onChange={e=>setMode(e.target.value)}><option value="format">Encode UTF-8 text</option><option value="decode">Decode Base64 as UTF-8</option></select></div>}
-      {id==='qr-generator' && <div className="v2-field"><label>QR content type</label><select value={qrKind} onChange={e=>setQrKind(e.target.value as typeof qrKind)}><option value="text">Text</option><option value="url">Website URL</option><option value="wifi">Wi-Fi credentials</option><option value="vcard">Contact card</option></select></div>}
+      {id==='qr-generator' && <div className="v2-field"><label>QR content type</label><select value={qrKind} onChange={e=>setQrKind(e.target.value as typeof qrKind)}><option value="text">Text</option><option value="url">Website URL</option><option value="wifi">Wi-Fi credentials</option><option value="vcard">Contact card</option><option value="email">Email address</option><option value="sms">SMS message</option><option value="phone">Phone call</option><option value="geo">Geolocation</option><option value="whatsapp">WhatsApp chat</option><option value="calendar">Calendar event (basic VEVENT)</option><option value="app">App download URL</option><option value="menu">Restaurant menu URL</option></select></div>}
       <div className="v2-field"><label>{id==='uuid-tool'?'Number of UUIDs (1–100)':id==='qr-generator'?(qrKind==='wifi'?'Wi-Fi network name':qrKind==='vcard'?'Contact full name':'Content to encode'):id==='barcode-generator'?'Barcode value':'Input text'}</label>
         {id==='uuid-tool'||id==='qr-generator'||id==='barcode-generator'?<input value={input} onChange={e=>setInput(e.target.value)} placeholder={id==='uuid-tool'?'1':id==='barcode-generator'?'PRODUCT-123456':'Enter content'} />:<textarea rows={10} value={input} onChange={e=>setInput(e.target.value)} placeholder={id==='json-tool'?'{"hello": "world"}':'Paste or type your text here...'}/>}</div>
-      {id==='qr-generator'&&(qrKind==='wifi'||qrKind==='vcard')&&<div className="v2-field"><label>{qrKind==='wifi'?'Wi-Fi password':'Phone number'}</label><input value={extra} onChange={e=>setExtra(e.target.value)}/></div>}
+      {id==='barcode-generator'&&<div className="v2-field"><label>Barcode format</label><select value={barcodeFormat} onChange={e=>setBarcodeFormat(e.target.value)}>{['CODE128','CODE39','EAN13','EAN8','UPC','ITF14','MSI','codabar'].map(f=><option value={f} key={f}>{f}</option>)}</select></div>}
+      {id==='qr-generator'&&['wifi','vcard','sms','whatsapp','calendar'].includes(qrKind)&&<div className="v2-field"><label>{qrKind==='wifi'?'Wi-Fi password':qrKind==='vcard'?'Phone number':'Optional message / description'}</label><input value={extra} onChange={e=>setExtra(e.target.value)}/></div>}
       {(id==='qr-generator'||id==='barcode-generator')&&<div className="v2-colors"><label>Foreground <input type="color" value={color} onChange={e=>setColor(e.target.value)}/></label><label>Background <input type="color" value={bgColor} onChange={e=>setBgColor(e.target.value)}/></label></div>}
       <button className="v2-primary" onClick={run} style={buttonStyle}><WandSparkles size={17}/>{id==='qr-generator'||id==='barcode-generator'?'Generate':'Process locally'}</button>
       {error&&<p className="v2-error" role="alert">{error}</p>}

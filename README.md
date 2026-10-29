@@ -1,67 +1,81 @@
-# LocalTools
+# LocalTools — Offline-First Web Utilities (v0.4 browser preview)
 
-**Local-first, no-file-upload document and utility suite** — React + TypeScript + Vite PWA; one monorepo for future React Native and Tauri apps.
+This repository contains a React + TypeScript + Vite PWA for client-side file processing, with a SQLite WebAssembly database saved in browser IndexedDB for optional local preferences, favorites, activity metadata and template drafts.
 
-## Web v0.2 capabilities
+## Scope and honesty
 
-- **Dashboard:** dark / light / system theme, accent color, favorites, tool search, local recent activity, tool history, responsive navigation.
-- **Local persistence:** SQLite WASM (`sql.js`) exported to **IndexedDB**. Saves favorites, activity metadata (tool, input/output filenames, timestamp), preferences and saved CV/invoice drafts. **No input document data or converted file bytes are stored in the database**. Browser storage can be cleared or evicted; there is no cloud sync or account.
-- **PDF (11):** merge, split into individual PDFs (ZIP), extract, remove, reorder, rotate, watermark ASCII text, number pages, images to PDF, PDF to PNG (ZIP), inspect PDF metadata (JSON).
-- **Images (3):** convert JPG/PNG/WebP, resize images, re-encode for compression.
-- **Other utilities (8):** QR code generator (text, URL, Wi-Fi, vCard), Code 128 barcode, JSON validator/formatter/minifier, word count, case converter, Base64 text encode/decode, UUID v4 generator, SHA-256 text digest.
-- **Templates (2):** CV/resume builder (Modern, Classic, Minimal; editable personal sections, accent color, browser Print/Save to PDF); invoice generator with editable company, invoice and items, print to PDF. Local SQLite draft saving.
-- **480-action catalog:** search and browse all 480 proposed actions across 24 categories. Action-to-feature mappings are approximate where one implementation covers multiple related actions. Planned actions are **not implemented** and do not run.
+The catalog contains **all 480 numbered ideas** from the supplied product backlog, grouped into 24 categories. **A catalog entry is not proof that its converter is implemented.** The web UI labels unsupported entries as *Planned*. Office conversions in this release are intentionally simplified; accurate Office layout conversion, AI inference, OCR, professional-grade media transcoding and signed-PDF validation remain future work. A purely offline implementation is not feasible for live exchange-rate services and remotely editable QR redirects.
 
-**Important:** 24 working tool interfaces/builders, not 480 working converters. A successful CI build means the project compiles, not that every tool has undergone exhaustive real-file testing. Browser print output can vary. The CV form supports basic structured sections, not a WYSIWYG editor. Invoice currently has one line item. Recent activity metadata never contains downloadable copies of processed documents.
+In addition to the previous 14 PDF/image utilities, eight basic developer/QR/text tools and two document generators, this preview adds 90 text/developer/design/calculator actions, new browser image editing operations, several PDF page/form actions, ZIP/file operations and CSV operations. Each additional action has its own UI and real local implementation, but **a build passing does not establish conversion correctness for all possible files**. Carefully review the limitations below before using real documents.
 
-## Privacy and offline constraints
+## Setup
 
-All conversions happen locally in the browser: documents are not uploaded to a server. The web app needs a network connection to download its code the first time; after offline assets are cached, most tools can run without network access. Cache may be evicted by the browser. No cloud conversion server, analytics or third-party CDN is used. The included content-security policy disallows external connections. The initial app's PDF size, page count and browser RAM limits still apply.
+Node.js 22 recommended. Run at the repository root:
 
-No absolute privacy or security guarantee is possible on a compromised device. Do not use the PDF watermark as secure redaction or assume PDF signatures are preserved after editing.
-
-## Prerequisites
-
-Node.js >=20.19 and npm >=10. For a machine short on C: space, use a portable Node.js distribution on D: and configure the npm cache on D: before installing.
-
-## Develop
-
-```powershell
-cd D:\Github\local-tools-main
-npm.cmd install --no-audit --no-fund
-npm.cmd run dev
+```sh
+npm install
+npm run typecheck
+npm run build
+npm run dev
 ```
 
-Open the local URL printed by Vite (usually http://localhost:5173). To build:
+Open Vite's reported local URL. No cloud conversion backend is required. To run the production PWA offline, serve the generated `apps/web/dist` folder from localhost or HTTPS, allow the service worker to install its assets, then turn networking off for an offline test. Browser cache eviction can remove assets.
 
-```powershell
-npm.cmd run typecheck
-npm.cmd run build
-npm.cmd run preview
+## Storage and privacy
+
+- Browser SQLite through sql.js and IndexedDB for **metadata and template drafts only**. It is not a desktop OS SQLite service.
+- The current application does not upload documents, but browsers/extensions, hosting, and installed scripts must still be audited before claiming absolute privacy.
+- Loading the web app initially requires access to the static assets; no remote AI or cloud conversion servers are bundled.
+- Large/decompression-heavy files can exhaust browser memory. File and pixel caps reduce but do not eliminate this risk.
+- ZIP extraction is limited and does not preserve folder paths, to avoid path traversal.
+- PDF page cropping is **not redaction** and changing common PDF metadata is **not forensic sanitization**.
+- PDF editing destroys or invalidates existing cryptographic signatures. Existing text content is not safely redacted.
+- CSV SQL generation creates SQL Server-flavored statements; always review output before executing it.
+- Token decoding is not verification; HS256 verification does not automatically validate claims or expiry.
+- Text encryption uses AES-GCM with a PBKDF2-derived key, requiring correct password and supported browser Web Crypto.
+- PNG/JPEG conversion may discard EXIF and color profile metadata. Many operations are intentionally limited to JPG/PNG/WebP.
+- These utilities should not be treated as independently security-audited or legally compliant services.
+
+## Local filesystem structure
+
+- `apps/web/src/catalog.ts`: all 480 catalog ideas and availability aliases
+- `apps/web/src/extraEngine.ts`: 90 locally executed text, design, developer and calculator actions
+- `apps/web/src/ExtraWorkbench.tsx`: form-driven interface for the above actions
+- `apps/web/src/ImageWorkbench.tsx`: image Canvas operations
+- `apps/web/src/PdfAdvanced.tsx`: additional PDF manipulation and extraction
+- `apps/web/src/FileWorkbench.tsx`: ZIP, GZIP, hash, file metadata utilities
+- `apps/web/src/CsvWorkbench.tsx`: CSV filters, sort, dedup-related tasks
+- `apps/web/src/App.tsx`: theme-aware dashboard and routing
+- `apps/web/src/localDb.ts`: sql.js + IndexedDB storage adapter
+- `apps/web/tests/extraEngine.test.mjs`: core engine regression checks
+
+## Testing
+
+```sh
+node --experimental-strip-types --test apps/web/tests/extraEngine.test.mjs
 ```
 
-The compiled application is in `apps/web/dist` and can be served statically over HTTPS. GitHub Actions runs type checking and a production build on each push to `main`.
+This tests representative text, crypto, developer, design and calculation operations. Additional real-file browser integration and security tests remain necessary.
 
-To update a ZIP-downloaded copy without Git, download the new repository ZIP and replace source files (not `node_modules`), then re-run `npm.cmd install` if dependencies changed.
+## Roadmap
 
-## Source layout
+Keep unsupported features marked Planned. Prioritize automated tests, accessible UI controls, safe file size limits, cancellation, real-browser testing and platform-specific mobile/desktop engines before expanding claims.
 
-```text
-apps/web/src/App.tsx           Dashboard, favorites, recent activity, catalog, settings
-apps/web/src/dashboard.css     Dashboard styling and themes
-apps/web/src/PdfWorkspace.tsx  Embedded PDF/image tool workspace
-apps/web/src/conversion.ts    PDF/image engine
-apps/web/src/Utilities.tsx     Text, JSON, QR, barcode and developer utilities
-apps/web/src/Templates.tsx     CV and invoice builders
-apps/web/src/localDb.ts       SQLite WASM + IndexedDB persistence
-apps/web/src/catalog.ts       All 480 user-supplied roadmap actions
-packages/core/src/index.ts    Original shared PDF/image tool definitions
-```
+## v0.4 changes (29 October 2026)
 
-## Not implemented yet
+- Fixed browser Content Security Policy to permit **local WebAssembly compilation** (`wasm-unsafe-eval`), required by SQLite and FFmpeg. WebAssembly runs locally and no third-party JS script source is enabled.
+- Light theme on new installs; improved default text sizes and contrast, with dark and system mode options preserved.
+- Browser SQLite and IndexedDB persistence self-test and downloadable `.sqlite` backup in Settings. Favorites and activity still persist locally when browser storage is permitted.
+- 34 domain calculators: binary/octal/hex/base conversion, SI and IEC storage, electrical, physics, chemistry, engineering cost/material formulas. Units and assumptions displayed.
+- 10 extra printable business document templates, including certificates, receipts, quotations, purchase orders, employee IDs, business cards, labels and timesheets. Form editing, A4 print and local drafts.
+- 8 **basic** Office conversion workflows including DOCX/PPTX/XLSX to text-only PDF, PDF text extraction to DOCX/XLSX, page-image PDF to PPTX, and CSV/XLSX exchange. This does NOT retain complex Office styles, tables, formulas or layout.
+- 20 browser media actions via self-hosted FFmpeg WebAssembly. Includes MP4/WebM transcoding, extracted MP3 from video, audio format conversion and an image/audio-to-MP4 builder. **32 MB+ core and substantial runtime memory** required. Some codec operations can fail depending on the supported build.
+- Additional GitHub Actions checks for real-browser SQLite persistence and favorites (Playwright).
 
-DOCX/XLSX/PPTX full-fidelity conversion, AI/OCR, advanced PDF compression, signing/encryption, video/audio codecs, WYSIWYG CV editing, many business templates, mobile/desktop apps, cloud login/sync, file history re-download, automated real-file test suite. These require separate investigation and testing.
+## Media-specific setup
 
-## Licenses
+Run `npm install` at the repository root, then `npm run dev` or `npm run build`. A `predev`/`prebuild` script copies the local FFmpeg core JS/WASM into `apps/web/public/ffmpeg` from the installed npm package. No CDN or third-party upload service is used. These large assets are generated locally and are **not committed to source control**. They are included in the built PWA and may take more than 30 MB of disk/network on first visit.
 
-Check the licenses and distribution obligations of all dependencies before publishing the app or bundling native engines. The project's private repository does not yet include a separately selected application license.
+## Important limitations
+
+This is an experimental, expanding project, **not 480 production-ready converters**. The 480-row catalog remains complete and each action's actual availability is separately tracked. The browser cannot perform a remotely editable QR redirect entirely offline, cannot guarantee full-fidelity Office conversions, and cannot run every professional codec or AI workload in constrained devices. Simplified Office conversion workflows are explicitly titled and described as such. Do not use the formulas as a substitute for independent engineering checks. Browser ZIP-based processing can be resource intensive; stay within published file limits.
