@@ -11,7 +11,7 @@ export default function UnitWorkbench({id,onSwap,onComplete}:{id:string;onSwap:(
   return {result:Number(n.toPrecision(digits)).toString(),error:''};
  }catch(e){return {result:'',error:e instanceof Error?e.message:String(e)};}},[id,input,digits]);
  if(!spec)return <div role="alert">Unsupported unit conversion.</div>;
- function record(){if(state.result)onComplete(spec.name,state.result+' '+spec.to.label);}
+ function record(){if(state.result)onComplete(spec!.name,state.result+' '+spec!.to.label);}
  async function copy(){if(!state.result)return;try{await navigator.clipboard.writeText(state.result);setCopied(true);}catch{setCopied(false);}}
  return <div className="v2-toolview tn-unit-view">
   <div className="v2-pagehead"><div><span className="v2-kicker">VERIFIED UNIT PAIR · {spec.family.name.toUpperCase()}</span><h1>{spec.name}</h1><p>Local unit conversion with explicit unit definitions. No files or values are uploaded.</p></div></div>
