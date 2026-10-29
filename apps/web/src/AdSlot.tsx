@@ -4,13 +4,16 @@ import { useEffect, useState } from 'react';
 // Google-certified consent flow must set window.__toolnestAdsConsent = true and dispatch
 // 'toolnest-consent-updated' before the first ad request. No ad network loads offline.
 declare global { interface Window { __toolnestAdsConsent?:boolean; adsbygoogle?:Record<string,unknown>[] } }
-type Placement='home'|'catalog'|'footer'|'tools'|'article';
+type Placement='home'|'catalog'|'footer'|'tools'|'article'|'leaderboard'|'infeed'|'category';
 const slots:Record<Placement,string|undefined>={
   home:import.meta.env.VITE_ADSENSE_SLOT_HOME,
   catalog:import.meta.env.VITE_ADSENSE_SLOT_CATALOG,
   footer:import.meta.env.VITE_ADSENSE_SLOT_FOOTER,
   tools:import.meta.env.VITE_ADSENSE_SLOT_TOOLS,
   article:import.meta.env.VITE_ADSENSE_SLOT_ARTICLE,
+  leaderboard:import.meta.env.VITE_ADSENSE_SLOT_LEADERBOARD,
+  infeed:import.meta.env.VITE_ADSENSE_SLOT_INFEED,
+  category:import.meta.env.VITE_ADSENSE_SLOT_CATEGORY,
 };
 let scriptPromise:Promise<void>|undefined;
 function loadAdScript(client:string){
@@ -37,9 +40,9 @@ export default function AdSlot({placement}:{placement:Placement}){
    return()=>{alive=false};
  },[enabled,client,slot]);
  if(new URLSearchParams(window.location.search).has('desktop'))return null;
- return <section className="v6-ad-slot no-print" aria-label="Advertisement">
+ return <section className={`v6-ad-slot tn-ad-region tn-ad-${placement} ${placement==='leaderboard'?'tn-ad-wide':''} no-print`} aria-label="Advertisement">
    <div className="v6-ad-label">Advertisement</div>
    {enabled&&!error?<ins className="adsbygoogle" style={{display:'block'}} data-ad-client={client} data-ad-slot={slot} data-ad-format="auto" data-full-width-responsive="true"/>:
-   <div className="v6-ad-empty">{error?'Advertisement unavailable':'Reserved ad space · no ad loaded in local or offline mode'}</div>}
+   <div className="v6-ad-empty">{error?'Advertisement unavailable':'Ad placement preview — shown only after publisher approval and consent'}</div>}
  </section>;
 }

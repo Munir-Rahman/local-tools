@@ -43,3 +43,24 @@ Regular Google AdSense placements are NOT permitted in standalone desktop softwa
 ## Launch gate
 
 Current state: web AdSense adapter/scaffold and native reserved placements, not live ads. Publisher/consent integration, mobile AdMob SDK wiring, domain verification and device tests remain prerequisites.
+
+## ToolNest 0.9 — Expanded web placements
+
+The redesigned web layout has additional **in-page** ad slots, activated only after AdSense approval, valid ad IDs, HTTPS and any required user consent:
+
+| Placement | Environment variable | Where it appears |
+| --- | --- | --- |
+| Homepage leaderboard | `VITE_ADSENSE_SLOT_LEADERBOARD` | After hero/category navigation and before searches |
+| Homepage primary | `VITE_ADSENSE_SLOT_HOME` | Before popular tools |
+| Homepage in-feed | `VITE_ADSENSE_SLOT_INFEED` | Between tool cards and recent activity |
+| Tool-directory separator | `VITE_ADSENSE_SLOT_CATEGORY` | After the tool card grid |
+| Tool-directory existing | `VITE_ADSENSE_SLOT_TOOLS` | Near the bottom of the directory |
+| Catalog | `VITE_ADSENSE_SLOT_CATALOG` | In the 5,000-entry roadmap |
+| Help/article | `VITE_ADSENSE_SLOT_ARTICLE` | Information and FAQ areas |
+| Footer | `VITE_ADSENSE_SLOT_FOOTER` | Above the footer |
+
+All placements use distinct label **Advertisement**, are hidden from printed exports, and are suppressed in standalone desktop mode. They do not show real ads on localhost, without consent, or offline. You may choose to configure *fewer* placements. More slots do not guarantee higher revenue and may reduce usability or violate provider rules if content is crowded.
+
+Do not imitate AsliTools's exact brand assets, ad popups, or deceptive download-looking banners. Do not add your own interstitials or fixed ads. If you enable Google-controlled Auto ads, configure them through AdSense only after approval, reviewing Google's placement and format policies.
+
+Policy references: https://support.google.com/adsense/answer/1346295 and https://support.google.com/publisherpolicies/answer/11035030

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Activity, ArrowRight, BookMarked, Check, CheckCircle2, ChevronDown, ChevronRight, CircleHelp,
-  Clock3, Database, FileCode2, FileText, Files, FolderHeart, Heart, Image,
+  Clock3, Database, FileCode2, FileText, Files, FolderHeart, Heart, Image, FileImage, FileArchive, Film, Headphones, Calculator, Laptop,
   LayoutDashboard, Menu, Moon, Palette, Printer, Search, Settings2, ShieldCheck,
   Sparkles, Star, Sun, WandSparkles, X, Zap, QrCode, ScanBarcode, Type, Braces, Code2 } from 'lucide-react';
 import { tools as pdfTools } from '@local-tools/core';
@@ -9,6 +9,7 @@ import type { ToolId } from '@local-tools/core';
 import { catalog, catalogSupported } from './catalog';
 import masterCatalog from './masterCatalog';
 import AdSlot from './AdSlot';
+import ToolNestHeader from './ToolNestHeader';
 import StickerStudio from './StickerStudio';
 import { utilityDefs } from './Utilities';
 import type { UtilityId } from './Utilities';
@@ -170,7 +171,8 @@ export default function App(){
   ];
   const style={'--v2-accent':accent} as CSSProperties;
   function Card({tool}:{tool:ToolItem}){
-    const Icon=toolIcon(tool.id);const fav=favorites.includes(tool.id);
+    const categoryIcons:Record<string,typeof Files>={PDF:FileText,Images:FileImage,File:FileArchive,Spreadsheets:Database,Office:FileText,Video:Film,Audio:Headphones,Developer:Code2,Text:Type,Calculators:Calculator,Design:Sparkles,Templates:BookMarked,Computer:Laptop,Physics:Zap,Chemistry:Zap,Electrical:Zap,Engineering:Settings2};
+    const Icon=toolIcons[tool.id]||categoryIcons[tool.category]||FileText;const fav=favorites.includes(tool.id);
     return <article className="v2-card" onClick={()=>openTool(tool.id)} onKeyDown={e=>{if(e.key==='Enter')openTool(tool.id)}} tabIndex={0} role="button" aria-label={`Open ${tool.name}`}>
       <div className="v2-cardtop"><span className={`v2-ticon ${tool.category==='PDF'?'v2-pdf':tool.category==='Images'?'v2-image':tool.category==='Templates'?'v2-purple':'v2-green'}`}><Icon size={23}/></span>
         <button className={`v2-star ${fav?'is-favorite':''}`} aria-label={fav?`Remove ${tool.name} from favorites`:`Favorite ${tool.name}`} title={fav?'Remove favorite':'Add favorite'} onClick={e=>{e.stopPropagation();void favorite(tool.id)}}><Star size={21} fill={fav?'currentColor':'none'}/></button>
@@ -196,9 +198,9 @@ export default function App(){
         <div className="v2-local"><span/> Local processing · v0.8</div>
       </div>
     </aside>
-    <div className="v2-main"><header className="v2-topbar"><div className="v2-top-left"><button className="v2-mobile-menu" onClick={()=>setSideOpen(true)} aria-label="Open menu"><Menu size={21}/></button><span className="v2-breadcrumb">Workspace <ChevronRight size={15}/> <strong>{selected?(allTools.find(x=>x.id===selected)?.name||'Tool') : page==='catalog'?'5,000-action catalog':page==='recent'?'Recent activity':page==='all'?'All tools':page.charAt(0).toUpperCase()+page.slice(1)}</strong></span></div>
-      <nav className="v7-top-nav no-print" aria-label="Top categories"><button onClick={()=>go('dashboard')}>Home</button><button onClick={()=>go('all')}>All tools</button><button onClick={()=>{go('all');setGroup('PDF')}}>PDF tools</button><button onClick={()=>{go('all');setGroup('Images')}}>Image tools</button><button onClick={()=>{go('all');setGroup('Video')}}>Video</button><button onClick={()=>{go('all');setGroup('Audio')}}>Audio</button><button onClick={()=>go('templates')}>Templates</button><button onClick={()=>go('catalog')}>5,000 catalog</button></nav>
-      <div className="v2-top-actions"><span className="v2-device"><ShieldCheck size={16}/> Local processing</span><button className="v2-iconbtn" title={isDark?'Light theme':'Dark theme'} aria-label="Toggle dark theme" onClick={()=>void updateTheme(isDark?'light':'dark')}>{isDark?<Sun size={19}/>:<Moon size={19}/>}</button><button className="v2-help" onClick={()=>go('settings')}><Palette size={17}/> Appearance</button></div></header>
+    <div className="v2-main"><ToolNestHeader tools={allTools} favoriteCount={favorites.length} isDark={isDark}
+        onOpenTool={openTool} onCategory={g=>{go('all');setGroup(g)}} onPage={p=>go(p)}
+        onToggleTheme={()=>void updateTheme(isDark?'light':'dark')} onOpenMobile={()=>setSideOpen(true)}/>
       <main className="v2-content">
         {storageError&&<div className="v2-warning" role="alert">{storageError}<button onClick={()=>setStorageError('')}><X size={16}/></button></div>}
         {selected&&<button className="v2-secondary v6-pageback no-print" type="button" onClick={back}>← Back to previous page</button>}
@@ -217,22 +219,36 @@ export default function App(){
         selectedUtil?<Utilities key={selectedUtil.id} id={selectedUtil.id as UtilityId} onBack={back} onCompleted={(name,result)=>{void activity(selectedUtil.id,name,'Text / local input',result)}}/>:
         selectedTemplate?<Templates key={selected} id={selected as TemplateId} onBack={back} onCompleted={(name,result)=>{void activity(selected,name,'Local template',result)}}/>:
         page==='dashboard'?<>
-          <div className="v2-headingrow"><div><h1>{displayName.trim()?`Welcome, ${displayName.trim().slice(0,40)}`:'Welcome to your workspace'} <span className="v2-wave">✦</span></h1><p>Private file tools, offline-ready. No account or document upload required.</p></div><div className="v2-operational"><span/> Your device is the processor</div></div>
+          <section className="tn-hero" aria-label="ToolNest introductory banner">
+            <div className="tn-hero-left"><span className="tn-hero-brow"><ShieldCheck size={15}/> PRIVATE BY DESIGN · FREE TO USE</span>
+              <h1>Powerful file tools.<br/><em>Simply yours.</em></h1>
+              <p>Convert documents, create designs and work with PDFs, images, audio and video. Supported tools process files on your device, not on an upload server.</p>
+              <div className="tn-hero-pills"><button onClick={()=>go('all')}><Grid2X2 size={17}/> Explore tools <ArrowRight size={16}/></button><button onClick={()=>go('templates')}><BookMarked size={17}/> Ready-made templates</button><button onClick={()=>go('favorites')}><Heart size={17}/> My favorites</button></div>
+            </div>
+            <div className="tn-hero-art" aria-hidden="true"><div className="tn-hero-document"><FileText size={34}/><span/><span/><span/><span/></div><div className="tn-hero-floating tn-float-a"><Image size={37}/></div><div className="tn-hero-floating tn-float-b"><Sparkles size={37}/></div><div className="tn-hero-floating tn-float-c"><FileArchive size={34}/></div></div>
+          </section>
+          <div className="tn-trust-band"><div><ShieldCheck size={24}/><span><strong>Private by default</strong><small>Files stay in local processing engines</small></span></div><div><Zap size={24}/><span><strong>Offline-capable tools</strong><small>Use supported cached tools without internet</small></span></div><div><Heart size={24}/><span><strong>Free and practical</strong><small>No credits or account required</small></span></div></div>
+          <div className="tn-section-intro"><div><span className="tn-eyebrow">FIND THE RIGHT TOOL</span><h2>Browse by category</h2><p>Pick a category to explore compatible utilities.</p></div><button onClick={()=>go('all')}>View all tools <ArrowRight size={16}/></button></div>
+          <div className="tn-category-tiles">{[
+            ['PDF','PDF tools',FileText,'Organize PDF documents'],['Images','Image tools',Image,'Resize and convert'],['Office','Office tools',BookMarked,'Documents & spreadsheets'],['Video','Video tools',Film,'Edit and extract'],['Audio','Audio tools',Headphones,'Audio conversion'],['Templates','Templates',Sparkles,'CVs, invoices and more']
+          ].map(([cat,label,Icon,note])=>{const TileIcon=Icon as typeof FileText;return <button key={cat as string} className="tn-category-tile" onClick={()=>{go('all');setGroup(cat as string)}}><TileIcon size={29}/><strong>{label as string}</strong><span>{note as string}</span></button>})}</div>
+          <AdSlot placement="leaderboard"/>
           <div className="v2-searchwrap"><Search size={20}/><input value={search} ref={searchRef} onChange={e=>setSearch(e.target.value)} onFocus={()=>{}} placeholder="Search tools like 'Merge PDF', 'QR code' or 'Resume'..."/><kbd>Ctrl K</kbd></div>
           <div className="v2-tabs">{groups.map(g=><button key={g} className={group===g?'selected':''} onClick={()=>setGroup(g)}>{g}</button>)}</div>
           <div className="v2-overview"><div><span className="v2-stat-icon"><Files size={18}/></span><strong>{allTools.length}</strong><small>Tool routes (some simplified)</small></div><div><span className="v2-stat-icon"><Star size={18}/></span><strong>{favorites.length}</strong><small>Saved favorites</small></div><div><span className="v2-stat-icon"><Activity size={18}/></span><strong>{history.length}</strong><small>Recent operations stored locally</small></div><div><span className="v2-stat-icon"><BookMarked size={18}/></span><strong>5,000</strong><small>Feature ideas in roadmap</small></div></div>
           <AdSlot placement="home"/>
           <div className="v2-sectiontitle"><h2>{search||group!=='All'?'Matching tools':'Popular tools'}</h2><button className="v2-link" onClick={()=>go('all')}>View all <ArrowRight size={16}/></button></div>
           {cardGrid(search||group!=='All'?matched:featured)}
+          <AdSlot placement="infeed"/>
           <div className="v2-sectiontitle v2-topspace"><h2>Recent activity</h2><button className="v2-link" onClick={()=>go('recent')}>View history <ArrowRight size={16}/></button></div>
           <HistoryTable entries={history.slice(0,5)} onOpen={openTool}/>
           <div className="v2-roadmap"><div><Sparkles size={24}/><strong>5,000 ideas cataloged, with verified and planned engines</strong><p>Explore the full backlog. Implemented web tools are available; Office fidelity, advanced security, offline AI and many media features still require separate engines.</p></div><button className="v2-primary" onClick={()=>go('catalog')}>Explore roadmap <ArrowRight size={16}/></button></div>
         </>:
         page==='all'||page==='favorites'?<><div className="v2-pagehead"><div><span className="v2-kicker">YOUR TOOLBOX</span><h1>{page==='favorites'?'Favorite tools':'All available tools'}</h1><p>{page==='favorites'?'Starred utilities, saved privately in local SQLite.':'Open any of the implemented offline-capable utilities below.'}</p></div></div>
           {page==='all'&&<><div className="v2-searchwrap"><Search size={19}/><input ref={searchRef} value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search working tools..."/><kbd>Ctrl K</kbd></div><div className="v2-tabs">{groups.map(g=><button key={g} className={group===g?'selected':''} onClick={()=>setGroup(g)}>{g}</button>)}</div></>}
-          {cardGrid(page==='favorites'?favoriteTools:matched)}{page==='all'&&<AdSlot placement="tools"/>}</>:
+          {cardGrid(page==='favorites'?favoriteTools:matched)}{page==='all'&&<><AdSlot placement="category"/><AdSlot placement="tools"/></>}</>:
         page==='recent'?<><div className="v2-pagehead"><div><span className="v2-kicker">YOUR DEVICE ONLY</span><h1>Recent activity</h1><p>Only tool names, input file names, output names and timestamps are saved in browser-local SQLite. File contents are never stored here.</p></div><button className="v2-secondary" disabled={history.length===0} onClick={()=>void eraseHistory()}>Clear history</button></div><HistoryTable entries={history} onOpen={openTool}/><p className="v2-hint">For privacy and disk space, downloads are not retained. Past results cannot be re-downloaded from this list; run the tool again with the original file.</p></>:
-        page==='templates'?<><div className="v2-pagehead"><div><span className="v2-kicker">EDITABLE DESIGNS</span><h1>Document templates</h1><p>Fill forms, choose styles and colors, save local drafts, and print to PDF. No cloud account is required.</p></div></div>{cardGrid(allTools.filter(t=>t.category==='Templates'))}<div className="v2-roadmap"><div><BookMarked size={22}/><strong>More templates planned</strong><p>Quotation, receipt, purchase order, delivery note, certificate, cover letter, business card, ID badge, timesheet and product label templates are included in this release.</p></div><button className="v2-secondary" onClick={()=>go('catalog')}>See planned templates</button></div></>:
+        page==='templates'?<><div className="v2-pagehead"><div><span className="v2-kicker">EDITABLE DESIGNS</span><h1>Document templates</h1><p>Fill forms, choose styles and colors, save local drafts, and print to PDF. No cloud account is required.</p></div></div>{cardGrid(allTools.filter(t=>t.category==='Templates'))}<AdSlot placement="category"/><div className="v2-roadmap"><div><BookMarked size={22}/><strong>More templates planned</strong><p>Quotation, receipt, purchase order, delivery note, certificate, cover letter, business card, ID badge, timesheet and product label templates are included in this release.</p></div><button className="v2-secondary" onClick={()=>go('catalog')}>See planned templates</button></div></>:
         page==='catalog'?<><div className="v2-pagehead"><div><span className="v2-kicker">PRODUCT ROADMAP · MULTIPLE CATEGORIES</span><h1>5,000-action tool catalog</h1><p>From your 5,000-item master backlog. Planned entries are not working converters until verified.</p></div><span className="v2-count">{filteredCatalog.length} ideas</span></div>
           <AdSlot placement="catalog"/>
           <div className="v2-catalog-filter"><div className="v2-searchwrap"><Search size={19}/><input ref={searchRef} placeholder="Search all 5,000 actions..." value={search} onChange={e=>{setSearch(e.target.value);setCatalogPage(0)}}/></div><label><span>Category</span><select value={catalogGroup} onChange={e=>{setCatalogGroup(e.target.value);setCatalogPage(0)}}><option>All categories</option>{masterCategories.map(c=><option key={c}>{c}</option>)}</select><ChevronDown size={16}/></label></div>
