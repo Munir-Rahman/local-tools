@@ -6,7 +6,7 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
-    "backgroundColor": "#F5F7FB",
+    "backgroundColor": "#fffaf5",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
@@ -14,10 +14,9 @@
     },
     "android": {
       "package": "com.localtools.private",
-      "edgeToEdgeEnabled": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#EAF2FF"
+        "backgroundColor": "#fff4e9"
       }
     },
     "plugins": [
@@ -26,8 +25,12 @@
     ],
     "extra": {
       "privacy": "All document processing runs on the device",
-      "brand": "ToolNest"
+      "brand": "ToolNest",
+      "eas": {
+        "projectId": "8a4305aa-a216-46a5-85cf-46f0c7f4fb39"
+      }
     },
-    "icon": "./assets/icon.png"
+    "icon": "./assets/icon.png",
+    "owner": "munirrahmani"
   }
 }
