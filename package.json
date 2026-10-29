@@ -17,7 +17,8 @@
     "desktop:check": "node --test apps/desktop/tests/*.test.cjs",
     "windows:diagnose": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/diagnose-windows.ps1",
     "mobile:doctor": "node scripts/mobile-doctor.cjs",
-    "mobile:repair": "node scripts/mobile-doctor.cjs --repair"
+    "mobile:repair": "node scripts/mobile-doctor.cjs --repair",
+    "windows:repair-web": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/repair-web-install.ps1"
   },
   "engines": {
     "node": ">=20.19.0"

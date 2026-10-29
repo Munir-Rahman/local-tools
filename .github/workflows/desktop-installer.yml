@@ -6,6 +6,8 @@ on:
     branches: [main]
     paths:
       - 'apps/desktop/**'
+      - 'apps/web/**'
+      - 'packages/core/**'
       - '.github/workflows/desktop-installer.yml'
 
 permissions:
