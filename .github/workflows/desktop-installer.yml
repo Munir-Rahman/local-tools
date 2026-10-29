@@ -2,6 +2,11 @@ name: Build ToolNest Windows Installer
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/desktop/**'
+      - '.github/workflows/desktop-installer.yml'
 
 permissions:
   contents: read
