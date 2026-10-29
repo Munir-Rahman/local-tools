@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test('invoice supports multiple editable line items and remembers the prior page',async ({page})=>{
   await page.goto('/');
+  await page.getByRole('button',{name:'Templates',exact:true}).click();
   await page.getByRole('button',{name:'Open Invoice Generator'}).click();
   await expect(page.getByRole('heading',{name:'Invoice Generator'})).toBeVisible();
   await page.getByRole('button',{name:/Add item/}).click();
@@ -15,7 +16,7 @@ test('invoice supports multiple editable line items and remembers the prior page
   await rows.nth(1).locator('input').nth(2).fill('4');
   await expect(page.locator('.invoice-total')).toContainText('42.00');
   await page.getByRole('button',{name:/Back to previous page/}).click();
-  await expect(page.getByRole('heading',{name:/Good|Powerful|Welcome|tools/i}).first()).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Document templates'})).toBeVisible();
 });
 
 test('master catalog includes action 5000 but never calls it implemented',async({page})=>{
