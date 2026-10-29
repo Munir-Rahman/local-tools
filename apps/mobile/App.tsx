@@ -89,7 +89,7 @@ function Main(){
   const openTool=async(next:MobileTool)=>{setToolOrigin({tab,catalog:catalogOpen});setTool(next);setCatalogOpen(false);setSettingsOpen(false);setSelectedFiles([]);setOptions(defaultOptions);setResult(null);setError('');
     if(next.id==='cv-builder'||next.id==='invoice-builder'){
       const saved=await loadDraft(next.id).catch(()=>null);
-      if(saved && typeof saved==='object'){if(next.id==='cv-builder')setResume({...defaultResume,...saved as ResumeData});else setInvoice({...defaultInvoice,...saved as InvoiceData,items:Array.isArray((saved as InvoiceData).items)?(saved as InvoiceData).items:defaultInvoice.items});}
+      if(saved && typeof saved==='object'){if(next.id==='cv-builder')setResume({...defaultResume,...saved as ResumeData});else setInvoice({...defaultInvoice,...saved as unknown as InvoiceData,items:Array.isArray((saved as unknown as InvoiceData).items)?(saved as unknown as InvoiceData).items:defaultInvoice.items});}
     }
   };
   const goBack=useCallback(()=>{
