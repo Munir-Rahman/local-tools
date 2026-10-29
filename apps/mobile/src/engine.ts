@@ -1,4 +1,6 @@
 import { File, Paths } from 'expo-file-system';
+import * as LegacyFS from 'expo-file-system/legacy';
+import { Platform } from 'react-native';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as Sharing from 'expo-sharing';
 import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib';
@@ -28,13 +30,11 @@ export async function importPickedFile(uri:string,name:string):Promise<string>{
   // This avoids content:// URI grants expiring between the picker and PDF processing.
   const safe=name.replace(/[^a-zA-Z0-9._-]/g,'_').slice(-80)||'document';
   const dest=new File(Paths.cache,`picked-${Date.now()}-${Math.floor(Math.random()*1e6)}-${safe}`);
-  try{ await new File(uri).copy(dest); return dest.uri; }
-  catch(err){
-    if(uri.startsWith('file://')){
-      try{await new File(uri).bytes();return uri;}catch{}
-    }
-    throw Error(`Android cannot grant access to this document. Try Files → Downloads, then select it again. ${String(err)}`);
-  }
+  // DocumentPicker(copyToCacheDirectory:true) already returns an app-readable file:// copy.
+  // Do not re-copy it via a restricted document provider; that triggered the READ permission error.
+  if(uri.startsWith('file://')){try{const f=new File(uri);if(f.exists && f.size>=0)return f.uri;}catch{/* fall back to copy */}}
+  try{ await new File(uri).copy(dest); if(!dest.exists)throw Error('No cached file created'); return dest.uri; }
+  catch(err){throw Error(`Cannot access this document through the selected Android provider. Open Android Files, select the file using its system picker, and try again. No broad storage permission is required. Details: ${String(err)}`); }
 }
 
 function resultName(base:string,extension:string){return `${base}-${Date.now()}.${extension}`;}
@@ -149,5 +149,22 @@ export async function generateQr(text:string,color:string){
 export async function shareResult(result:EngineOutput){
   if(result.kind!=='file')return;
   if(!(await Sharing.isAvailableAsync()))throw Error('File sharing is not available on this device.');
-  await Sharing.shareAsync(result.uri,{dialogTitle:'Save or share your LocalTools file',mimeType:result.mime,UTI:result.mime==='application/pdf'?'com.adobe.pdf':undefined});
+  // Android sharing providers only grant access to app-owned local files.
+  const original=new File(result.uri);
+  if(!original.exists)throw Error('Generated output is no longer present in local storage. Generate the file again.');
+  const safe=result.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+  const shareFile=new File(Paths.cache,`share-${Date.now()}-${safe}`);
+  try{await original.copy(shareFile);await Sharing.shareAsync(shareFile.uri,{dialogTitle:'Save or share ToolNest output',mimeType:result.mime});}
+  catch(err){throw Error(`Could not open Android file sharing. Use “Save file to a folder” instead. ${String(err)}`);}
+}
+export async function saveResultToFolder(result:EngineOutput):Promise<boolean>{
+  if(result.kind!=='file')return false;
+  if(Platform.OS!=='android')throw Error('Android folder saving is supported; use the iOS share sheet on iOS.');
+  const grant=await LegacyFS.StorageAccessFramework.requestDirectoryPermissionsAsync();
+  if(!grant.granted)return false;
+  const target=await LegacyFS.StorageAccessFramework.createFileAsync(grant.directoryUri,result.name.replace(/\.[a-z0-9]+$/i,''),result.mime);
+  // SAF requires writing to the user-authorized content URI, using base64 for binary data.
+  const b64=await new File(result.uri).base64();
+  await LegacyFS.writeAsStringAsync(target,b64,{encoding:LegacyFS.EncodingType.Base64});
+  return true;
 }

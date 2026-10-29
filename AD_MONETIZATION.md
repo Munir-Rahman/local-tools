@@ -5,10 +5,10 @@ ToolNest is a **free, offline-processing** utility suite. Advertising is online-
 ## Web: Google AdSense
 
 1. Deploy a public HTTPS website with original content and the required privacy/cookie documentation. Obtain approval from Google AdSense; approval and ad fill are not guaranteed.
-2. Set `VITE_ADSENSE_CLIENT_ID=ca-pub-...`, `VITE_ADSENSE_SLOT_HOME=...`, `VITE_ADSENSE_SLOT_CATALOG=...` in the web production build environment. Rebuild.
+2. Set `VITE_ADSENSE_CLIENT_ID=ca-pub-...`, `VITE_ADSENSE_SLOT_HOME=...`, `VITE_ADSENSE_SLOT_CATALOG=...`, `VITE_ADSENSE_SLOT_TOOLS=...`, `VITE_ADSENSE_SLOT_ARTICLE=...`, `VITE_ADSENSE_SLOT_FOOTER=...` in the web production build environment. Rebuild.
 3. Integrate a **Google-certified consent management platform (CMP)** where required. Your CMP must set `window.__toolnestAdsConsent = true` **only after advertising is allowed** and trigger `window.dispatchEvent(new Event('toolnest-consent-updated'))`. Set it to false when permissions are withdrawn and reload or stop ad requests. This bridge is NOT itself a CMP.
 4. Review Content Security Policy against the exact ad networks serving your site and integrate `ads.txt` provided by AdSense at the hosting domain. Do not put publisher IDs or ad network script URLs into the local conversion engines.
-5. Slots are reserved on the dashboard and catalog page, separated from upload/download/process controls. Slots never print. Localhost and offline mode show only inert placeholders.
+5. Slots are reserved on the dashboard, tool collection, catalog, information articles and footer, separated from upload/download/process controls. Slots never print. Localhost and offline mode show only inert placeholders.
 
 **Do not** ask people to click ads, imply ads are download buttons, use forced ad clicks, place ads immediately next to actions or show ads in print pages. Web AdSense cannot be embedded directly in ordinary native desktop apps; use native-app-approved inventory, sponsorship, or affiliates for desktop (subject to provider policies).
 

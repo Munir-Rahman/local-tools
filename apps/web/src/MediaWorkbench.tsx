@@ -56,14 +56,14 @@ function outputMime(ext:string){return ({mp4:'video/mp4',webm:'video/webm',mp3:'
 export default function MediaWorkbench({id,onComplete}:{id:MediaId;onComplete:(name:string,result:string)=>void}){
  const spec=mediaTools.find(x=>x.id===id)!;
  const engine=useRef<FFmpeg|null>(null);
- const [files,setFiles]=useState<File[]>([]);
+ const [files,setFiles]=useState<File[]>([]);const [targetMB,setTargetMB]=useState('');const [durationOverride,setDurationOverride]=useState('');const [outputBytes,setOutputBytes]=useState<number|null>(null);
  const [start,setStart]=useState('0');const [duration,setDuration]=useState('10');const [quality,setQuality]=useState(8);
  const [busy,setBusy]=useState(false);const [progress,setProgress]=useState('');const [error,setError]=useState('');
  const [engineReady,setEngineReady]=useState(false);
  const [output,setOutput]=useState<{name:string;url:string}|null>(null);
  useEffect(()=>()=>{if(engine.current){engine.current.terminate();engine.current=null;}},[]);
  useEffect(()=>()=>{if(output)URL.revokeObjectURL(output.url)},[output]);
- const select=(newFiles:FileList|null)=>{setFiles(Array.from(newFiles||[]).slice(0,2));setError('');setOutput(null)};
+ const select=(newFiles:FileList|null)=>{setFiles(Array.from(newFiles||[]).slice(0,2));setError('');setOutput(null);setOutputBytes(null)};
  async function run(){
   if(!files.length)return;
   setBusy(true);setError('');setProgress('Checking local FFmpeg files…');
@@ -104,6 +104,26 @@ export default function MediaWorkbench({id,onComplete}:{id:MediaId;onComplete:(n
     args=['-loop','1','-framerate','1','-i',imgName,'-i',secondName,'-vf','scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2','-c:v','mpeg4','-q:v','7','-c:a','aac','-shortest','-pix_fmt','yuv420p',outputName];
 
    }else args=commands(id,input,outputName,start,duration,quality);
+   if(targetMB.trim() && (id==='video-compress'||id==='audio-compress')){
+     const mb=Number(targetMB);if(!Number.isFinite(mb)||mb<=0||mb>500)throw Error('Enter a target between 0.1 and 500 MB.');
+     let length=Number(durationOverride);
+     if(!length || !Number.isFinite(length)){
+       const url=URL.createObjectURL(first);
+       try{length=await new Promise<number>((resolve,reject)=>{const probe=document.createElement(id==='audio-compress'?'audio':'video');probe.preload='metadata';probe.onloadedmetadata=()=>resolve(probe.duration);probe.onerror=()=>reject(Error('Cannot read media duration. Enter the duration manually.'));probe.src=url;setTimeout(()=>reject(Error('Metadata probe timed out. Enter duration manually.')),5000);});}
+       finally{URL.revokeObjectURL(url)}
+     }
+     if(!Number.isFinite(length)||length<=0)throw Error('Enter a valid media duration in seconds.');
+     const overallKbps=(mb*1024*1024*8*.92)/(length*1000);
+     if(id==='audio-compress'){
+       const kbps=Math.min(320,Math.floor(overallKbps));if(kbps<24)throw Error('Target too small for playable audio at this duration.');
+       args=['-i',input,'-vn','-c:a','libmp3lame','-b:a',`${kbps}k`,outputName];
+     }else{
+       const audioKbps=overallKbps>160?96:48;
+       const videoKbps=Math.floor(overallKbps-audioKbps);
+       if(videoKbps<90)throw Error('Target too small for playable video at this duration.');
+       args=['-i',input,'-vf','scale=-2:480','-c:v','mpeg4','-b:v',`${videoKbps}k`,'-c:a','aac','-b:a',`${audioKbps}k`,outputName];
+     }
+   }
    setProgress('Converting locally…');
    const code=await ffmpeg.exec(args,120000);
    if(code!==0)throw Error(`FFmpeg could not perform this conversion (exit ${code}); the codec may not be available.`);
@@ -112,7 +132,7 @@ export default function MediaWorkbench({id,onComplete}:{id:MediaId;onComplete:(n
    const bytes=new Uint8Array(data);
    if(!bytes.length)throw Error('Converter returned an empty file.');
    const url=URL.createObjectURL(new Blob([bytes],{type:outputMime(resultExt)}));
-   setOutput({name:outputName,url});setProgress('Complete. Save the file to your device.');onComplete(spec.name,outputName);
+   setOutput({name:outputName,url});setOutputBytes(bytes.length);setProgress('Complete. Save the file to your device.');onComplete(spec.name,outputName);
    await ffmpeg.deleteFile(outputName);
    try{await ffmpeg.deleteFile(input);}catch{/* Input already removed */}
    if(secondName)try{await ffmpeg.deleteFile(secondName)}catch{/* optional */}
@@ -125,8 +145,9 @@ export default function MediaWorkbench({id,onComplete}:{id:MediaId;onComplete:(n
      {files.map(f=><p className="v2-hint" key={f.name}>{f.name} · {(f.size/1024/1024).toFixed(2)} MB</p>)}
      {['video-trim','video-gif','audio-trim'].includes(id)&&<><label className="v2-field">Start at seconds<input type="number" min="0" value={start} onChange={e=>setStart(e.target.value)}/></label><label className="v2-field">Duration in seconds<input type="number" min="0.1" value={duration} onChange={e=>setDuration(e.target.value)}/></label></>}
      {id==='video-compress'&&<label className="v2-field">Compression quality (2 = high, 20 = low)<input type="range" min="2" max="20" value={quality} onChange={e=>setQuality(Number(e.target.value))}/>{quality}</label>}
+     {(id==='video-compress'||id==='audio-compress')&&<><label className="v2-field">Optional target size (MB)<input type="number" min="0.1" max="500" step="0.1" value={targetMB} onChange={e=>setTargetMB(e.target.value)} placeholder="e.g. 5"/></label>{targetMB.trim()&&<label className="v2-field">Duration in seconds (optional; auto-detected when blank)<input type="number" min="0.1" value={durationOverride} onChange={e=>setDurationOverride(e.target.value)} placeholder="Auto detect"/></label>}<p className="v2-hint">The target is approximate. Content complexity, codec and metadata can cause output to exceed it. This tool does not guarantee an exact byte count.</p></>}
      <button className="v2-primary" disabled={busy||!files.length} type="button" onClick={()=>void run()}><Film size={17}/>{busy?'Processing…':'Convert on this device'}</button>
      <p className="v2-hint"><TriangleAlert size={16}/> Media decoding is CPU-intensive; some codec combinations cannot run in this FFmpeg build. Maximum input size 64 MB.</p>
-   </section><section className="v2-panel"><h2><Music2 size={17}/> Output</h2>{progress&&<p role="status" className="v2-hint">{progress}</p>}{error&&<div className="v2-error" role="alert">{error}</div>}{output&&<a className="v2-primary" href={output.url} download={output.name}><Download size={17}/> Download {output.name}</a>}{engineReady&&<p className="v2-hint" style={{color:'#16a34a'}}>FFmpeg engine ready on this device.</p>}<p className="v2-hint">Local FFmpeg WebAssembly is bundled with this app. It requires an initial download to cache (~32 MB) and significant browser memory. Output is not sent to a server.</p></section></div>
+   </section><section className="v2-panel"><h2><Music2 size={17}/> Output</h2>{progress&&<p role="status" className="v2-hint">{progress}</p>}{error&&<div className="v2-error" role="alert">{error}</div>}{outputBytes!==null&&<p className="v2-hint">Output size: {(outputBytes/1024/1024).toFixed(2)} MB {targetMB&&Number(targetMB)>0&&outputBytes>Number(targetMB)*1024*1024?'· Above target; a smaller bitrate may be required.':''}</p>}{output&&<a className="v2-primary" href={output.url} download={output.name}><Download size={17}/> Download {output.name}</a>}{engineReady&&<p className="v2-hint" style={{color:'#16a34a'}}>FFmpeg engine ready on this device.</p>}<p className="v2-hint">Local FFmpeg WebAssembly is bundled with this app. It requires an initial download to cache (~32 MB) and significant browser memory. Output is not sent to a server.</p></section></div>
  </div>;
 }

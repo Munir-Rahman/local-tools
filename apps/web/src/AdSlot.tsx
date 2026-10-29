@@ -4,11 +4,13 @@ import { useEffect, useState } from 'react';
 // Google-certified consent flow must set window.__toolnestAdsConsent = true and dispatch
 // 'toolnest-consent-updated' before the first ad request. No ad network loads offline.
 declare global { interface Window { __toolnestAdsConsent?:boolean; adsbygoogle?:Record<string,unknown>[] } }
-type Placement='home'|'catalog'|'footer';
+type Placement='home'|'catalog'|'footer'|'tools'|'article';
 const slots:Record<Placement,string|undefined>={
   home:import.meta.env.VITE_ADSENSE_SLOT_HOME,
   catalog:import.meta.env.VITE_ADSENSE_SLOT_CATALOG,
   footer:import.meta.env.VITE_ADSENSE_SLOT_FOOTER,
+  tools:import.meta.env.VITE_ADSENSE_SLOT_TOOLS,
+  article:import.meta.env.VITE_ADSENSE_SLOT_ARTICLE,
 };
 let scriptPromise:Promise<void>|undefined;
 function loadAdScript(client:string){
@@ -26,7 +28,7 @@ export default function AdSlot({placement}:{placement:Placement}){
  const [error,setError]=useState(false);
  const client=import.meta.env.VITE_ADSENSE_CLIENT_ID as string|undefined;
  const slot=slots[placement];
- const enabled=Boolean(import.meta.env.PROD&&location.protocol==='https:'&&client?.startsWith('ca-pub-')&&slot&&consented);
+ const enabled=Boolean(!new URLSearchParams(location.search).has('desktop')&&import.meta.env.PROD&&location.protocol==='https:'&&client?.startsWith('ca-pub-')&&slot&&consented);
  useEffect(()=>{const update=()=>setConsented(Boolean(window.__toolnestAdsConsent));window.addEventListener('toolnest-consent-updated',update);return()=>window.removeEventListener('toolnest-consent-updated',update)},[]);
  useEffect(()=>{
    if(!enabled||!client||!slot)return;
@@ -34,6 +36,7 @@ export default function AdSlot({placement}:{placement:Placement}){
    loadAdScript(client).then(()=>{if(alive)(window.adsbygoogle=window.adsbygoogle||[]).push({});}).catch(()=>{if(alive)setError(true)});
    return()=>{alive=false};
  },[enabled,client,slot]);
+ if(new URLSearchParams(window.location.search).has('desktop'))return null;
  return <section className="v6-ad-slot no-print" aria-label="Advertisement">
    <div className="v6-ad-label">Advertisement</div>
    {enabled&&!error?<ins className="adsbygoogle" style={{display:'block'}} data-ad-client={client} data-ad-slot={slot} data-ad-format="auto" data-full-width-responsive="true"/>:

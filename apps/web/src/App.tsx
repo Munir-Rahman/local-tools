@@ -31,7 +31,7 @@ import BusinessTemplates, {businessTemplates} from './BusinessTemplates';
 import MediaWorkbench, {mediaTools} from './MediaWorkbench';
 import OfficeWorkbench, {officeTools} from './OfficeWorkbench';
 
-type Page='dashboard'|'all'|'favorites'|'recent'|'catalog'|'templates'|'settings'|'privacy';
+type Page='dashboard'|'all'|'favorites'|'recent'|'catalog'|'templates'|'settings'|'privacy'|'about'|'faq'|'contact';
 type ToolItem={id:string;name:string;description:string;category:string;featured?:boolean};
 const allTools:ToolItem[]=[
   ...pdfTools.map(t=>({id:t.id,name:t.name,description:t.description,category:t.category,featured:t.featured})),
@@ -57,7 +57,7 @@ const toolIcons:Record<string,typeof Files>={
   'word-counter':Type,'text-case':Type,'base64-tool':Code2,'uuid-tool':Code2,'sha-tool':ShieldCheck,
   'qr-generator':QrCode,'barcode-generator':ScanBarcode,'cv-builder':FileText,'invoice-builder':Printer,'sticker-studio':Sparkles,
 };
-const accentColors=['#3b82f6','#8b5cf6','#10b981','#f97316','#e11d48'];
+const accentColors=['#ef892c','#3b82f6','#10b981','#8b5cf6','#e11d48'];
 const toolIcon=(id:string)=>toolIcons[id]||FileText;
 const displayDate=(n:number)=>new Date(n).toLocaleString(undefined,{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});
 
@@ -71,7 +71,7 @@ export default function App(){
   const [favorites,setFavorites]=useState<string[]>([]);
   const [history,setHistory]=useState<ActivityEntry[]>([]);
   const [theme,setTheme]=useState<'dark'|'light'|'system'>('light');
-  const [accent,setAccent]=useState('#3b82f6');
+  const [accent,setAccent]=useState('#ef892c');
   const [systemDark,setSystemDark]=useState(true);
   const [sideOpen,setSideOpen]=useState(false);
   const [storageError,setStorageError]=useState('');
@@ -111,7 +111,11 @@ export default function App(){
   }
   function back(){if(window.history.state?.tn)window.history.back();else{setSelected(null);setPage('all');}}
   useEffect(()=>{
-    window.history.replaceState({tn:true,page:'dashboard',selected:null},'',location.pathname+location.search+'#dashboard');
+    const raw=decodeURIComponent(location.hash.replace(/^#/,''));
+    const selectedFromHash=raw.startsWith('tool/')?raw.slice(5):null;
+    const pageFromHash=(['dashboard','all','favorites','recent','catalog','templates','settings','privacy','about','faq','contact'] as Page[]).includes(raw as Page)?raw as Page:'dashboard';
+    window.history.replaceState({tn:true,page:pageFromHash,selected:selectedFromHash},'',location.pathname+location.search+(location.hash||'#dashboard'));
+    setPage(pageFromHash);setSelected(selectedFromHash);
     const restore=(e:PopStateEvent)=>{setSelected(e.state?.selected||null);setPage(e.state?.page||'dashboard');setSideOpen(false);window.scrollTo(0,0)};
     window.addEventListener('popstate',restore);return()=>window.removeEventListener('popstate',restore);
   },[]);
@@ -178,6 +182,7 @@ export default function App(){
       <nav aria-label="Main workspace">
         {sideLinks.map(([id,Icon,label])=><button key={id} className={`v2-navlink ${page===id&&!selected?'active':''}`} onClick={()=>go(id)}><Icon size={18}/><span>{label}</span>{id==='favorites'&&favorites.length>0&&<em>{favorites.length}</em>}</button>)}
       </nav>
+      <div className="v2-navcaption">TOOL CATEGORIES</div><nav className="v7-side-submodules" aria-label="Browse tool categories">{groups.filter(x=>x!=='All').map(g=><button key={g} className="v2-navlink" onClick={()=>{go('all');setGroup(g)}}><ChevronRight size={15}/><span>{g}</span></button>)}</nav>
       <div className="v2-navcaption">QUICK ACCESS</div><nav aria-label="Quick access">
         {allTools.filter(t=>favorites.includes(t.id)).slice(0,4).map(t=><button key={t.id} className="v2-navlink" onClick={()=>openTool(t.id)}><Star size={16}/><span>{t.name}</span></button>)}
         {favorites.length===0&&<span className="v2-emptyhint">Star tools for quick access</span>}
@@ -185,10 +190,11 @@ export default function App(){
       <div className="v2-navbottom"><div className="v2-safety"><ShieldCheck size={20}/><strong>No uploads</strong><small>Your files stay on your device.</small></div>
         <button className={`v2-navlink ${page==='settings'&&!selected?'active':''}`} onClick={()=>go('settings')}><Settings2 size={18}/>Settings</button>
         <button className={`v2-navlink ${page==='privacy'&&!selected?'active':''}`} onClick={()=>go('privacy')}><CircleHelp size={18}/>Privacy & help</button>
-        <div className="v2-local"><span/> Local-only conversion · v0.4</div>
+        <div className="v2-local"><span/> Local processing · v0.7</div>
       </div>
     </aside>
     <div className="v2-main"><header className="v2-topbar"><div className="v2-top-left"><button className="v2-mobile-menu" onClick={()=>setSideOpen(true)} aria-label="Open menu"><Menu size={21}/></button><span className="v2-breadcrumb">Workspace <ChevronRight size={15}/> <strong>{selected?(allTools.find(x=>x.id===selected)?.name||'Tool') : page==='catalog'?'5,000-action catalog':page==='recent'?'Recent activity':page==='all'?'All tools':page.charAt(0).toUpperCase()+page.slice(1)}</strong></span></div>
+      <nav className="v7-top-nav no-print" aria-label="Top categories"><button onClick={()=>go('dashboard')}>Home</button><button onClick={()=>go('all')}>All tools</button><button onClick={()=>{go('all');setGroup('PDF')}}>PDF tools</button><button onClick={()=>{go('all');setGroup('Images')}}>Image tools</button><button onClick={()=>{go('all');setGroup('Video')}}>Video</button><button onClick={()=>{go('all');setGroup('Audio')}}>Audio</button><button onClick={()=>go('templates')}>Templates</button><button onClick={()=>go('catalog')}>5,000 catalog</button></nav>
       <div className="v2-top-actions"><span className="v2-device"><ShieldCheck size={16}/> Local processing</span><button className="v2-iconbtn" title={isDark?'Light theme':'Dark theme'} aria-label="Toggle dark theme" onClick={()=>void updateTheme(isDark?'light':'dark')}>{isDark?<Sun size={19}/>:<Moon size={19}/>}</button><button className="v2-help" onClick={()=>go('settings')}><Palette size={17}/> Appearance</button></div></header>
       <main className="v2-content">
         {storageError&&<div className="v2-warning" role="alert">{storageError}<button onClick={()=>setStorageError('')}><X size={16}/></button></div>}
@@ -221,7 +227,7 @@ export default function App(){
         </>:
         page==='all'||page==='favorites'?<><div className="v2-pagehead"><div><span className="v2-kicker">YOUR TOOLBOX</span><h1>{page==='favorites'?'Favorite tools':'All available tools'}</h1><p>{page==='favorites'?'Starred utilities, saved privately in local SQLite.':'Open any of the implemented offline-capable utilities below.'}</p></div></div>
           {page==='all'&&<><div className="v2-searchwrap"><Search size={19}/><input ref={searchRef} value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search working tools..."/><kbd>Ctrl K</kbd></div><div className="v2-tabs">{groups.map(g=><button key={g} className={group===g?'selected':''} onClick={()=>setGroup(g)}>{g}</button>)}</div></>}
-          {cardGrid(page==='favorites'?favoriteTools:matched)}</>:
+          {cardGrid(page==='favorites'?favoriteTools:matched)}{page==='all'&&<AdSlot placement="tools"/>}</>:
         page==='recent'?<><div className="v2-pagehead"><div><span className="v2-kicker">YOUR DEVICE ONLY</span><h1>Recent activity</h1><p>Only tool names, input file names, output names and timestamps are saved in browser-local SQLite. File contents are never stored here.</p></div><button className="v2-secondary" disabled={history.length===0} onClick={()=>void eraseHistory()}>Clear history</button></div><HistoryTable entries={history} onOpen={openTool}/><p className="v2-hint">For privacy and disk space, downloads are not retained. Past results cannot be re-downloaded from this list; run the tool again with the original file.</p></>:
         page==='templates'?<><div className="v2-pagehead"><div><span className="v2-kicker">EDITABLE DESIGNS</span><h1>Document templates</h1><p>Fill forms, choose styles and colors, save local drafts, and print to PDF. No cloud account is required.</p></div></div>{cardGrid(allTools.filter(t=>t.category==='Templates'))}<div className="v2-roadmap"><div><BookMarked size={22}/><strong>More templates planned</strong><p>Quotation, receipt, purchase order, delivery note, certificate, cover letter, business card, ID badge, timesheet and product label templates are included in this release.</p></div><button className="v2-secondary" onClick={()=>go('catalog')}>See planned templates</button></div></>:
         page==='catalog'?<><div className="v2-pagehead"><div><span className="v2-kicker">PRODUCT ROADMAP · MULTIPLE CATEGORIES</span><h1>5,000-action tool catalog</h1><p>From your 5,000-item master backlog. Planned entries are not working converters until verified.</p></div><span className="v2-count">{filteredCatalog.length} ideas</span></div>
@@ -233,8 +239,19 @@ export default function App(){
           <div className="v2-pagination"><button className="v2-secondary" disabled={catalogPage===0} onClick={()=>setCatalogPage(p=>Math.max(0,p-1))}>Previous</button><span>Page {catalogPage+1} of {Math.max(1,Math.ceil(filteredCatalog.length/30))}</span><button className="v2-secondary" disabled={(catalogPage+1)*30>=filteredCatalog.length} onClick={()=>setCatalogPage(p=>p+1)}>Next</button></div>
         </>:
         page==='settings'?<><div className="v2-pagehead"><div><span className="v2-kicker">PERSONALIZE</span><h1>Appearance & preferences</h1><p>Make the workspace comfortable. Your selections are stored in your browser's SQLite database. The light theme is the default on new installations.</p></div></div><div className="v2-settingscards"><section className="v2-panel"><h2><Palette size={20}/> Theme mode</h2><div className="v2-themeoptions">{(['dark','light','system'] as const).map(t=><button key={t} className={theme===t?'selected':''} onClick={()=>void updateTheme(t)}>{t==='dark'?<Moon size={22}/>:t==='light'?<Sun size={22}/>:<Settings2 size={22}/>}<strong>{t.charAt(0).toUpperCase()+t.slice(1)}</strong>{theme===t&&<CheckCircle2 size={17}/>}</button>)}</div></section><section className="v2-panel"><h2><WandSparkles size={20}/> Accent color</h2><div className="v2-accentchoices">{accentColors.map(c=><button key={c} aria-label={`Set accent ${c}`} style={{background:c}} className={accent===c?'selected':''} onClick={()=>void updateAccent(c)}>{accent===c&&<Check size={21}/>}</button>)}<label>Custom <input type="color" value={accent} onChange={e=>void updateAccent(e.target.value)}/></label></div></section></div><div className="v2-panel v2-settingnote"><Database size={27}/><div><strong>Private SQLite workspace</strong><p>Favorites, activity metadata, saved CV/invoice drafts, theme and accent color persist locally using SQLite WASM and IndexedDB. If you clear site data, this information is deleted. Use the controls below to verify persistence or export your database.</p></div></div><div className="v2-panel" style={{marginTop:16}}><h2>Local SQLite database health</h2><div className="v2-result-actions"><button className="v2-primary" onClick={()=>void checkStorage()}>Test SQLite persistence</button><button className="v2-secondary" onClick={()=>void downloadDatabase()}>Export SQLite backup</button></div><p role="status" className="v2-hint">{dbTest||'Favorites, history and saved drafts are stored locally.'}</p></div></>:
-        page==='privacy'?<><div className="v2-pagehead"><div><span className="v2-kicker">PRIVACY FIRST</span><h1>Your documents stay in your workspace.</h1><p>Processing uses JavaScript, Canvas, PDF engines, and WebAssembly locally. Offline tools require cached assets. Optional advertisements use Google online services and may transmit ad-related data; document contents are not sent to ad providers.</p></div></div><div className="v2-privacygrid"><div className="v2-panel"><ShieldCheck size={27}/><h3>No document upload</h3><p>We do not transmit the files selected for conversion. No cloud conversion service is included.</p></div><div className="v2-panel"><Database size={27}/><h3>Browser-local SQLite</h3><p>Favorites, recent file-name metadata, preferences and template drafts stay in IndexedDB on this device.</p></div><div className="v2-panel"><Zap size={27}/><h3>Offline after install</h3><p>The service worker caches application assets for offline usage, subject to browser storage eviction. Test offline before relying on it.</p></div></div></>:null}
-      </main><footer className="v2-footer"><span>ToolNest © {new Date().getFullYear()} · Private, offline-first software</span><span>{allTools.length} tool routes & builders · 5,000 roadmap ideas</span></footer>
+        page==='privacy'?<><div className="v2-pagehead"><div><span className="v2-kicker">PRIVACY FIRST</span><h1>Your documents stay in your workspace.</h1><p>Processing uses JavaScript, Canvas, PDF engines, and WebAssembly locally. Offline tools require cached assets. Optional advertisements use Google online services and may transmit ad-related data; document contents are not sent to ad providers.</p></div></div><div className="v2-privacygrid"><div className="v2-panel"><ShieldCheck size={27}/><h3>No document upload</h3><p>We do not transmit the files selected for conversion. No cloud conversion service is included.</p></div><div className="v2-panel"><Database size={27}/><h3>Browser-local SQLite</h3><p>Favorites, recent file-name metadata, preferences and template drafts stay in IndexedDB on this device.</p></div><div className="v2-panel"><Zap size={27}/><h3>Offline after install</h3><p>The service worker caches application assets for offline usage, subject to browser storage eviction. Test offline before relying on it.</p></div></div></>:
+        page==='about'?<section className="v7-information"><span className="v2-kicker">ABOUT OUR PRODUCT</span><h1>Everyday tools, in one place.</h1><p>ToolNest is an independently built productivity workspace for PDF, office, image, audio, video, text and document-generation tasks. Many tools can process files in your browser without uploading them.</p><h2>How we build it</h2><p>We prioritize clear results, transparent implementation statuses and local-first handling. The searchable 5,000-action catalog is a development roadmap; it does not mean 5,000 processing engines are complete.</p><AdSlot placement="article"/></section>:
+        page==='faq'?<section className="v7-information"><span className="v2-kicker">HELP CENTER</span><h1>Frequently asked questions</h1>{[
+          ['Is ToolNest free?','Yes. There is no ToolNest account or credit balance required for the local tools. Optional ads may appear when online.'],
+          ['Do my files leave my device?','Local tools process files in your browser or app storage. Advertising and optional cloud imports involve network requests, but ToolNest does not upload the content of locally selected documents for conversion.'],
+          ['Are all 5,000 tools working?','No. The catalog lists ideas, planned tools and implemented routes. Available items open a processing interface; planned items are displayed as roadmap entries.'],
+          ['Can I use it offline?','Core local tools work offline after their assets have been installed or cached. Google ads, cloud file imports and uncached models require an internet connection.'],
+          ['Can I make a smaller PDF or video with an exact byte size?','Compression depends on content and format. You can specify a target and we can aim below it where an appropriate processor exists, but some source files cannot reach an arbitrary size without major quality loss.'],
+          ['Why does Android report a file permission problem?','Select the document using the Android system document picker. The app should process its cached copy; a signed build must still be tested with your specific Android version and file provider.'],
+          ['Are advertisements part of the file?','No. Ads live in page layouts, not generated PDF, CV, image, or other downloaded outputs.']
+        ].map(([q,a])=><details className="v7-faq-item" key={q}><summary>{q}</summary><p>{a}</p></details>)}<AdSlot placement="article"/></section>:
+        page==='contact'?<section className="v7-information"><span className="v2-kicker">GET IN TOUCH</span><h1>Contact ToolNest</h1><p>Report a problem, request a new tool, or share feedback. Include the tool name, platform (web, Android, iOS, or desktop), and steps to reproduce the issue. Never send private files or passwords in a bug report.</p><p>{import.meta.env.VITE_CONTACT_EMAIL ? <a className="v2-primary" href={`mailto:${import.meta.env.VITE_CONTACT_EMAIL}?subject=ToolNest%20feedback`}>Email support</a>: 'Support email has not been configured. Set VITE_CONTACT_EMAIL in the deployed web environment.'}</p><AdSlot placement="article"/></section>:null}
+      </main><AdSlot placement="footer"/><footer className="v7-footer no-print"><div className="v7-footer-grid"><section><img src="/brand-icon.png" alt="" width="54" height="54"/><h3>ToolNest</h3><p>Your independent productivity suite. Local-first tools, clear results and a growing roadmap.</p></section><section><h3>Explore</h3><button onClick={()=>go('all')}>All tools</button><button onClick={()=>go('templates')}>CV & document templates</button><button onClick={()=>go('catalog')}>5,000-action roadmap</button><button onClick={()=>{go('all');setGroup('Video')}}>Video tools</button><button onClick={()=>{go('all');setGroup('Audio')}}>Audio tools</button></section><section><h3>Company</h3><button onClick={()=>go('about')}>About us</button><button onClick={()=>go('contact')}>Contact us</button><button onClick={()=>go('faq')}>Frequently asked questions</button><button onClick={()=>go('privacy')}>Privacy & security</button></section><section><h3>Important information</h3><p>Ads may use external network services. Files selected for local conversion are not sold to advertisers.</p><p>Google AdSense placements are web-only. Desktop releases use no AdSense code.</p></section></div><div className="v7-footer-bottom">© {new Date().getFullYear()} ToolNest · Independent software · {allTools.length} tool interfaces · 5,000 cataloged actions</div></footer>
     </div>
   </div>;
 }

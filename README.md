@@ -1,3 +1,33 @@
+# ToolNest v0.7 — Web + Native Mobile + Desktop source
+
+**Current status:** upgraded source release; NOT a fully device-tested signed release. The original 5,000-item master catalog is searchable on web and mobile (and through the desktop-shared web UI), but most entries are a roadmap, not 5,000 verified processors.
+
+## New in v0.7
+
+- ToolNest uses the user-provided glossy four-petal mark throughout web, Android/iOS source and Electron desktop assets.
+- The web has an original warm orange/cream interface with large tool icons, a top category menu, nested sidebar categories, multi-column footer, About, FAQ and configurable Contact page. It is inspired by document-tool websites but not copied pixel-for-pixel.
+- The web CV editor shows visual previews for all **12** style choices, as well as a live full-page preview.
+- The copy-first sticker and emoji studio offers 200+ selectable Unicode emoji, decorative symbols, emoticon combinations, a custom-text composer, and optional SVG/print sheets. Emoji display depends on OS glyph support. Mobile adds a copy-to-clipboard emoji library and CV preview.
+- Android picker respects `DocumentPicker.getDocumentAsync({copyToCacheDirectory:true})`, avoiding an unnecessary second copy of cached file URLs. A user-authorized Android SAF folder-save fallback is implemented. **The actual phone error fix needs a signed APK and device testing.**
+- Web audio/video compression has an optional **approximate output size** target using bitrate calculations. Exact byte sizes cannot be guaranteed. PDF, Word and Excel target-size compression is NOT broadly implemented.
+- `apps/desktop` adds an Electron desktop source shell that serves the built React web app from loopback localhost; its source shares the web tools. Desktop release binaries are **not** built or device tested.
+- Five AdSense placement points are prepared for the website (home, tools, catalog, article, footer). They are disabled until genuine consent and publisher/slot configuration. AdSense is never requested from desktop. AdMob on mobile is still a **nonfunctional reserved banner**, not live ads.
+
+## Run locally
+
+```sh
+npm install
+npm run dev              # Web
+npm run start --workspace @local-tools/mobile   # Native mobile source in Expo
+npm run desktop:run      # Build web and launch Electron desktop shell
+```
+
+For an installable Windows NSIS application: `npm run desktop:win` on a supported build host. This requires the Electron and builder dependencies to install and has **not** been validated here. The browser web tools process locally; native Android media and full Office fidelity require additional platform engines.
+
+See `AD_MONETIZATION.md` for the platform restrictions and consent requirements.
+
+---
+
 # LocalTools v0.5 — Web and Native Mobile
 
 **Projects:** `apps/web` (React/Vite PWA), `apps/mobile` (Expo SDK 58 / React Native 0.88). A future desktop application can reuse browser UI but needs native conversion engines. The app is local-first and deliberately makes no file-content upload API.

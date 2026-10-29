@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Download, FileText, Plus, Printer, Save, Trash2 } from 'lucide-react';
+import { Download, FileText, Plus, Printer, Save, Trash2, Check } from 'lucide-react';
 import { deleteDocument, readDocument, saveDocument } from './localDb';
 
 export type TemplateId='cv-builder'|'invoice-builder';
@@ -33,7 +33,7 @@ export default function Templates({id,onBack,onCompleted}:{id:TemplateId;onBack:
     <div className="v2-pagehead no-print"><div><span className="v2-kicker">CUSTOMIZABLE LOCAL TEMPLATE</span><h1>{id==='cv-builder'?'CV & Resume Builder':'Invoice Generator'}</h1><p>Customize information, colors, and layout. Save a local draft or print to PDF without uploads.</p></div></div>
     <div className="template-layout"><section className="v2-panel template-editor no-print"><div className="v2-sectiontitle"><h2>{id==='cv-builder'?'Your professional profile':'Invoice details'}</h2></div>
       {id==='cv-builder'?<>
-        <div className="v2-template-options"><label className="v2-field"><span>Template</span><select value={cv.template} onChange={e=>cvUpdate('template',e.target.value)}>{cvLayouts.map(v=><option value={v} key={v}>{v.charAt(0).toUpperCase()+v.slice(1)}</option>)}</select></label><label className="v2-field"><span>Accent color</span><input type="color" value={cv.color} onChange={e=>cvUpdate('color',e.target.value)}/></label></div>
+        <div className="v7-cv-heading"><h3>Choose your resume design</h3><span>12 live preview layouts</span></div><div className="v7-cv-gallery" role="group" aria-label="Choose CV template">{cvLayouts.map(v=><button key={v} type="button" aria-pressed={cv.template===v} className={`v7-cv-choice ${cv.template===v?'selected':''}`} onClick={()=>cvUpdate('template',v)}><span className={`v7-cv-thumb v7-thumb-${v}`}><i className="v7-mini-head"/><i className="v7-mini-name"/><i className="v7-mini-line"/><i className="v7-mini-line short"/><i className="v7-mini-section"/><i className="v7-mini-line"/><i className="v7-mini-line short"/><i className="v7-mini-section"/><i className="v7-mini-line"/></span><span>{v.charAt(0).toUpperCase()+v.slice(1)}</span>{cv.template===v&&<Check size={14}/>}</button>)}</div><div className="v2-template-options"><label className="v2-field"><span>Accent color</span><input type="color" value={cv.color} onChange={e=>cvUpdate('color',e.target.value)}/></label></div>
         <div className="v2-two-col">{cvField('name','Full name')}{cvField('title','Professional title')}{cvField('email','Email')}{cvField('phone','Phone')}{cvField('location','Location')}{cvField('website','Website or portfolio')}</div>
         {cvField('summary','Profile summary',true)}{cvField('experience','Work experience (one entry per line)',true)}
         {cvField('education','Education (one entry per line)',true)}{cvField('skills','Skills (comma-separated)',true)}

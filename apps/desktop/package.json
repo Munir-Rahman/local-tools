@@ -1,0 +1,16 @@
+{
+  "name":"@local-tools/desktop",
+  "version":"0.1.0",
+  "private":true,
+  "description":"ToolNest offline desktop shell (shared React processing engines)",
+  "main":"main.cjs",
+  "scripts":{"start":"electron .","dist:win":"electron-builder --win nsis","dist:linux":"electron-builder --linux AppImage","dist:mac":"electron-builder --mac dmg"},
+  "devDependencies":{"electron":"^39.0.0","electron-builder":"^26.0.0"},
+  "build":{
+    "appId":"com.toolnest.desktop","productName":"ToolNest","asar":true,
+    "files":["main.cjs","local-server.cjs","assets/**","../../apps/web/dist/**"],
+    "extraResources":[{"from":"../web/dist","to":"web-dist"}],
+    "directories":{"output":"../../releases"},
+    "win":{"target":"nsis","icon":"assets/icon.ico"},"mac":{"target":"dmg"},"linux":{"target":"AppImage"}
+  }
+}
