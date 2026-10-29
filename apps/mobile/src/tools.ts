@@ -27,6 +27,7 @@ export const tools:MobileTool[] = [
   {id:'uuid-generator',name:'UUID generator',subtitle:'Create a unique identifier',kind:'text',icon:'key-outline',catalog:321,color:'#9162DB'},
   {id:'qr-generator',name:'QR generator',subtitle:'Create and export SVG QR',kind:'qr',icon:'qr-code-outline',catalog:201,popular:true,color:'#19A886'},
   {id:'cv-builder',name:'CV & Resume',subtitle:'Design and export a PDF CV',kind:'template',icon:'person-outline',catalog:433,popular:true,color:'#D18A32'},
+  {id:'sticker-maker',name:'Sticker & Emoji Studio',subtitle:'Create a printable 12-sticker sheet',kind:'template',icon:'happy-outline',popular:true,color:'#E47D49'},
   {id:'invoice-builder',name:'Invoice maker',subtitle:'Create a printable invoice',kind:'template',icon:'receipt-outline',catalog:421,color:'#D18A32'}
 ];
 export const byId = (id:string): MobileTool|undefined => tools.find(tool=>tool.id===id);

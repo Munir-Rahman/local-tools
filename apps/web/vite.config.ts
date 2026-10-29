@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'pwa-192.png', 'pwa-512.png'],
       manifest: {
-        name: 'LocalTools — Private File Utilities',
-        short_name: 'LocalTools',
+        name: 'ToolNest — Free Private Utilities',
+        short_name: 'ToolNest',
         description: 'Private offline PDF and image tools. Files never leave your browser.',
         theme_color: '#10223d',
         background_color: '#f6f8fc',

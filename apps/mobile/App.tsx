@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  ActivityIndicator, Alert, Appearance, KeyboardAvoidingView, Platform, Pressable,
+  ActivityIndicator, Alert, Appearance, BackHandler, Image, KeyboardAvoidingView, Platform, Pressable,
   ScrollView, StatusBar, StyleSheet, Text, TextInput, View, useWindowDimensions,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -14,15 +14,16 @@ import { tools, categories, byId } from './src/tools';
 import type { MobileTool, ToolId } from './src/tools';
 import { loadState, setFavorite, recordUse, clearActivity, savePreference, testPersistence, loadDraft, saveDraft } from './src/storage';
 import type { RecentItem } from './src/storage';
-import { processTool, shareResult, generateQr } from './src/engine';
+import { processTool, shareResult, generateQr, importPickedFile } from './src/engine';
 import type { PickedFile, EngineOutput, EngineOptions } from './src/engine';
-import { defaultInvoice, defaultResume, exportTemplatePdf } from './src/templates';
+import { defaultInvoice, defaultResume, exportTemplatePdf, exportStickerPdf, resumeLayouts } from './src/templates';
 import type { ResumeData, InvoiceData } from './src/templates';
-import catalog from './src/catalog.json';
+import catalog from './src/masterCatalog';
 
 type Tab = 'home'|'explore'|'saved'|'activity';
 type ThemeSetting = 'light'|'dark'|'system';
 const accentChoices=['#4775F5','#8059D7','#18A58B','#F28A4A','#DB5177'];
+const stickerEmojis=['✨','🌈','💡','🔥','🎯','💜','🌸','⭐','🦋','🚀','😊','🏆'];
 const defaultOptions:EngineOptions={pages:'1-2',angle:90,watermark:'CONFIDENTIAL',width:1200,quality:78,format:'jpg',inputText:''};
 const light={background:'#F5F7FC',surface:'#FFFFFF',text:'#18243A',muted:'#718099',border:'#E7EBF4',subtle:'#EEF2FA',hero:'#18274A',heroMuted:'#C6D4F6',shadow:'#B9C4DC',warning:'#FDF4E6',warningText:'#9A6126'};
 const dark={background:'#101827',surface:'#192538',text:'#F3F7FF',muted:'#A2B1C8',border:'#2D405A',subtle:'#233148',hero:'#132445',heroMuted:'#C6D4F6',shadow:'#060F20',warning:'#3A2B1B',warningText:'#F6C68D'};
@@ -75,6 +76,8 @@ function Main(){
   const [selectedFiles,setSelectedFiles]=useState<PickedFile[]>([]);const [options,setOptions]=useState<EngineOptions>(defaultOptions);
   const [result,setResult]=useState<EngineOutput|null>(null);const [error,setError]=useState('');const [busy,setBusy]=useState(false);
   const [resume,setResume]=useState<ResumeData>(defaultResume);const [invoice,setInvoice]=useState<InvoiceData>(defaultInvoice);
+  const [stickerEmoji,setStickerEmoji]=useState('✨');
+  const [toolOrigin,setToolOrigin]=useState<{tab:Tab;catalog:boolean}>({tab:'home',catalog:false});
   const [qrSvg,setQrSvg]=useState('');const [dbState,setDbState]=useState('');
   const [ready,setReady]=useState(false);
   const hydrate=useCallback(async()=>{
@@ -83,12 +86,20 @@ function Main(){
   useEffect(()=>{void hydrate();const listener=Appearance.addChangeListener(({colorScheme})=>setSystemMode(colorScheme==='dark'));return()=>listener.remove();},[hydrate]);
   useEffect(()=>{if(!tool||tool.id!=='qr-generator'){setQrSvg('');return;}let active=true;const t=setTimeout(()=>QRCode.toString(options.inputText||'https://example.com',{type:'svg',margin:1,width:240,color:{dark:accent,light:'#FFFFFF'}}).then(svg=>{if(active)setQrSvg(svg)}).catch(()=>setQrSvg('')),240);return()=>{active=false;clearTimeout(t);};},[tool,options.inputText,accent]);
   const go=(next:Tab)=>{setTab(next);setTool(null);setCatalogOpen(false);setSettingsOpen(false);setQuery('');setError('');setResult(null);};
-  const openTool=async(next:MobileTool)=>{setTool(next);setCatalogOpen(false);setSettingsOpen(false);setSelectedFiles([]);setOptions(defaultOptions);setResult(null);setError('');
+  const openTool=async(next:MobileTool)=>{setToolOrigin({tab,catalog:catalogOpen});setTool(next);setCatalogOpen(false);setSettingsOpen(false);setSelectedFiles([]);setOptions(defaultOptions);setResult(null);setError('');
     if(next.id==='cv-builder'||next.id==='invoice-builder'){
       const saved=await loadDraft(next.id).catch(()=>null);
-      if(saved && typeof saved==='object'){if(next.id==='cv-builder')setResume({...defaultResume,...saved as ResumeData});else setInvoice({...defaultInvoice,...saved as InvoiceData});}
+      if(saved && typeof saved==='object'){if(next.id==='cv-builder')setResume({...defaultResume,...saved as ResumeData});else setInvoice({...defaultInvoice,...saved as InvoiceData,items:Array.isArray((saved as InvoiceData).items)?(saved as InvoiceData).items:defaultInvoice.items});}
     }
   };
+  const goBack=useCallback(()=>{
+    if(tool){setTool(null);setTab(toolOrigin.tab);setCatalogOpen(toolOrigin.catalog);setError('');setResult(null);return true;}
+    if(settingsOpen){setSettingsOpen(false);return true;}
+    if(catalogOpen){setCatalogOpen(false);return true;}
+    if(tab!=='home'){setTab('home');return true;}
+    return false;
+  },[tool,toolOrigin,settingsOpen,catalogOpen,tab]);
+  useEffect(()=>{const subscription=BackHandler.addEventListener('hardwareBackPress',goBack);return()=>subscription.remove();},[goBack]);
   const favorite=async(id:string)=>{
     const on=!favorites.includes(id);
     setFavorites(prev=>on?[...prev,id]:prev.filter(x=>x!==id));
@@ -102,7 +113,7 @@ function Main(){
     try{
       const picked=await DocumentPicker.getDocumentAsync({type:image?'image/*':'application/pdf',multiple,copyToCacheDirectory:true});
       if(picked.canceled)return;
-      setSelectedFiles(picked.assets.map(a=>({uri:a.uri,name:a.name,size:a.size,mimeType:a.mimeType||undefined})));setResult(null);setError('');
+      const files=await Promise.all(picked.assets.map(async a=>({uri:await importPickedFile(a.uri,a.name),name:a.name,size:a.size,mimeType:a.mimeType||undefined})));setSelectedFiles(files);setResult(null);setError('');
     }catch(e){Alert.alert('File picker error',String(e));}
   };
   const run=async()=>{
@@ -113,6 +124,7 @@ function Main(){
       else if(tool.id==='qr-generator'){
         const data=await generateQr(options.inputText,accent);if(data.kind!=='file')throw Error('QR export failed.');output={kind:'file',name:data.name,uri:data.uri,mime:data.mime};
       }
+      else if(tool.id==='sticker-maker')output=await exportStickerPdf(options.inputText,stickerEmoji,accent);
       else if(tool.id==='cv-builder')output=await exportTemplatePdf('resume',{...resume,accent});
       else if(tool.id==='invoice-builder')output=await exportTemplatePdf('invoice',{...invoice,accent});
       else output=await processTool(tool.id,selectedFiles,options);
@@ -122,7 +134,7 @@ function Main(){
   const toolSearch=useMemo(()=>tools.filter(t=>(filter==='all'||t.kind===filter)&&`${t.name} ${t.subtitle}`.toLowerCase().includes(query.toLowerCase())),[filter,query]);
   const catalogueResults=useMemo(()=>catalog.filter(x=>`${x.name} ${x.category}`.toLowerCase().includes(query.toLowerCase())),[query]);
   const catalogMap=useMemo(()=>new Map(tools.filter(t=>t.catalog).map(t=>[t.catalog!,t])),[]);
-  const headerTitle=tool?tool.name:settingsOpen?'Settings':catalogOpen?'480-action roadmap':tab==='home'?'Workspace':tab==='explore'?'All tools':tab==='saved'?'Favorites':'Recent activity';
+  const headerTitle=tool?tool.name:settingsOpen?'Settings':catalogOpen?'5,000-action roadmap':tab==='home'?'Workspace':tab==='explore'?'All tools':tab==='saved'?'Favorites':'Recent activity';
   const saveDraftNow=async()=>{if(!tool)return;try{await saveDraft(tool.id,tool.id==='cv-builder'?resume:invoice);Alert.alert('Saved locally','Your template draft is saved in SQLite on this device.');}catch(e){Alert.alert('Cannot save draft',String(e));}};
   const changeTheme=(next:ThemeSetting)=>{setTheme(next);void savePreference('theme',next).catch(e=>Alert.alert('Theme not saved',String(e)));};
   const changeAccent=(next:string)=>{setAccent(next);void savePreference('accent',next).catch(e=>Alert.alert('Accent not saved',String(e)));};
@@ -131,9 +143,9 @@ function Main(){
   return <SafeAreaView style={{flex:1,backgroundColor:p.background}} edges={['top','bottom']}>
     <StatusBar barStyle={darkMode?'light-content':'dark-content'}/>
     <View style={[s.topbar,{backgroundColor:p.background,borderBottomColor:p.border}]}>
-      <Pressable accessibilityRole="button" onPress={()=>{if(tool)setTool(null);else if(settingsOpen||catalogOpen){setSettingsOpen(false);setCatalogOpen(false);}else go('home');}} style={s.topbarLeft}>
-        {tool||settingsOpen||catalogOpen?<View style={[s.roundButton,{backgroundColor:p.surface}]}><Glyph name="arrow-back" color={p.text} size={22}/></View>:<View style={[s.logo,{backgroundColor:accent}]}><Glyph name="layers" color="#FFFFFF" size={23}/></View>}
-        <View><Text style={[s.brand,{color:p.text}]}>{tool||settingsOpen||catalogOpen?'LocalTools':'localtools.'}</Text><Text style={{fontSize:10,color:p.muted,marginTop:1}}>{headerTitle}</Text></View>
+      <Pressable accessibilityRole="button" onPress={()=>goBack()} style={s.topbarLeft}>
+        {tool||settingsOpen||catalogOpen?<View style={[s.roundButton,{backgroundColor:p.surface}]}><Glyph name="arrow-back" color={p.text} size={22}/></View>:<Image source={require('./assets/icon.png')} style={s.logo} resizeMode="contain"/>}
+        <View><Text style={[s.brand,{color:p.text}]}>{tool||settingsOpen||catalogOpen?'ToolNest':'ToolNest'}</Text><Text style={{fontSize:10,color:p.muted,marginTop:1}}>{headerTitle}</Text></View>
       </Pressable>
       <View style={s.topbarRight}><View style={[s.offlinePill,{backgroundColor:darkMode?'#143A33':'#E7F7F0'}]}><View style={s.onlineDot}/><Text style={{color:darkMode?'#B7EDCF':'#1D8966',fontSize:10,fontWeight:'800'}}>On device</Text></View>
         <Pressable accessibilityLabel="Settings" accessibilityRole="button" onPress={()=>{setTool(null);setCatalogOpen(false);setSettingsOpen(true);}} style={[s.roundButton,{backgroundColor:p.surface}]}><Glyph name="settings-outline" color={p.text} size={19}/></Pressable>
@@ -160,11 +172,25 @@ function Main(){
           {tool.kind==='qr'&&<><InputField label="URL or text" value={options.inputText} onChange={v=>setOptions({...options,inputText:v})} p={p} placeholder="https://example.com"/><View style={[s.qrPreview,{backgroundColor:'#FFFFFF',borderColor:p.border}]}>{qrSvg?<SvgXml xml={qrSvg} width={190} height={190}/>:<ActivityIndicator color={accent}/>}</View></>}
           {tool.id==='cv-builder'&&<>
             <Text style={[s.panelHeading,{color:p.text}]}>Build your resume</Text>
-            <View style={s.chips}>{(['modern','classic','minimal'] as const).map(v=><Pressable key={v} onPress={()=>setResume({...resume,layout:v})} style={[s.chip,{backgroundColor:resume.layout===v?accent+'18':p.surface,borderColor:resume.layout===v?accent:p.border}]}><Text style={{color:resume.layout===v?accent:p.text,fontWeight:'700'}}>{v}</Text></Pressable>)}</View>
+            <View style={s.chips}>{resumeLayouts.map(v=><Pressable key={v} onPress={()=>setResume({...resume,layout:v})} style={[s.chip,{backgroundColor:resume.layout===v?accent+'18':p.surface,borderColor:resume.layout===v?accent:p.border}]}><Text style={{color:resume.layout===v?accent:p.text,fontWeight:'700'}}>{v}</Text></Pressable>)}</View>
             {(['name','role','email','phone','location','summary','skills','experience','education'] as const).map(key=><InputField key={key} label={key==='role'?'Professional title':key.charAt(0).toUpperCase()+key.slice(1)} value={resume[key]} onChange={v=>setResume({...resume,[key]:v})} p={p} multiline={['summary','skills','experience','education'].includes(key)}/>)}
           </>}
-          {tool.id==='invoice-builder'&&<><Text style={[s.panelHeading,{color:p.text}]}>Invoice details</Text>{(['business','client','number','date','item','quantity','price','currency','notes'] as const).map(key=><InputField key={key} label={key.charAt(0).toUpperCase()+key.slice(1)} value={invoice[key]} onChange={v=>setInvoice({...invoice,[key]:v})} p={p} keyboardType={['quantity','price'].includes(key)?'numeric':'default'} multiline={key==='notes'}/>)}
-          <Text style={[s.invoiceTotal,{color:p.text}]}>Total: {invoice.currency} {((Number(invoice.price)||0)*(Number(invoice.quantity)||0)).toFixed(2)}</Text></>}
+          {tool.id==='sticker-maker'&&<>
+            <Text style={[s.panelHeading,{color:p.text}]}>Printable sticker sheet · 12 designs</Text>
+            <InputField label="Sticker caption" placeholder="KEEP GOING!" value={options.inputText} onChange={v=>setOptions({...options,inputText:v})} p={p}/>
+            <Text style={[s.fieldLabel,{color:p.text}]}>Choose an emoji</Text><View style={s.chips}>{stickerEmojis.map(e=><Pressable key={e} onPress={()=>setStickerEmoji(e)} style={[s.chip,{backgroundColor:stickerEmoji===e?accent+'1b':p.surface,borderColor:stickerEmoji===e?accent:p.border}]}><Text style={{fontSize:23}}>{e}</Text></Pressable>)}</View>
+          </>}
+          {tool.id==='invoice-builder'&&<>
+            <Text style={[s.panelHeading,{color:p.text}]}>Invoice details</Text>
+            {(['business','client','number','date','currency','notes'] as const).map(key=><InputField key={key} label={key.charAt(0).toUpperCase()+key.slice(1)} value={invoice[key]} onChange={v=>setInvoice({...invoice,[key]:v})} p={p} multiline={key==='notes'}/>)}
+            <Text style={[s.panelHeading,{color:p.text,marginTop:6}]}>Bill items ({(invoice.items||[]).length})</Text>
+            {(invoice.items||[]).map((row,i)=><View key={row.id} style={{marginBottom:15,padding:12,borderWidth:1,borderColor:p.border,borderRadius:13}}>
+              <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center'}}><Text style={{fontWeight:'700',color:p.text}}>Item {i+1}</Text><Pressable disabled={invoice.items.length<=1} onPress={()=>setInvoice({...invoice,items:invoice.items.filter(x=>x.id!==row.id)})}><Glyph name="trash-outline" color={invoice.items.length<=1?p.muted:'#DE5362'}/></Pressable></View>
+              {(['description','quantity','price'] as const).map(key=><InputField key={key} label={key==='price'?'Unit price':key==='quantity'?'Quantity':'Description'} value={row[key]} p={p} keyboardType={key==='description'?'default':'numeric'} onChange={v=>setInvoice(prev=>({...prev,items:prev.items.map(x=>x.id===row.id?{...x,[key]:v}:x)}))}/>)}
+            </View>)}
+            <SecondaryButton label="Add another item" icon="add-circle-outline" p={p} accent={accent} onPress={()=>setInvoice(prev=>({...prev,items:[...(prev.items||[]),{id:Crypto.randomUUID(),description:'',quantity:'1',price:'0'}]}))}/>
+            <Text style={[s.invoiceTotal,{color:p.text,marginTop:16}]}>Total: {invoice.currency} {(invoice.items||[]).reduce((sum,x)=>sum+(Math.max(0,Number(x.quantity)||0)*Math.max(0,Number(x.price)||0)),0).toFixed(2)}</Text>
+          </>}
           {error!==''&&<View style={[s.message,{backgroundColor:darkMode?'#4A2730':'#FCE8EB'}]}><Glyph name="alert-circle-outline" color="#DE5362"/><Text style={{flex:1,color:darkMode?'#FFB0BC':'#9D3045',fontSize:12}}>{error}</Text></View>}
           <FilledButton label={busy?'Processing locally…':tool.kind==='template'?'Generate PDF':tool.id==='qr-generator'?'Export QR as SVG':tool.kind==='text'?'Run utility':'Process files'} icon={busy?'hourglass-outline':'sparkles-outline'} accent={accent} disabled={Boolean(busy||(pdfOrImage&&selectedFiles.length===0))} onPress={()=>void run()}/>
           {tool.kind==='template'&&<View style={{marginTop:10}}><SecondaryButton label="Save draft in SQLite" icon="save-outline" p={p} accent={accent} onPress={()=>void saveDraftNow()}/></View>}
@@ -175,16 +201,17 @@ function Main(){
         <Heading eyebrow="PREFERENCES" title="Make it yours" subtitle="Saved privately on this device." p={p}/>
         <View style={[s.panel,{backgroundColor:p.surface,borderColor:p.border}]}><Text style={[s.panelHeading,{color:p.text}]}>Appearance</Text><View style={s.chips}>{(['light','dark','system'] as const).map(t=><Pressable key={t} onPress={()=>changeTheme(t)} style={[s.chip,{backgroundColor:theme===t?accent+'19':p.surface,borderColor:theme===t?accent:p.border}]}><Text style={{color:theme===t?accent:p.text,fontWeight:'700'}}>{t.charAt(0).toUpperCase()+t.slice(1)}</Text></Pressable>)}</View>
         <Text style={[s.panelHeading,{color:p.text,marginTop:20}]}>Accent color</Text><View style={s.chips}>{accentChoices.map(c=><Pressable accessibilityLabel={`Choose color ${c}`} key={c} onPress={()=>changeAccent(c)} style={[s.colorSwatch,{backgroundColor:c,borderWidth:accent===c?3:0,borderColor:p.text}]}>{accent===c&&<Glyph name="checkmark" color="#fff" size={20}/>}</Pressable>)}</View></View>
-        <View style={[s.panel,{backgroundColor:p.surface,borderColor:p.border,marginTop:13}]}><Text style={[s.panelHeading,{color:p.text}]}>Storage and privacy</Text><Text style={[s.subtitle,{color:p.muted,marginBottom:14}]}>Favorites, recent activity and document drafts are stored in SQLite. Source files and outputs are not uploaded by LocalTools.</Text><SecondaryButton label="Test local SQLite" icon="server-outline" p={p} accent={accent} onPress={()=>void testPersistence().then(()=>Alert.alert('SQLite ready','Database write/read test passed.')).catch(e=>Alert.alert('SQLite failed',String(e)))}/><View style={{height:10}}/><SecondaryButton label="Clear activity history" icon="trash-outline" p={p} accent={accent} onPress={()=>Alert.alert('Clear history?','Your favorites and document drafts will remain.',[{text:'Cancel',style:'cancel'},{text:'Clear',style:'destructive',onPress:()=>void clearActivity().then(()=>setRecent([])).catch(e=>Alert.alert('Error',String(e)))}])}/></View>
-        <Pressable onPress={()=>{setCatalogOpen(true);setSettingsOpen(false);setQuery('');}} style={[s.linkRow,{backgroundColor:p.surface,borderColor:p.border}]}><Glyph name="library-outline" color={accent}/><Text style={{flex:1,color:p.text,fontWeight:'700'}}>Browse 480-tool roadmap</Text><Glyph name="chevron-forward" color={p.muted}/></Pressable>
+        <View style={[s.panel,{backgroundColor:p.surface,borderColor:p.border,marginTop:13}]}><Text style={[s.panelHeading,{color:p.text}]}>Storage and privacy</Text><Text style={[s.subtitle,{color:p.muted,marginBottom:14}]}>Favorites, recent activity and document drafts are stored in SQLite. Source files and outputs are not uploaded by ToolNest.</Text><SecondaryButton label="Test local SQLite" icon="server-outline" p={p} accent={accent} onPress={()=>void testPersistence().then(()=>Alert.alert('SQLite ready','Database write/read test passed.')).catch(e=>Alert.alert('SQLite failed',String(e)))}/><View style={{height:10}}/><SecondaryButton label="Clear activity history" icon="trash-outline" p={p} accent={accent} onPress={()=>Alert.alert('Clear history?','Your favorites and document drafts will remain.',[{text:'Cancel',style:'cancel'},{text:'Clear',style:'destructive',onPress:()=>void clearActivity().then(()=>setRecent([])).catch(e=>Alert.alert('Error',String(e)))}])}/></View>
+        <Pressable onPress={()=>{setCatalogOpen(true);setSettingsOpen(false);setQuery('');}} style={[s.linkRow,{backgroundColor:p.surface,borderColor:p.border}]}><Glyph name="library-outline" color={accent}/><Text style={{flex:1,color:p.text,fontWeight:'700'}}>Browse 5,000-tool roadmap</Text><Glyph name="chevron-forward" color={p.muted}/></Pressable>
       </>:catalogOpen?<>
-        <Heading eyebrow="PRODUCT ROADMAP" title="480 utility actions" subtitle="Every idea is listed. Only tools with native mobile engines can run here." p={p}/>
+        <Heading eyebrow="PRODUCT ROADMAP" title="5,000 utility actions" subtitle="Every idea is listed. Only tools with native mobile engines can run here." p={p}/>
         <View style={[s.searchBox,{backgroundColor:p.surface,borderColor:p.border}]}><Glyph name="search" color={p.muted}/><TextInput value={query} onChangeText={v=>{setQuery(v);setCatalogPage(0);}} placeholder="Search every planned tool…" placeholderTextColor={p.muted} style={[s.searchInput,{color:p.text}]}/></View>
         <View style={[s.countBanner,{backgroundColor:p.subtle}]}><Glyph name="information-circle-outline" color={accent}/><Text style={{flex:1,fontSize:12,color:p.muted}}>{tools.filter(t=>t.catalog).length} actions mapped to native mobile tools · remaining entries are planned.</Text></View>
         {catalogueResults.slice(catalogPage*40,catalogPage*40+40).map(entry=>{const mapped=catalogMap.get(entry.number);return <Pressable key={entry.number} onPress={()=>mapped&&void openTool(mapped)} style={[s.catalogRow,{backgroundColor:p.surface,borderColor:p.border}]}><Text style={{fontSize:11,fontWeight:'800',color:accent,minWidth:33}}>{String(entry.number).padStart(3,'0')}</Text><View style={{flex:1}}><Text style={{fontSize:13,fontWeight:'700',color:p.text}}>{entry.name}</Text><Text style={{fontSize:10,color:p.muted,marginTop:4}}>{entry.category}</Text></View><Text style={{fontSize:10,fontWeight:'700',color:mapped?'#179D7D':p.muted}}>{mapped?'OPEN':'PLANNED'}</Text></Pressable>})}
         <View style={[s.pageControls,{justifyContent:'space-between'}]}><SecondaryButton label="Previous" icon="chevron-back" p={p} accent={accent} onPress={()=>setCatalogPage(Math.max(0,catalogPage-1))}/><Text style={{color:p.muted,fontSize:12}}>{catalogPage+1}/{Math.max(1,Math.ceil(catalogueResults.length/40))}</Text><SecondaryButton label="Next" icon="chevron-forward" p={p} accent={accent} onPress={()=>setCatalogPage(Math.min(Math.ceil(catalogueResults.length/40)-1,catalogPage+1))}/></View>
       </>:tab==='home'?<>
         <View style={[s.hero,{backgroundColor:p.hero}]}><View style={s.heroOrbOne}/><View style={s.heroOrbTwo}/><View style={s.heroText}><View style={s.heroBadge}><Glyph name="shield-checkmark" color="#7DF1C7" size={12}/><Text style={{color:'#B8FBE2',fontSize:10,fontWeight:'800',letterSpacing:1}}>PRIVATE WORKSPACE</Text></View><Text style={s.heroHeadline}>Your files.{"\n"}<Text style={{color:'#92F2D0'}}>Your device.</Text></Text><Text style={{color:p.heroMuted,fontSize:12,lineHeight:18,marginTop:11,maxWidth:245}}>Powerful PDF, image and document tools. Zero uploads, even when offline.</Text><Pressable onPress={()=>go('explore')} style={[s.heroCta,{backgroundColor:'#FFFFFF'}]}><Text style={{color:'#20355F',fontWeight:'800',fontSize:12}}>Explore all tools</Text><Glyph name="arrow-forward" color="#20355F" size={17}/></Pressable></View><View style={s.heroArt}><View style={s.heroDocument}><Glyph name="document-text-outline" color="#EF5660" size={35}/><View style={{height:6,width:65,backgroundColor:'#E7EAF1',marginTop:14,borderRadius:4}}/><View style={{height:6,width:53,backgroundColor:'#E7EAF1',marginTop:6,borderRadius:4}}/></View><View style={s.heroLock}><Glyph name="lock-closed" color="#18A77E" size={22}/></View></View></View>
+        <View style={[s.adSlot,{backgroundColor:p.surface,borderColor:p.border}]}><Glyph name="megaphone-outline" color={p.muted} size={17}/><View style={{flex:1}}><Text style={{fontSize:11,color:p.muted,fontWeight:'700'}}>Advertisement</Text><Text style={{fontSize:10,color:p.muted}}>AdMob placement reserved · no ad request in this build</Text></View></View>
         <View style={[s.statsRow,{marginTop:17}]}>{[{value:String(tools.length),label:'Mobile tools',icon:'grid-outline'},{value:String(favorites.length),label:'Favorites',icon:'star-outline'},{value:String(recent.length),label:'Recent',icon:'time-outline'}].map(o=><View key={o.label} style={[s.statCard,{backgroundColor:p.surface,borderColor:p.border}]}><Glyph name={o.icon} color={accent} size={17}/><Text style={{fontSize:19,fontWeight:'900',color:p.text,marginTop:7}}>{o.value}</Text><Text style={{fontSize:10,color:p.muted,marginTop:2}}>{o.label}</Text></View>)}</View>
         <View style={s.sectionHeader}><View><Text style={[s.sectionTitle,{color:p.text}]}>Popular tools</Text><Text style={{color:p.muted,fontSize:12,marginTop:4}}>Fast, private and always with you</Text></View><Pressable onPress={()=>go('explore')}><Text style={{color:accent,fontSize:12,fontWeight:'800'}}>View all →</Text></Pressable></View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{gap:12,paddingRight:18}}>{tools.filter(t=>t.popular).map(t=><ToolTile key={t.id} tool={t} compact p={p} accent={accent} isSaved={favorites.includes(t.id)} onSave={()=>void favorite(t.id)} onOpen={()=>void openTool(t)}/>)}</ScrollView>
@@ -215,6 +242,7 @@ const s=StyleSheet.create({
   hero:{minHeight:252,borderRadius:23,overflow:'hidden',padding:24,position:'relative'},heroText:{zIndex:2},heroBadge:{flexDirection:'row',alignItems:'center',gap:6},heroHeadline:{color:'white',fontSize:31,fontWeight:'900',lineHeight:36,marginTop:13,letterSpacing:-1.2},heroCta:{flexDirection:'row',alignSelf:'flex-start',marginTop:20,borderRadius:11,alignItems:'center',gap:10,paddingVertical:12,paddingHorizontal:15},heroOrbOne:{position:'absolute',width:205,height:205,borderRadius:110,backgroundColor:'#3B5FAF',opacity:.35,right:-53,top:-48},heroOrbTwo:{position:'absolute',width:150,height:150,borderRadius:90,backgroundColor:'#4D6DD2',opacity:.23,right:37,bottom:-84},heroArt:{position:'absolute',right:-10,top:69,width:138,height:174,transform:[{rotate:'13deg'}]},heroDocument:{backgroundColor:'#FFFFFF',borderRadius:15,padding:20,width:109,height:140,shadowColor:'#02091A',shadowOpacity:.18,shadowRadius:10,elevation:4},heroLock:{width:48,height:48,borderRadius:14,backgroundColor:'#D8F9E9',position:'absolute',right:9,bottom:0,alignItems:'center',justifyContent:'center',transform:[{rotate:'-13deg'}]},
   statsRow:{flexDirection:'row',gap:10},statCard:{flex:1,borderWidth:1,borderRadius:14,padding:14,minWidth:0},sectionHeader:{marginTop:31,marginBottom:14,flexDirection:'row',justifyContent:'space-between',alignItems:'flex-end'},sectionTitle:{fontSize:19,fontWeight:'900',letterSpacing:-.45},categoryGrid:{flexDirection:'row',gap:10,flexWrap:'wrap'},categoryTile:{borderRadius:15,borderWidth:1,padding:15,width:'30%',minWidth:95,flexGrow:1,gap:2},roadmapBanner:{marginTop:25,borderWidth:1,borderRadius:17,padding:14,flexDirection:'row',alignItems:'center',gap:13},
   eyebrow:{color:'#4775F5',fontSize:10,fontWeight:'900',letterSpacing:1.5,marginBottom:9},heading:{fontSize:27,fontWeight:'900',letterSpacing:-1.1},subtitle:{fontSize:12,lineHeight:19,marginTop:5},searchBox:{height:51,borderWidth:1,borderRadius:13,flexDirection:'row',gap:9,alignItems:'center',paddingHorizontal:14,marginBottom:16},searchInput:{flex:1,fontSize:13,paddingVertical:8},categoryChips:{gap:8,paddingBottom:19,paddingRight:20},filterChip:{borderRadius:30,borderWidth:1,paddingHorizontal:15,paddingVertical:10,minHeight:40},tileGrid:{flexDirection:'row',flexWrap:'wrap',gap:12},toolTile:{width:'47%',flexGrow:1,minHeight:185,borderWidth:1,borderRadius:17,padding:15},tileTop:{flexDirection:'row',justifyContent:'space-between',alignItems:'flex-start'},tileIcon:{width:43,height:43,borderRadius:13,alignItems:'center',justifyContent:'center'},starButton:{padding:2,minWidth:26,minHeight:26,alignItems:'center',justifyContent:'center'},tileName:{fontSize:14,fontWeight:'800',marginTop:14},tileDescription:{fontSize:11,lineHeight:16,marginTop:6,minHeight:32},tileFooter:{marginTop:'auto',paddingTop:12,flexDirection:'row',alignItems:'center',justifyContent:'space-between'},
+  adSlot:{marginTop:18,padding:17,borderWidth:1,borderRadius:14,minHeight:90,flexDirection:'row',alignItems:'center',gap:12},
   bottomTabs:{height:72,borderTopWidth:1,flexDirection:'row',justifyContent:'space-around',alignItems:'center',paddingHorizontal:8},tab:{alignItems:'center',justifyContent:'center',flex:1,gap:2},tabIcon:{width:44,height:34,alignItems:'center',justifyContent:'center',borderRadius:12},
   toolHeading:{flexDirection:'row',gap:13,alignItems:'center',marginBottom:22},toolTitle:{fontSize:22,fontWeight:'900',letterSpacing:-.7},largeIcon:{width:54,height:54,borderRadius:16,justifyContent:'center',alignItems:'center'},panel:{borderWidth:1,borderRadius:18,padding:18},panelHeading:{fontSize:16,fontWeight:'800',marginBottom:14},dropzone:{borderWidth:1.5,borderStyle:'dashed',borderRadius:16,padding:23,alignItems:'center',marginBottom:15},uploadCircle:{width:58,height:58,borderRadius:17,alignItems:'center',justifyContent:'center',marginBottom:11},pickedFile:{borderBottomWidth:1,flexDirection:'row',alignItems:'center',gap:10,paddingVertical:10},field:{borderWidth:1,borderRadius:10,paddingHorizontal:13,minHeight:44,fontSize:13},fieldLabel:{fontSize:12,fontWeight:'700',marginBottom:7},chips:{flexDirection:'row',flexWrap:'wrap',gap:8,marginBottom:12},chip:{paddingHorizontal:15,paddingVertical:10,borderRadius:10,borderWidth:1,minHeight:40,justifyContent:'center'},primary:{height:49,borderRadius:12,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:9,marginTop:8,paddingHorizontal:14},primaryText:{fontSize:13,color:'#FFFFFF',fontWeight:'800'},secondaryButton:{minHeight:43,borderRadius:11,borderWidth:1,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:8,paddingHorizontal:14},message:{borderRadius:11,padding:13,flexDirection:'row',alignItems:'center',gap:9,marginBottom:14},outputText:{fontSize:12,lineHeight:19,borderRadius:9,padding:13,marginBottom:16},privacyFoot:{textAlign:'center',padding:20,fontSize:10,lineHeight:17},qrPreview:{borderWidth:1,borderRadius:15,alignItems:'center',paddingVertical:18,marginBottom:16},invoiceTotal:{fontSize:16,fontWeight:'800',marginBottom:13},colorSwatch:{width:38,height:38,borderRadius:20,alignItems:'center',justifyContent:'center'},
   emptyState:{borderWidth:1,borderRadius:17,padding:28,alignItems:'center',marginTop:13,gap:5},countBanner:{borderRadius:12,padding:12,flexDirection:'row',alignItems:'center',gap:9,marginBottom:15},catalogRow:{borderWidth:1,borderRadius:11,marginBottom:9,padding:13,flexDirection:'row',alignItems:'center',gap:10},pageControls:{flexDirection:'row',alignItems:'center',marginVertical:17,gap:8},linkRow:{padding:15,borderWidth:1,borderRadius:12,flexDirection:'row',alignItems:'center',gap:11,marginTop:14},activityRow:{padding:15,borderWidth:1,borderRadius:13,flexDirection:'row',gap:12,alignItems:'center',marginBottom:10},

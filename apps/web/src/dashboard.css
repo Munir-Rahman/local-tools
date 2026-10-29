@@ -44,7 +44,12 @@
   #print-document{box-shadow:none!important;border:0!important;padding:0!important;width:100%!important;min-height:0!important;margin:0!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}
   #print-document section{break-inside:avoid}
 }
-/* LocalTools v0.4: refined typography and accessible light theme */
+.v2-result-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:13px}
+.v2-result-actions button{display:flex;align-items:center;gap:7px}
+.v3-image-result{max-width:100%;max-height:370px;object-fit:contain;display:block;margin:0 0 18px;background:repeating-conic-gradient(#ddd 0 25%,#fff 0 50%) 50%/20px 20px}
+.v3-file-download{display:flex!important;align-items:center;gap:10px;width:100%;margin:9px 0;overflow-wrap:anywhere}
+
+/* v0.4 accessible typography and improved light-theme surfaces */
 .v2{font-family:Inter,'Segoe UI Variable','Segoe UI',ui-sans-serif,system-ui,sans-serif;font-size:15px;line-height:1.58}
 .v2-light{--v2-bg:#f5f7fb;--v2-card:#ffffff;--v2-text:#16243b;--v2-muted:#52647e;--v2-border:#dbe3ef;--v2-overlay:#eaf0fa;--v2-fade:#f0f4fa;--v2-field:#fff}
 .v2 .v2-card h3{font-size:15px}.v2 .v2-card p,.v2 .v2-pagehead p,.v2 .v2-headingrow p,.v2 .v2-field,.v2 .v2-navlink{font-size:13px}
@@ -54,8 +59,50 @@
 .v4-output>strong{font-size:clamp(17px,2vw,23px);line-height:1.5}
 .v4-template-paper{background:white;color:#243044;padding:38px;min-height:550px;border-top:7px solid var(--document-accent,#2563eb);font-size:13px;line-height:1.6;white-space:pre-wrap}
 .v4-template-paper h1{font-size:28px;letter-spacing:-.5px;margin:0 0 22px;color:var(--document-accent,#2563eb)}
-.v4-template-paper h2{font-size:17px;margin:16px 0 6px}.v4-template-paper p{margin:6px 0}
+.v4-template-paper h2{font-size:17px;margin:16px 0 6px}
+.v4-template-paper p{margin:6px 0}
 .v4-template-paper .v4-issuer{font-size:15px;font-weight:750}
 .v4-template-paper .v4-footer{margin-top:65px;border-top:1px solid #b9c4d4;padding-top:12px;font-size:11px;color:#647389}
-.v4-simple-table{width:100%;border-collapse:collapse;margin:25px 0}.v4-simple-table th,.v4-simple-table td{padding:9px;border-bottom:1px solid #dbe3ed;text-align:left}
-@media print{.v4-template-paper{box-shadow:none!important;border:0!important;min-height:0!important;padding:6mm!important}}
+@media print{.v4-template-paper{box-shadow:none!important;border:0!important;min-height:0!important;padding:6mm!important}.v4-template-paper h1{color:var(--document-accent,#2563eb)!important}}
+
+/* ToolNest v0.6: improved document controls, print-only badge, icon identity and sponsor slots */
+.v2{font-family:'Segoe UI Variable','Segoe UI',Inter,system-ui,sans-serif}
+.v2-brandmark{background:transparent;box-shadow:none}.v2-brandmark img{width:43px;height:43px;object-fit:contain;border-radius:11px}
+.v2-card{border-radius:15px;min-height:184px}.v2-card:hover{box-shadow:0 14px 35px #173e7e16}
+.v2-headingrow h1,.v2-pagehead h1{letter-spacing:-.8px}.v2-card h3{font-size:15px}
+.v6-ad-slot{margin:38px 0;min-height:135px;border:1px solid var(--v2-border);border-radius:16px;background:var(--v2-card);padding:15px 21px;display:flex;flex-direction:column;gap:8px}
+.v6-ad-label{color:var(--v2-muted);font-size:10px;letter-spacing:.9px;text-transform:uppercase;text-align:center}
+.v6-ad-empty{flex:1;min-height:76px;display:flex;align-items:center;justify-content:center;color:var(--v2-muted);font-size:12px;text-align:center;background:var(--v2-fade);border-radius:9px}
+.v6-lineitems-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:14px 0}.v6-lineitems-head h3{margin:0;font-size:15px}
+.v6-lineitem{display:grid;grid-template-columns:minmax(0,2fr) minmax(80px,.6fr) minmax(90px,.8fr) 35px;align-items:end;gap:8px;margin:8px 0;padding:13px;border:1px solid var(--v2-border);border-radius:13px;background:var(--v2-fade)}
+.v6-lineitem .v2-field{margin:0}.v6-remove-line{border:1px solid var(--v2-border);border-radius:8px;background:transparent;color:#e05062;height:41px;display:grid;place-items:center}
+.v6-badge-sheet{padding:32px;min-height:280px;border:0}.v6-badge-sheet>.v6-omit-on-badge{display:none}
+.v6-card-actual{--badge-accent:#2563eb;width:85.6mm;height:54mm;max-width:100%;border:1px solid #c8d4e7;border-radius:8px;overflow:hidden;font-family:'Segoe UI',Arial,sans-serif;color:#17324e;background:#fff;display:flex;flex-direction:column;margin:4px auto;box-shadow:0 8px 20px #182e4c20}
+.v6-badge-top{background:linear-gradient(120deg,var(--badge-accent),#162f5a);color:#fff;padding:9px 13px;display:flex;justify-content:space-between;align-items:center;font-size:12px}.v6-badge-top span{font-size:8px;letter-spacing:1px}
+.v6-badge-body{display:flex;align-items:center;gap:14px;padding:12px 15px;flex:1}.v6-badge-body strong{font-size:15px}.v6-badge-body p{font-size:10px;color:#395579;margin:2px 0}.v6-badge-body small{font-size:9px;color:#5d6e84}.v6-avatar{background:#e8f1fc;color:var(--badge-accent);font-weight:800;font-size:27px;width:52px;height:52px;border-radius:11px;display:grid;place-items:center;flex:0 0 52px}
+.v6-badge-bottom{border-top:1px solid #deebf5;display:flex;justify-content:space-between;padding:5px 13px;font-size:8px;color:#5e708a}
+.v6-emoji-picker{display:grid;grid-template-columns:repeat(8,1fr);gap:8px}.v6-emoji-picker button{font-size:24px;min-height:45px;border:1px solid var(--v2-border);background:var(--v2-fade);border-radius:10px}.v6-emoji-picker button.selected{border-color:var(--v2-accent);background:var(--v2-overlay)}
+.v6-sticker-sheet{background:#fff;padding:20px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;max-width:100%;margin:0 auto;min-height:410px}
+.v6-sticker{border:2px dashed;border-radius:20px;min-height:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:9px;overflow-wrap:anywhere}.v6-sticker>span{font-size:47px}.v6-sticker strong{font-size:12px}.v6-sticker small{font-size:8px;color:#657b96}.v6-sticker-round .v6-sticker{border-radius:50%}
+.cv-executive .cv-header{background:#e7edf7;border-top:8px solid #162c4e;padding:25px}.cv-executive h1{color:#162c4e}
+.cv-creative .cv-header{background:#fff0f5;border-radius:14px;padding:24px}.cv-creative .cv-content h2{border-left:5px solid var(--document-accent);padding-left:10px}
+.cv-academic h1,.cv-elegant h1{font-family:Georgia,serif;font-weight:500}.cv-academic .cv-header{text-align:center;border-bottom:2px double var(--document-accent)}
+.cv-technical h1{font-family:monospace}.cv-technical .cv-content h2{background:#e9f4f7;border:0;padding:8px}
+.cv-elegant .cv-content h2{font-family:Georgia,serif;font-style:italic;letter-spacing:1px}
+.cv-sidebar .cv-header{border-left:11px solid var(--document-accent);border-bottom:0;padding-left:22px}.cv-sidebar .cv-content h2{border-left:4px solid var(--document-accent);padding-left:9px}
+.cv-compact{padding:27px 30px;font-size:10px;line-height:1.35}.cv-compact .cv-content section{margin-top:12px}
+.cv-bold .cv-header{background:#142640;color:#fff;padding:24px}.cv-bold h1,.cv-bold .cv-role,.cv-bold .cv-contact{color:white}
+.cv-graduate .cv-header{background:#e7f7f1;border-top:6px solid #17936c;padding:24px}.cv-graduate h1{color:#138d6b}
+@media(max-width:650px){.v6-lineitem{grid-template-columns:1fr 1fr}.v6-lineitem .v2-field:first-child{grid-column:span 2}.v6-emoji-picker{grid-template-columns:repeat(4,1fr)}.v6-sticker-sheet{grid-template-columns:repeat(2,1fr)}.v6-card-actual{width:100%;height:auto;min-height:190px}}
+@media print{
+ .v6-ad-slot{display:none!important}
+ .v6-badge-sheet{padding:0!important;border:0!important;min-height:0!important}
+ .v6-card-actual{width:85.6mm!important;height:54mm!important;min-height:0!important;max-width:none!important;break-inside:avoid!important;border:1px solid #bbc8d8!important;border-radius:3mm!important;margin:0!important;box-shadow:none!important}
+ .v6-sticker-sheet{max-width:none!important;width:190mm!important;min-height:0!important;grid-template-columns:repeat(3,1fr)!important}
+ .v6-sticker{height:54mm!important;min-height:0!important}
+}
+.v6-pageback{margin-bottom:18px!important;display:inline-flex;align-items:center;gap:7px}
+@media print{.v6-badge-top{background:transparent!important;color:#193a60!important;border-bottom:3px solid var(--badge-accent)}.v6-badge-top span{color:#193a60!important}}
+
+@page badge{size:85.6mm 54mm;margin:0}
+@media print{#print-document.v6-badge-sheet{page:badge!important;margin:0!important;padding:0!important;width:85.6mm!important;min-height:54mm!important;overflow:hidden!important}}

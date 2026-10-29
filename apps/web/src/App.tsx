@@ -6,7 +6,10 @@ import { Activity, ArrowRight, BookMarked, Check, CheckCircle2, ChevronDown, Che
   Sparkles, Star, Sun, WandSparkles, X, Zap, QrCode, ScanBarcode, Type, Braces, Code2 } from 'lucide-react';
 import { tools as pdfTools } from '@local-tools/core';
 import type { ToolId } from '@local-tools/core';
-import { catalog, catalogCategories, catalogSupported } from './catalog';
+import { catalog, catalogSupported } from './catalog';
+import masterCatalog from './masterCatalog';
+import AdSlot from './AdSlot';
+import StickerStudio from './StickerStudio';
 import { utilityDefs } from './Utilities';
 import type { UtilityId } from './Utilities';
 import Utilities from './Utilities';
@@ -34,7 +37,8 @@ const allTools:ToolItem[]=[
   ...pdfTools.map(t=>({id:t.id,name:t.name,description:t.description,category:t.category,featured:t.featured})),
   ...utilityDefs.map(t=>({...t,featured:['json-tool','word-counter','qr-generator','barcode-generator'].includes(t.id)})),
   {id:'cv-builder',name:'CV & Resume Builder',description:'Build a professional resume using editable templates and print it as a PDF.',category:'Templates',featured:true},
-  {id:'invoice-builder',name:'Invoice Generator',description:'Create printable invoices with custom company details and colors.',category:'Templates',featured:true},
+  {id:'invoice-builder',name:'Invoice Generator',description:'Create detailed invoices with multiple items, discounts and printable bills.',category:'Templates',featured:true},
+  {id:'sticker-studio',name:'Sticker & Emoji Studio',description:'Make colorful printable stickers and SVG sheets with emoji and captions.',category:'Design',featured:true},
   ...Object.values(extras).map(spec=>({id:`action-${spec.number}`,name:catalog[spec.number-1].name,description:spec.help,category:spec.category,featured:false})),
   ...imageActionNumbers.map(n=>({id:`image-${n}`,name:catalog[n-1].name,description:'Offline image editing with browser Canvas.',category:'Images',featured:false})),
   ...pdfAdvancedNumbers.map(n=>({id:`pdf-${n}`,name:catalog[n-1].name,description:'Offline PDF operation using local processing.',category:'PDF',featured:false})),
@@ -45,13 +49,13 @@ const allTools:ToolItem[]=[
   ...mediaTools.map(t=>({id:t.id,name:t.name,description:t.description,category:t.category,featured:false})),
   ...officeTools.map(t=>({id:t.id,name:t.name,description:t.description,category:'Office',featured:false}))
 ];
-const starterFeatured=['merge-pdf','image-convert','json-tool','word-counter','qr-generator','barcode-generator','cv-builder','rotate-pdf'];
+const starterFeatured=['merge-pdf','image-convert','json-tool','word-counter','qr-generator','barcode-generator','cv-builder','sticker-studio'];
 const groups=['All','PDF','Images','File','Spreadsheets','Developer','Text','Calculators','Design','QR & Barcode','Templates','Computer','Physics','Chemistry','Electrical','Engineering','Video','Audio','Office'];
 const toolIcons:Record<string,typeof Files>={
   'merge-pdf':Files,'split-pdf':FileText,'pdf-to-png':Image,'images-to-pdf':Image,
   'compress-image':Image,'resize-image':Image,'image-convert':Image,'json-tool':Braces,
   'word-counter':Type,'text-case':Type,'base64-tool':Code2,'uuid-tool':Code2,'sha-tool':ShieldCheck,
-  'qr-generator':QrCode,'barcode-generator':ScanBarcode,'cv-builder':FileText,'invoice-builder':Printer,
+  'qr-generator':QrCode,'barcode-generator':ScanBarcode,'cv-builder':FileText,'invoice-builder':Printer,'sticker-studio':Sparkles,
 };
 const accentColors=['#3b82f6','#8b5cf6','#10b981','#f97316','#e11d48'];
 const toolIcon=(id:string)=>toolIcons[id]||FileText;
@@ -101,8 +105,17 @@ export default function App(){
     window.addEventListener('keydown',listener);return()=>window.removeEventListener('keydown',listener);
   },[]);
   const isDark=theme==='dark'||(theme==='system'&&systemDark);
-  function go(p:Page){setSelected(null);setPage(p);setSideOpen(false);setSearch('');setGroup('All');window.scrollTo(0,0);}
-  function openTool(id:string){setSelected(id);setSideOpen(false);window.scrollTo(0,0);}
+  function go(p:Page){
+    window.history.pushState({tn:true,page:p,selected:null},'',`#${p}`);
+    setSelected(null);setPage(p);setSideOpen(false);setSearch('');setGroup('All');window.scrollTo(0,0);
+  }
+  function back(){if(window.history.state?.tn)window.history.back();else{setSelected(null);setPage('all');}}
+  useEffect(()=>{
+    window.history.replaceState({tn:true,page:'dashboard',selected:null},'',location.pathname+location.search+'#dashboard');
+    const restore=(e:PopStateEvent)=>{setSelected(e.state?.selected||null);setPage(e.state?.page||'dashboard');setSideOpen(false);window.scrollTo(0,0)};
+    window.addEventListener('popstate',restore);return()=>window.removeEventListener('popstate',restore);
+  },[]);
+  function openTool(id:string){window.history.pushState({tn:true,page,selected:id},'',`#tool/${encodeURIComponent(id)}`);setSelected(id);setSideOpen(false);window.scrollTo(0,0);}
   async function favorite(id:string){
     const next=!favorites.includes(id);setFavorites(prev=>next?[id,...prev]:prev.filter(x=>x!==id));
     try{await toggleFavorite(id,next);}catch(e){setFavorites(prev=>next?prev.filter(x=>x!==id):[id,...prev]);setStorageError('Could not save favorite: '+(e instanceof Error?e.message:String(e)));}
@@ -120,9 +133,10 @@ export default function App(){
   const matched=useMemo(()=>allTools.filter(t=>(group==='All'||t.category===group)&&`${t.name} ${t.description} ${t.category}`.toLowerCase().includes(search.toLowerCase())),[group,search]);
   const featured=starterFeatured.map(id=>allTools.find(t=>t.id===id)!).filter(Boolean);
   const favoriteTools=allTools.filter(t=>favorites.includes(t.id));
-  const filteredCatalog=useMemo(()=>catalog.filter(t=>
+  const filteredCatalog=useMemo(()=>masterCatalog.filter(t=>
     (catalogGroup==='All categories'||t.category===catalogGroup)&&
     `${t.number} ${t.name} ${t.category}`.toLowerCase().includes(search.toLowerCase())),[catalogGroup,search]);
+  const masterCategories=useMemo(()=>[...new Set(masterCatalog.map(t=>t.category))],[]);
   const visibleCatalog=filteredCatalog.slice(catalogPage*30,(catalogPage+1)*30);
   const selectedCore=pdfTools.find(t=>t.id===selected);
   const selectedUtil=utilityDefs.find(t=>t.id===selected);
@@ -145,7 +159,7 @@ export default function App(){
     ...Object.fromEntries(officeTools.map(t=>[t.catalog,t.id]))};
   const sideLinks:[Page,typeof Files,string][]=[
     ['dashboard',LayoutDashboard,'Dashboard'],['all',Files,'All tools'],['favorites',Heart,'Favorites'],
-    ['recent',Clock3,'Recent activity'],['templates',BookMarked,'Templates'],['catalog',FolderHeart,'480-action catalog']
+    ['recent',Clock3,'Recent activity'],['templates',BookMarked,'Templates'],['catalog',FolderHeart,'5,000-action catalog']
   ];
   const style={'--v2-accent':accent} as CSSProperties;
   function Card({tool}:{tool:ToolItem}){
@@ -159,7 +173,7 @@ export default function App(){
   return <div className={`v2 ${isDark?'v2-dark':'v2-light'}`} style={style}>
     {sideOpen&&<button className="v2-overlay" aria-label="Close menu" onClick={()=>setSideOpen(false)}/>}
     <aside className={`v2-sidebar ${sideOpen?'is-open':''}`}>
-      <button className="v2-brand" onClick={()=>go('dashboard')}><span className="v2-brandmark"><LayoutDashboard size={22}/></span><span><strong>LocalTools</strong><small>Private Work Suite</small></span></button>
+      <button className="v2-brand" onClick={()=>go('dashboard')}><span className="v2-brandmark"><img src="/brand-icon.png" alt=""/></span><span><strong>ToolNest</strong><small>Free private tool suite</small></span></button>
       <div className="v2-navcaption">WORKSPACE</div>
       <nav aria-label="Main workspace">
         {sideLinks.map(([id,Icon,label])=><button key={id} className={`v2-navlink ${page===id&&!selected?'active':''}`} onClick={()=>go(id)}><Icon size={18}/><span>{label}</span>{id==='favorites'&&favorites.length>0&&<em>{favorites.length}</em>}</button>)}
@@ -174,49 +188,53 @@ export default function App(){
         <div className="v2-local"><span/> Local-only conversion · v0.4</div>
       </div>
     </aside>
-    <div className="v2-main"><header className="v2-topbar"><div className="v2-top-left"><button className="v2-mobile-menu" onClick={()=>setSideOpen(true)} aria-label="Open menu"><Menu size={21}/></button><span className="v2-breadcrumb">Workspace <ChevronRight size={15}/> <strong>{selected?(allTools.find(x=>x.id===selected)?.name||'Tool') : page==='catalog'?'480-action catalog':page==='recent'?'Recent activity':page==='all'?'All tools':page.charAt(0).toUpperCase()+page.slice(1)}</strong></span></div>
+    <div className="v2-main"><header className="v2-topbar"><div className="v2-top-left"><button className="v2-mobile-menu" onClick={()=>setSideOpen(true)} aria-label="Open menu"><Menu size={21}/></button><span className="v2-breadcrumb">Workspace <ChevronRight size={15}/> <strong>{selected?(allTools.find(x=>x.id===selected)?.name||'Tool') : page==='catalog'?'5,000-action catalog':page==='recent'?'Recent activity':page==='all'?'All tools':page.charAt(0).toUpperCase()+page.slice(1)}</strong></span></div>
       <div className="v2-top-actions"><span className="v2-device"><ShieldCheck size={16}/> Local processing</span><button className="v2-iconbtn" title={isDark?'Light theme':'Dark theme'} aria-label="Toggle dark theme" onClick={()=>void updateTheme(isDark?'light':'dark')}>{isDark?<Sun size={19}/>:<Moon size={19}/>}</button><button className="v2-help" onClick={()=>go('settings')}><Palette size={17}/> Appearance</button></div></header>
       <main className="v2-content">
         {storageError&&<div className="v2-warning" role="alert">{storageError}<button onClick={()=>setStorageError('')}><X size={16}/></button></div>}
+        {selected&&<button className="v2-secondary v6-pageback no-print" type="button" onClick={back}>← Back to previous page</button>}
         {!loaded&&<div className="v2-loading">Initializing private workspace…</div>}
-        {selectedExtra!==null&&extras[selectedExtra]?<ExtraWorkbench key={selectedExtra} number={selectedExtra} onBack={()=>go('catalog')} onCompleted={(name,result)=>{void activity(selected!,name,'Local input',result)}}/>:
-        selectedImage!==null&&imageActionNumbers.includes(selectedImage)?<ImageWorkbench key={selectedImage} number={selectedImage} onBack={()=>go('catalog')} onCompleted={(name,result)=>{void activity(selected!,name,'Local image',result)}}/>:
-        selectedPdfExtra!==null&&pdfAdvancedNumbers.includes(selectedPdfExtra)?<PdfAdvanced key={selectedPdfExtra} number={selectedPdfExtra} onBack={()=>go('catalog')} onCompleted={(name,result)=>{void activity(selected!,name,'Local PDF',result)}}/>:
-        selectedFile!==null&&fileActionNumbers.includes(selectedFile)?<FileWorkbench key={selectedFile} number={selectedFile} onBack={()=>go('catalog')} onCompleted={(name,result)=>{void activity(selected!,name,'Local file',result)}}/>:
-        selectedCsv!==null&&csvNumbers.includes(selectedCsv)?<CsvWorkbench key={selectedCsv} number={selectedCsv} onBack={()=>go('catalog')} onCompleted={(name,result)=>{void activity(selected!,name,'Local CSV',result)}}/>:
+        {selectedExtra!==null&&extras[selectedExtra]?<ExtraWorkbench key={selectedExtra} number={selectedExtra} onBack={back} onCompleted={(name,result)=>{void activity(selected!,name,'Local input',result)}}/>:
+        selectedImage!==null&&imageActionNumbers.includes(selectedImage)?<ImageWorkbench key={selectedImage} number={selectedImage} onBack={back} onCompleted={(name,result)=>{void activity(selected!,name,'Local image',result)}}/>:
+        selectedPdfExtra!==null&&pdfAdvancedNumbers.includes(selectedPdfExtra)?<PdfAdvanced key={selectedPdfExtra} number={selectedPdfExtra} onBack={back} onCompleted={(name,result)=>{void activity(selected!,name,'Local PDF',result)}}/>:
+        selectedFile!==null&&fileActionNumbers.includes(selectedFile)?<FileWorkbench key={selectedFile} number={selectedFile} onBack={back} onCompleted={(name,result)=>{void activity(selected!,name,'Local file',result)}}/>:
+        selectedCsv!==null&&csvNumbers.includes(selectedCsv)?<CsvWorkbench key={selectedCsv} number={selectedCsv} onBack={back} onCompleted={(name,result)=>{void activity(selected!,name,'Local CSV',result)}}/>:
         selected&&scienceTools.some(t=>t.id===selected)?<ScienceWorkbench key={selected} id={selected} onComplete={(name,result)=>{void activity(selected,name,'Local calculation',result)}}/>:
-        selected&&businessTemplates.some(t=>t.id===selected)?<BusinessTemplates key={selected} id={selected as typeof businessTemplates[number]['id']} onBack={()=>go('templates')} onCompleted={(name,result)=>{void activity(selected,name,'Local template',result)}}/>:
+        selected&&businessTemplates.some(t=>t.id===selected)?<BusinessTemplates key={selected} id={selected as typeof businessTemplates[number]['id']} onBack={back} onCompleted={(name,result)=>{void activity(selected,name,'Local template',result)}}/>:
         selected&&mediaTools.some(t=>t.id===selected)?<MediaWorkbench key={selected} id={selected as typeof mediaTools[number]['id']} onComplete={(name,result)=>{void activity(selected,name,'Local media',result)}}/>:
         selected&&officeTools.some(t=>t.id===selected)?<OfficeWorkbench key={selected} id={selected} onComplete={(name,result)=>{void activity(selected,name,'Local Office file',result)}}/>:
-        selectedCore?<PdfWorkspace key={selectedCore.id} initialToolId={selectedCore.id as ToolId} onBack={()=>go('all')} onCompleted={(id,name,file,result)=>{void activity(id,name,file,result)}}/>:
-        selectedUtil?<Utilities key={selectedUtil.id} id={selectedUtil.id as UtilityId} onBack={()=>go('all')} onCompleted={(name,result)=>{void activity(selectedUtil.id,name,'Text / local input',result)}}/>:
-        selectedTemplate?<Templates key={selected} id={selected as TemplateId} onBack={()=>go('templates')} onCompleted={(name,result)=>{void activity(selected,name,'Local template',result)}}/>:
+        selected==='sticker-studio'?<StickerStudio onBack={back} onCompleted={(name,result)=>{void activity(selected,name,'Local text',result)}}/>:
+        selectedCore?<PdfWorkspace key={selectedCore.id} initialToolId={selectedCore.id as ToolId} onBack={back} onCompleted={(id,name,file,result)=>{void activity(id,name,file,result)}}/>:
+        selectedUtil?<Utilities key={selectedUtil.id} id={selectedUtil.id as UtilityId} onBack={back} onCompleted={(name,result)=>{void activity(selectedUtil.id,name,'Text / local input',result)}}/>:
+        selectedTemplate?<Templates key={selected} id={selected as TemplateId} onBack={back} onCompleted={(name,result)=>{void activity(selected,name,'Local template',result)}}/>:
         page==='dashboard'?<>
           <div className="v2-headingrow"><div><h1>Welcome to your workspace <span className="v2-wave">✦</span></h1><p>Private file tools, offline-ready. No account or document upload required.</p></div><div className="v2-operational"><span/> Your device is the processor</div></div>
           <div className="v2-searchwrap"><Search size={20}/><input value={search} ref={searchRef} onChange={e=>setSearch(e.target.value)} onFocus={()=>{}} placeholder="Search tools like 'Merge PDF', 'QR code' or 'Resume'..."/><kbd>Ctrl K</kbd></div>
           <div className="v2-tabs">{groups.map(g=><button key={g} className={group===g?'selected':''} onClick={()=>setGroup(g)}>{g}</button>)}</div>
-          <div className="v2-overview"><div><span className="v2-stat-icon"><Files size={18}/></span><strong>{allTools.length}</strong><small>Tool routes (some simplified)</small></div><div><span className="v2-stat-icon"><Star size={18}/></span><strong>{favorites.length}</strong><small>Saved favorites</small></div><div><span className="v2-stat-icon"><Activity size={18}/></span><strong>{history.length}</strong><small>Recent operations stored locally</small></div><div><span className="v2-stat-icon"><BookMarked size={18}/></span><strong>480</strong><small>Feature ideas in roadmap</small></div></div>
+          <div className="v2-overview"><div><span className="v2-stat-icon"><Files size={18}/></span><strong>{allTools.length}</strong><small>Tool routes (some simplified)</small></div><div><span className="v2-stat-icon"><Star size={18}/></span><strong>{favorites.length}</strong><small>Saved favorites</small></div><div><span className="v2-stat-icon"><Activity size={18}/></span><strong>{history.length}</strong><small>Recent operations stored locally</small></div><div><span className="v2-stat-icon"><BookMarked size={18}/></span><strong>5,000</strong><small>Feature ideas in roadmap</small></div></div>
+          <AdSlot placement="home"/>
           <div className="v2-sectiontitle"><h2>{search||group!=='All'?'Matching tools':'Popular tools'}</h2><button className="v2-link" onClick={()=>go('all')}>View all <ArrowRight size={16}/></button></div>
           {cardGrid(search||group!=='All'?matched:featured)}
           <div className="v2-sectiontitle v2-topspace"><h2>Recent activity</h2><button className="v2-link" onClick={()=>go('recent')}>View history <ArrowRight size={16}/></button></div>
           <HistoryTable entries={history.slice(0,5)} onOpen={openTool}/>
-          <div className="v2-roadmap"><div><Sparkles size={24}/><strong>480 actions tracked, with working engines</strong><p>Explore the full backlog. Implemented web tools are available; Office fidelity, advanced security, offline AI and many media features still require separate engines.</p></div><button className="v2-primary" onClick={()=>go('catalog')}>Explore roadmap <ArrowRight size={16}/></button></div>
+          <div className="v2-roadmap"><div><Sparkles size={24}/><strong>5,000 ideas cataloged, with verified and planned engines</strong><p>Explore the full backlog. Implemented web tools are available; Office fidelity, advanced security, offline AI and many media features still require separate engines.</p></div><button className="v2-primary" onClick={()=>go('catalog')}>Explore roadmap <ArrowRight size={16}/></button></div>
         </>:
         page==='all'||page==='favorites'?<><div className="v2-pagehead"><div><span className="v2-kicker">YOUR TOOLBOX</span><h1>{page==='favorites'?'Favorite tools':'All available tools'}</h1><p>{page==='favorites'?'Starred utilities, saved privately in local SQLite.':'Open any of the implemented offline-capable utilities below.'}</p></div></div>
           {page==='all'&&<><div className="v2-searchwrap"><Search size={19}/><input ref={searchRef} value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search working tools..."/><kbd>Ctrl K</kbd></div><div className="v2-tabs">{groups.map(g=><button key={g} className={group===g?'selected':''} onClick={()=>setGroup(g)}>{g}</button>)}</div></>}
           {cardGrid(page==='favorites'?favoriteTools:matched)}</>:
         page==='recent'?<><div className="v2-pagehead"><div><span className="v2-kicker">YOUR DEVICE ONLY</span><h1>Recent activity</h1><p>Only tool names, input file names, output names and timestamps are saved in browser-local SQLite. File contents are never stored here.</p></div><button className="v2-secondary" disabled={history.length===0} onClick={()=>void eraseHistory()}>Clear history</button></div><HistoryTable entries={history} onOpen={openTool}/><p className="v2-hint">For privacy and disk space, downloads are not retained. Past results cannot be re-downloaded from this list; run the tool again with the original file.</p></>:
         page==='templates'?<><div className="v2-pagehead"><div><span className="v2-kicker">EDITABLE DESIGNS</span><h1>Document templates</h1><p>Fill forms, choose styles and colors, save local drafts, and print to PDF. No cloud account is required.</p></div></div>{cardGrid(allTools.filter(t=>t.category==='Templates'))}<div className="v2-roadmap"><div><BookMarked size={22}/><strong>More templates planned</strong><p>Quotation, receipt, purchase order, delivery note, certificate, cover letter, business card, ID badge, timesheet and product label templates are included in this release.</p></div><button className="v2-secondary" onClick={()=>go('catalog')}>See planned templates</button></div></>:
-        page==='catalog'?<><div className="v2-pagehead"><div><span className="v2-kicker">PRODUCT ROADMAP · 24 CATEGORIES</span><h1>480-action tool catalog</h1><p>Based on your uploaded catalog. Browsing a planned tool does not mean its conversion engine exists.</p></div><span className="v2-count">{filteredCatalog.length} ideas</span></div>
-          <div className="v2-catalog-filter"><div className="v2-searchwrap"><Search size={19}/><input ref={searchRef} placeholder="Search all 480 actions..." value={search} onChange={e=>{setSearch(e.target.value);setCatalogPage(0)}}/></div><label><span>Category</span><select value={catalogGroup} onChange={e=>{setCatalogGroup(e.target.value);setCatalogPage(0)}}><option>All categories</option>{catalogCategories.map(c=><option key={c}>{c}</option>)}</select><ChevronDown size={16}/></label></div>
+        page==='catalog'?<><div className="v2-pagehead"><div><span className="v2-kicker">PRODUCT ROADMAP · MULTIPLE CATEGORIES</span><h1>5,000-action tool catalog</h1><p>From your 5,000-item master backlog. Planned entries are not working converters until verified.</p></div><span className="v2-count">{filteredCatalog.length} ideas</span></div>
+          <AdSlot placement="catalog"/>
+          <div className="v2-catalog-filter"><div className="v2-searchwrap"><Search size={19}/><input ref={searchRef} placeholder="Search all 5,000 actions..." value={search} onChange={e=>{setSearch(e.target.value);setCatalogPage(0)}}/></div><label><span>Category</span><select value={catalogGroup} onChange={e=>{setCatalogGroup(e.target.value);setCatalogPage(0)}}><option>All categories</option>{masterCategories.map(c=><option key={c}>{c}</option>)}</select><ChevronDown size={16}/></label></div>
           <div className="v2-legend"><span><CheckCircle2 size={15}/> Available: opens a working tool</span><span><Clock3 size={15}/> Planned: roadmap only</span></div>
           <div className="v2-catalog-list">{visibleCatalog.map(t=>{const id=availableCatalog[t.number];return <div className="v2-catalog-row" key={t.number}><span className="v2-catalog-n">{String(t.number).padStart(3,'0')}</span><div><strong>{t.name}</strong><small>{t.category}</small></div>{id?<button className="v2-available" onClick={()=>openTool(id)}><Check size={14}/> Available <ArrowRight size={14}/></button>:<span className="v2-planned">Planned</span>}</div>})}</div>
           {filteredCatalog.length===0&&<div className="v2-empty">No actions match your search.</div>}
           <div className="v2-pagination"><button className="v2-secondary" disabled={catalogPage===0} onClick={()=>setCatalogPage(p=>Math.max(0,p-1))}>Previous</button><span>Page {catalogPage+1} of {Math.max(1,Math.ceil(filteredCatalog.length/30))}</span><button className="v2-secondary" disabled={(catalogPage+1)*30>=filteredCatalog.length} onClick={()=>setCatalogPage(p=>p+1)}>Next</button></div>
         </>:
         page==='settings'?<><div className="v2-pagehead"><div><span className="v2-kicker">PERSONALIZE</span><h1>Appearance & preferences</h1><p>Make the workspace comfortable. Your selections are stored in your browser's SQLite database. The light theme is the default on new installations.</p></div></div><div className="v2-settingscards"><section className="v2-panel"><h2><Palette size={20}/> Theme mode</h2><div className="v2-themeoptions">{(['dark','light','system'] as const).map(t=><button key={t} className={theme===t?'selected':''} onClick={()=>void updateTheme(t)}>{t==='dark'?<Moon size={22}/>:t==='light'?<Sun size={22}/>:<Settings2 size={22}/>}<strong>{t.charAt(0).toUpperCase()+t.slice(1)}</strong>{theme===t&&<CheckCircle2 size={17}/>}</button>)}</div></section><section className="v2-panel"><h2><WandSparkles size={20}/> Accent color</h2><div className="v2-accentchoices">{accentColors.map(c=><button key={c} aria-label={`Set accent ${c}`} style={{background:c}} className={accent===c?'selected':''} onClick={()=>void updateAccent(c)}>{accent===c&&<Check size={21}/>}</button>)}<label>Custom <input type="color" value={accent} onChange={e=>void updateAccent(e.target.value)}/></label></div></section></div><div className="v2-panel v2-settingnote"><Database size={27}/><div><strong>Private SQLite workspace</strong><p>Favorites, activity metadata, saved CV/invoice drafts, theme and accent color persist locally using SQLite WASM and IndexedDB. If you clear site data, this information is deleted. Use the controls below to verify persistence or export your database.</p></div></div><div className="v2-panel" style={{marginTop:16}}><h2>Local SQLite database health</h2><div className="v2-result-actions"><button className="v2-primary" onClick={()=>void checkStorage()}>Test SQLite persistence</button><button className="v2-secondary" onClick={()=>void downloadDatabase()}>Export SQLite backup</button></div><p role="status" className="v2-hint">{dbTest||'Favorites, history and saved drafts are stored locally.'}</p></div></>:
-        page==='privacy'?<><div className="v2-pagehead"><div><span className="v2-kicker">PRIVACY FIRST</span><h1>Your files never need our server.</h1><p>Processing uses JavaScript, Canvas, PDF engines, and WebAssembly locally. The initial app download needs a network connection; offline use requires assets to be cached.</p></div></div><div className="v2-privacygrid"><div className="v2-panel"><ShieldCheck size={27}/><h3>No document upload</h3><p>We do not transmit the files selected for conversion. No cloud conversion service is included.</p></div><div className="v2-panel"><Database size={27}/><h3>Browser-local SQLite</h3><p>Favorites, recent file-name metadata, preferences and template drafts stay in IndexedDB on this device.</p></div><div className="v2-panel"><Zap size={27}/><h3>Offline after install</h3><p>The service worker caches application assets for offline usage, subject to browser storage eviction. Test offline before relying on it.</p></div></div></>:null}
-      </main><footer className="v2-footer"><span>LocalTools © {new Date().getFullYear()} · Private, offline-first software</span><span>{allTools.length} tool routes & builders · 480 roadmap ideas</span></footer>
+        page==='privacy'?<><div className="v2-pagehead"><div><span className="v2-kicker">PRIVACY FIRST</span><h1>Your documents stay in your workspace.</h1><p>Processing uses JavaScript, Canvas, PDF engines, and WebAssembly locally. Offline tools require cached assets. Optional advertisements use Google online services and may transmit ad-related data; document contents are not sent to ad providers.</p></div></div><div className="v2-privacygrid"><div className="v2-panel"><ShieldCheck size={27}/><h3>No document upload</h3><p>We do not transmit the files selected for conversion. No cloud conversion service is included.</p></div><div className="v2-panel"><Database size={27}/><h3>Browser-local SQLite</h3><p>Favorites, recent file-name metadata, preferences and template drafts stay in IndexedDB on this device.</p></div><div className="v2-panel"><Zap size={27}/><h3>Offline after install</h3><p>The service worker caches application assets for offline usage, subject to browser storage eviction. Test offline before relying on it.</p></div></div></>:null}
+      </main><footer className="v2-footer"><span>ToolNest © {new Date().getFullYear()} · Private, offline-first software</span><span>{allTools.length} tool routes & builders · 5,000 roadmap ideas</span></footer>
     </div>
   </div>;
 }

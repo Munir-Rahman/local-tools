@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "LocalTools",
-    "slug": "localtools",
-    "scheme": "localtools",
+    "name": "ToolNest",
+    "slug": "toolnest",
+    "scheme": "toolnest",
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
@@ -17,7 +17,7 @@
       "edgeToEdgeEnabled": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1B2B53"
+        "backgroundColor": "#EAF2FF"
       }
     },
     "plugins": [
@@ -25,7 +25,8 @@
       "expo-sqlite"
     ],
     "extra": {
-      "privacy": "All document processing runs on the device"
+      "privacy": "All document processing runs on the device",
+      "brand": "ToolNest"
     },
     "icon": "./assets/icon.png"
   }

@@ -17,10 +17,29 @@ function validate(files:PickedFile[],allowed:string[],min=1){
   if(files.some(f=>f.size && f.size>MAX_BYTES))throw Error('Maximum size is 35 MB per file on mobile.');
   for(const f of files){if(!allowed.includes(ext(f)))throw Error(`Unsupported file type: ${f.name}`);}
 }
-async function getBytes(f:PickedFile){return await new File(f.uri).bytes();}
+async function getBytes(f:PickedFile){
+  try { return await new File(f.uri).bytes(); }
+  catch(err){
+    throw Error(`Cannot read ${f.name}. Select it again through the device file picker. Android permissions or document provider may have expired. ${String(err)}`);
+  }
+}
+export async function importPickedFile(uri:string,name:string):Promise<string>{
+  // Explicitly copy to our own app cache while the picker grants us access.
+  // This avoids content:// URI grants expiring between the picker and PDF processing.
+  const safe=name.replace(/[^a-zA-Z0-9._-]/g,'_').slice(-80)||'document';
+  const dest=new File(Paths.cache,`picked-${Date.now()}-${Math.floor(Math.random()*1e6)}-${safe}`);
+  try{ await new File(uri).copy(dest); return dest.uri; }
+  catch(err){
+    if(uri.startsWith('file://')){
+      try{await new File(uri).bytes();return uri;}catch{}
+    }
+    throw Error(`Android cannot grant access to this document. Try Files → Downloads, then select it again. ${String(err)}`);
+  }
+}
+
 function resultName(base:string,extension:string){return `${base}-${Date.now()}.${extension}`;}
 async function store(name:string,data:string|Uint8Array,mime:string):Promise<EngineOutput>{
-  const file=new File(Paths.cache,name);file.create({overwrite:true});file.write(data);
+  const file=new File(Paths.cache,name);file.create({overwrite:true});await file.write(data);
   return {kind:'file',name,uri:file.uri,mime};
 }
 function pageIndices(source:string,count:number){

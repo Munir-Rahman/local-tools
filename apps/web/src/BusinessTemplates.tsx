@@ -38,14 +38,18 @@ export default function BusinessTemplates({id,onCompleted,onBack}:{id:BusinessTe
     <div className="template-actions"><button type="button" className="v2-secondary" onClick={save}><Save size={16}/> Save draft</button><button type="button" className="v2-secondary" onClick={clear}><Trash2 size={16}/> Clear</button><button type="button" className="v2-primary" onClick={print}><Printer size={16}/> Print / PDF</button></div>
     {notice&&<p role="status" className="v2-hint">{notice}</p>}<p className="v2-hint">All data stays in this browser. Print and select “Save as PDF.”</p></section>
     <section className="v2-panel template-preview-panel"><div className="v2-sectiontitle no-print"><h2>Live preview</h2><span><Download size={16}/> Printable</span></div>
-      <article className="v4-template-paper" id="print-document" style={{'--document-accent':values.color} as React.CSSProperties}>
-       <p className="v4-issuer">{values.issuer||'Your organization'}</p>
-       <h1>{spec.name.toUpperCase()}</h1>
-       <p><strong>Reference:</strong> {values.reference}　 <strong>Date:</strong> {values.date}</p>
+      <article className={`v4-template-paper ${id==='id-card-template'||id==='business-card-template'?'v6-badge-sheet':''}`} id="print-document" style={{'--document-accent':values.color} as React.CSSProperties}>
+       <p className="v4-issuer v6-omit-on-badge">{values.issuer||'Your organization'}</p>
+       <h1 className="v6-omit-on-badge">{spec.name.toUpperCase()}</h1>
+       <p className="v6-omit-on-badge"><strong>Reference:</strong> {values.reference}　 <strong>Date:</strong> {values.date}</p>
        {id==='certificate-template'?<div style={{textAlign:'center',margin:'50px 0'}}><p>This certifies that</p><h1>{values.recipient||'Recipient name'}</h1><p>{values.body||'has successfully completed the specified achievement.'}</p><h2>{values.subject||'Achievement / Course'}</h2></div>:
-       id==='business-card-template'||id==='id-card-template'?<div style={{margin:'40px auto',maxWidth:370,padding:28,border:`2px solid ${values.color}`,borderRadius:15}}><h2>{values.issuer||'Name'}</h2><p>{values.subject||'Title / role'}</p><p>{values.recipient||'Contact'}</p><p>{values.body||'Additional information'}</p></div>:
+       id==='business-card-template'||id==='id-card-template'?<div className={`v6-card-actual ${id==='id-card-template'?'v6-idcard':'v6-businesscard'}`} style={{'--badge-accent':values.color} as React.CSSProperties}>
+        <div className="v6-badge-top"><strong>{values.issuer||'Your organization'}</strong><span>{id==='id-card-template'?'EMPLOYEE ID':'CONTACT'}</span></div>
+        <div className="v6-badge-body"><div className="v6-avatar">{(values.recipient||'P').trim().slice(0,1).toUpperCase()}</div><div><strong>{values.recipient||'Employee name'}</strong><p>{values.subject||'Job title'}</p><small>{values.body||'Employee details'}</small></div></div>
+        <div className="v6-badge-bottom"><span>ID: {values.reference}</span><span>{values.date}</span></div>
+       </div>:
        <><p><strong>To:</strong> {values.recipient||'Recipient / customer'}</p><h2>{values.subject||'Subject'}</h2><p>{values.body||'Enter document details in the form.'}</p>{financial&&<table className="v4-simple-table"><thead><tr><th>Item</th><th>Quantity</th><th>Price</th><th>Amount</th></tr></thead><tbody><tr><td>{values.subject||'Description'}</td><td>{values.quantity}</td><td>{values.currency} {Number(values.unitPrice||0).toFixed(2)}</td><td>{values.currency} {total.toFixed(2)}</td></tr></tbody></table>}{financial&&<h2 style={{textAlign:'right'}}>Total: {values.currency} {total.toFixed(2)}</h2>}</>}
-       <div className="v4-footer">{values.footer||'Generated locally with LocalTools · No uploads'}</div>
+       <div className="v4-footer v6-omit-on-badge">{values.footer||'Generated locally with LocalTools · No uploads'}</div>
       </article>
     </section></div></div>;
 }

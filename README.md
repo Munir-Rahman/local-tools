@@ -93,3 +93,14 @@ Run `npm install` at the repository root, then `npm run dev` or `npm run build`.
 ## Important limitations
 
 This is an experimental, expanding project, **not 480 production-ready converters**. The 480-row catalog remains complete and each action's actual availability is separately tracked. The browser cannot perform a remotely editable QR redirect entirely offline, cannot guarantee full-fidelity Office conversions, and cannot run every professional codec or AI workload in constrained devices. Simplified Office conversion workflows are explicitly titled and described as such. Do not use the formulas as a substitute for independent engineering checks. Browser ZIP-based processing can be resource intensive; stay within published file limits.
+
+## ToolNest v0.6 development additions
+
+- New ToolNest branding and custom original app assets.
+- 5,000-item searchable master catalog imported from `localtools_master_5000(1).md`. This is a roadmap, **not 5,000 working converters**.
+- Editable multi-line item invoices in web and mobile, with local save/print.
+- 12 CV layout choices on both platforms. Distinct print styles, with layout-dependent typography.
+- Print-sized CR80 employee ID badge previews on the web (85.6 × 54 mm; printable on A4) and a 12-sticker/emoji sheet generator.
+- Web page/tool history navigation and Android system Back button support.
+- Android file-picker import explicitly copies selected files to private app cache before reading, and awaits Expo SDK 58 asynchronous File.write operations. Still requires Android-device validation.
+- Advertising placeholders on web and mobile; web AdSense adapter only loads on approved HTTPS production domains after explicit consent bridge. See `AD_MONETIZATION.md` for AdMob configuration and why ordinary AdSense is not suitable for native desktop.
