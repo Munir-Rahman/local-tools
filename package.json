@@ -15,7 +15,9 @@
     "desktop:run": "npm run build && npm run start --workspace @local-tools/desktop",
     "desktop:win": "npm run build && npm run dist:win --workspace @local-tools/desktop",
     "desktop:check": "node --test apps/desktop/tests/*.test.cjs",
-    "windows:diagnose": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/diagnose-windows.ps1"
+    "windows:diagnose": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/diagnose-windows.ps1",
+    "mobile:doctor": "node scripts/mobile-doctor.cjs",
+    "mobile:repair": "node scripts/mobile-doctor.cjs --repair"
   },
   "engines": {
     "node": ">=20.19.0"
