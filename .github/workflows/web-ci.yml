@@ -1,0 +1,33 @@
+name: Web CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Type-check
+        run: npm run typecheck
+      - name: Build offline web application
+        run: npm run build
+      - name: Verify offline service worker output
+        run: |
+          test -f apps/web/dist/index.html
+          test -f apps/web/dist/sw.js
+          test -f apps/web/dist/manifest.webmanifest
+      - name: Upload web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: localtools-web
+          path: apps/web/dist
+          if-no-files-found: error
