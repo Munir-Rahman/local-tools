@@ -9,3 +9,10 @@ test('desktop local-only static server serves web files with cross-origin isolat
   const appRoute=await fetch(url+'/#tool/cv-builder');assert.equal(appRoute.status,200);
  }finally{server.close();fs.rmSync(root,{recursive:true,force:true})}
 });
+
+// The packaged desktop main entry must not rely on unbundled sibling modules.
+test('desktop packaged entrypoint embeds static server',()=>{
+ const main=fs.readFileSync(path.resolve(__dirname,'../main.cjs'),'utf8');
+ assert.ok(!main.includes("require('./local-server')"));
+ assert.match(main,/function startServer\(/);
+});

@@ -20,9 +20,7 @@
     "asar": true,
     "files": [
       "main.cjs",
-      "local-server.cjs",
-      "assets/**",
-      "../../apps/web/dist/**"
+      "assets/**"
     ],
     "extraResources": [
       {
