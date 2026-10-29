@@ -23,6 +23,6 @@ test('FFmpeg WebAssembly starts locally and transcodes a small WAV file',async({
   await page.locator('input[type=file]').setInputFiles({name:'short.wav',mimeType:'audio/wav',buffer:silentWave()});
   await page.getByRole('button',{name:'Convert on this device'}).click();
   await expect(page.getByText('FFmpeg engine ready on this device.')).toBeVisible({timeout:120000});
-  await expect(page.getByRole('link',{name:/Download localtools-result.mp3/})).toBeVisible({timeout:45000});
+  await expect(page.getByRole('link',{name:/Download short-ToolNest\.mp3/})).toBeVisible({timeout:45000});
   expect(exceptions).toEqual([]);
 });
