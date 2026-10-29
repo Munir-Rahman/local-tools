@@ -22,7 +22,6 @@ function stem(name: string): string {
   return name.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9 _.-]/g, '_').slice(0, 80) || 'document';
 }
 function pdfBlob(bytes: Uint8Array): Blob { return new Blob([new Uint8Array(bytes)], { type: 'application/pdf' }); }
-function rawBlob(bytes: Uint8Array, type: string): Blob { return new Blob([new Uint8Array(bytes)], { type }); }
 function textBlob(value: string): Blob { return new Blob([value], { type: 'application/json' }); }
 function assertImage(file: File): void {
   if (!/\.(jpe?g|png|webp)$/i.test(file.name)) throw new Error(`${file.name}: only JPG, PNG and WebP are supported.`);
