@@ -9,7 +9,7 @@ const menus:{id:MenuId;label:string;headline:string;description:string;categorie
   {id:'documents',label:'Document tools',headline:'Work with documents',description:'PDF, Office and file conversion tools you can use privately.',categories:['PDF','Office','File','Spreadsheets'],keywords:['merge','split','compress','convert','pdf','excel','word','extract']},
   {id:'images',label:'Image tools',headline:'Create and edit images',description:'Resize, convert, compress and create visual assets.',categories:['Images','Design','QR & Barcode'],keywords:['image','resize','compress','qr','barcode','crop','sticker']},
   {id:'media',label:'Audio & video',headline:'Media conversion tools',description:'Use local engines for compatible media files.',categories:['Audio','Video'],keywords:['audio','video','mp3','mp4','extract','convert']},
-  {id:'more',label:'Other tools',headline:'Explore more tools',description:'Developer utilities, calculators, templates and science tools.',categories:['Developer','Text','Calculators','Computer','Physics','Chemistry','Electrical','Engineering','Templates'],keywords:['json','word','calculator','cv','invoice','qr','base64']},
+  {id:'more',label:'Other tools',headline:'Explore more tools',description:'Developer utilities, calculators, templates and science tools.',categories:['Developer','Text','Calculators','Computer','Physics','Chemistry','Electrical','Engineering','Converters','Templates'],keywords:['json','word','calculator','convert','unit','cv','invoice','qr','base64']},
 ];
 const menuIcons=[FileText,FileImage,Grid2X2,BookOpen,Film,Headphones,Sparkles,ShieldCheck];
 export default function ToolNestHeader({tools,onOpenTool,onCategory,onPage,onToggleTheme,isDark,onOpenMobile,favoriteCount}:{
