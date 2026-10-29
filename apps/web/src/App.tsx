@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Activity, ArrowRight, BookMarked, Check, CheckCircle2, ChevronDown, ChevronRight, CircleHelp,
   Clock3, Database, FileCode2, FileText, Files, FolderHeart, Heart, Image, FileImage, FileArchive, Film, Headphones, Calculator, Laptop,
-  LayoutDashboard, Menu, Moon, Palette, Printer, Search, Settings2, ShieldCheck,
+  LayoutDashboard, Moon, Palette, Printer, Search, Settings2, ShieldCheck,
   Sparkles, Star, Sun, WandSparkles, X, Zap, QrCode, ScanBarcode, Type, Braces, Code2 } from 'lucide-react';
 import { tools as pdfTools } from '@local-tools/core';
 import type { ToolId } from '@local-tools/core';
@@ -59,7 +59,6 @@ const toolIcons:Record<string,typeof Files>={
   'qr-generator':QrCode,'barcode-generator':ScanBarcode,'cv-builder':FileText,'invoice-builder':Printer,'sticker-studio':Sparkles,
 };
 const accentColors=['#ef892c','#3b82f6','#10b981','#8b5cf6','#e11d48'];
-const toolIcon=(id:string)=>toolIcons[id]||FileText;
 const displayDate=(n:number)=>new Date(n).toLocaleString(undefined,{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});
 
 export default function App(){
