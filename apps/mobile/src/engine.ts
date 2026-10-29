@@ -7,6 +7,7 @@ import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib';
 import JSZip from 'jszip';
 import QRCode from 'qrcode';
 import type { ToolId } from './tools';
+import { extendedText } from './textEngines';
 
 export type PickedFile={name:string;uri:string;size?:number;mimeType?:string};
 export type EngineOutput={kind:'file';name:string;uri:string;mime:string}|{kind:'text';text:string};
@@ -32,14 +33,16 @@ export async function importPickedFile(uri:string,name:string):Promise<string>{
   const dest=new File(Paths.cache,`picked-${Date.now()}-${Math.floor(Math.random()*1e6)}-${safe}`);
   // DocumentPicker(copyToCacheDirectory:true) already returns an app-readable file:// copy.
   // Do not re-copy it via a restricted document provider; that triggered the READ permission error.
-  if(uri.startsWith('file://')){try{const f=new File(uri);if(f.exists && f.size>=0)return f.uri;}catch{/* fall back to copy */}}
+  if(uri.startsWith('file://')){
+    try {const f=new File(uri);if(f.exists && f.size>=0){await f.bytes();return f.uri;}}catch{/* fall back to copy */}
+  }
   try{ await new File(uri).copy(dest); if(!dest.exists)throw Error('No cached file created'); return dest.uri; }
   catch(err){throw Error(`Cannot access this document through the selected Android provider. Open Android Files, select the file using its system picker, and try again. No broad storage permission is required. Details: ${String(err)}`); }
 }
 
 function resultName(base:string,extension:string){return `${base}-${Date.now()}.${extension}`;}
 async function store(name:string,data:string|Uint8Array,mime:string):Promise<EngineOutput>{
-  const file=new File(Paths.cache,name);file.create({overwrite:true});await file.write(data);
+  const file=new File(Paths.document,name);file.create({overwrite:true});await file.write(data);
   return {kind:'file',name,uri:file.uri,mime};
 }
 function pageIndices(source:string,count:number){
@@ -122,7 +125,9 @@ async function imageTask(id:ToolId,files:PickedFile[],o:EngineOptions):Promise<E
   if(id==='flip-image')ctx.flip(ImageManipulator.FlipType.Horizontal);
   const rendered=await ctx.renderAsync();
   const result=await rendered.saveAsync({format:id==='convert-image'&&o.format==='png'?ImageManipulator.SaveFormat.PNG:ImageManipulator.SaveFormat.JPEG,compress:id==='compress-image'?o.quality/100:.92});
-  return {kind:'file',uri:result.uri,name:result.uri.split('/').pop()||'localtools-image.jpg',mime:id==='convert-image'&&o.format==='png'?'image/png':'image/jpeg'};
+  const outputName=resultName('image',id==='convert-image'&&o.format==='png'?'png':'jpg');
+  const persisted=new File(Paths.document,outputName);await new File(result.uri).copy(persisted);
+  return {kind:'file',uri:persisted.uri,name:outputName,mime:id==='convert-image'&&o.format==='png'?'image/png':'image/jpeg'};
 }
 export function runTextTool(id:ToolId,o:EngineOptions):string{
   const s=o.inputText;
@@ -132,7 +137,7 @@ export function runTextTool(id:ToolId,o:EngineOptions):string{
     case 'text-case':return s.toUpperCase();
     case 'text-clean':return s.trim().replace(/\s+/gu,' ');
     case 'url-encode':return encodeURIComponent(s);
-    default:throw Error('This text tool is not yet supported.');
+    default:return extendedText(id,s);
   }
 }
 export async function processTool(id:ToolId,files:PickedFile[],o:EngineOptions):Promise<EngineOutput>{
@@ -149,13 +154,11 @@ export async function generateQr(text:string,color:string){
 export async function shareResult(result:EngineOutput){
   if(result.kind!=='file')return;
   if(!(await Sharing.isAvailableAsync()))throw Error('File sharing is not available on this device.');
-  // Android sharing providers only grant access to app-owned local files.
   const original=new File(result.uri);
-  if(!original.exists)throw Error('Generated output is no longer present in local storage. Generate the file again.');
-  const safe=result.name.replace(/[^a-zA-Z0-9._-]/g,'_');
-  const shareFile=new File(Paths.cache,`share-${Date.now()}-${safe}`);
-  try{await original.copy(shareFile);await Sharing.shareAsync(shareFile.uri,{dialogTitle:'Save or share ToolNest output',mimeType:result.mime});}
-  catch(err){throw Error(`Could not open Android file sharing. Use “Save file to a folder” instead. ${String(err)}`);}
+  // Share the actual app-owned file. Copying back to temporary cache caused stale URIs.
+  if(!result.uri.startsWith('file://') || !original.exists)throw Error('Generated file is missing or inaccessible. Generate it again.');
+  try { await Sharing.shareAsync(original.uri,{dialogTitle:'Share ToolNest output',mimeType:result.mime}); }
+  catch(err){throw Error(`Android could not open the share sheet. Try saving to a folder. ${String(err)}`);}
 }
 export async function saveResultToFolder(result:EngineOutput):Promise<boolean>{
   if(result.kind!=='file')return false;
@@ -164,7 +167,9 @@ export async function saveResultToFolder(result:EngineOutput):Promise<boolean>{
   if(!grant.granted)return false;
   const target=await LegacyFS.StorageAccessFramework.createFileAsync(grant.directoryUri,result.name.replace(/\.[a-z0-9]+$/i,''),result.mime);
   // SAF requires writing to the user-authorized content URI, using base64 for binary data.
-  const b64=await new File(result.uri).base64();
+  let b64:string;
+  try { b64=await new File(result.uri).base64(); }
+  catch(err){throw Error(`The generated output cannot be read. Make a fresh output first; if this is an older APK, install the updated build. ${String(err)}`);}
   await LegacyFS.writeAsStringAsync(target,b64,{encoding:LegacyFS.EncodingType.Base64});
   return true;
 }

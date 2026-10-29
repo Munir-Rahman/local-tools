@@ -3,7 +3,8 @@ export type ToolId =
   | 'merge-pdf'|'split-pdf'|'extract-pages'|'rotate-pdf'|'number-pdf'|'watermark-pdf'|'images-to-pdf'|'pdf-info'
   | 'resize-image'|'compress-image'|'convert-image'|'rotate-image'|'flip-image'
   | 'json-format'|'word-count'|'text-case'|'text-clean'|'url-encode'|'uuid-generator'
-  | 'qr-generator'|'cv-builder'|'invoice-builder'|'sticker-maker';
+  | 'qr-generator'|'cv-builder'|'invoice-builder'|'sticker-maker'
+  | 'json-validate'|'json-minify'|'text-lowercase'|'text-titlecase'|'text-camel'|'text-snake'|'text-kebab'|'text-trim'|'text-unique'|'text-sort'|'text-reverse'|'text-normalize'|'text-accents'|'text-line-numbers'|'url-decode'|'html-encode'|'html-decode'|'text-slug'|'safe-filename'|'number-base'|'storage-convert'|'percentage-calc'|'discount-calc'|'temp-convert'|'date-difference'|'csv-json'|'json-csv'|'text-frequency'|'text-to-binary'|'binary-to-text';
 export type MobileTool = {id:ToolId;name:string;subtitle:string;kind:ToolKind;icon:string;catalog?:number;popular?:boolean;color:string};
 export const tools:MobileTool[] = [
   {id:'merge-pdf',name:'Merge PDF',subtitle:'Combine PDF documents',kind:'pdf',icon:'documents-outline',catalog:1,popular:true,color:'#EF5660'},
@@ -28,6 +29,36 @@ export const tools:MobileTool[] = [
   {id:'qr-generator',name:'QR generator',subtitle:'Create and export SVG QR',kind:'qr',icon:'qr-code-outline',catalog:201,popular:true,color:'#19A886'},
   {id:'cv-builder',name:'CV & Resume',subtitle:'Design and export a PDF CV',kind:'template',icon:'person-outline',catalog:433,popular:true,color:'#D18A32'},
   {id:'sticker-maker',name:'Sticker & Emoji Studio',subtitle:'Create a printable 12-sticker sheet',kind:'template',icon:'happy-outline',popular:true,color:'#E47D49'},
+  {id:'json-validate',name:'Validate JSON',subtitle:'Validate JSON syntax',kind:'text',icon:'code-slash-outline',catalog:302,color:'#9162DB'},
+  {id:'json-minify',name:'Minify JSON',subtitle:'Remove whitespace from JSON',kind:'text',icon:'code-slash-outline',catalog:303,color:'#9162DB'},
+  {id:'text-lowercase',name:'Lowercase text',subtitle:'Convert to lowercase',kind:'text',icon:'text-outline',catalog:286,color:'#9162DB'},
+  {id:'text-titlecase',name:'Title Case',subtitle:'Capitalize words',kind:'text',icon:'text-outline',catalog:287,color:'#9162DB'},
+  {id:'text-camel',name:'camelCase',subtitle:'Convert words to camelCase',kind:'text',icon:'code-outline',catalog:288,color:'#9162DB'},
+  {id:'text-snake',name:'snake_case',subtitle:'Convert words to snake_case',kind:'text',icon:'code-outline',catalog:289,color:'#9162DB'},
+  {id:'text-kebab',name:'kebab-case',subtitle:'Convert words to kebab-case',kind:'text',icon:'code-outline',catalog:290,color:'#9162DB'},
+  {id:'text-trim',name:'Trim spaces',subtitle:'Remove outside whitespace',kind:'text',icon:'remove-circle-outline',catalog:292,color:'#9162DB'},
+  {id:'text-unique',name:'Deduplicate lines',subtitle:'Keep first occurrence of each line',kind:'text',icon:'list-outline',catalog:293,color:'#9162DB'},
+  {id:'text-sort',name:'Sort text lines',subtitle:'Alphabetical line sort',kind:'text',icon:'list-outline',catalog:294,color:'#9162DB'},
+  {id:'text-reverse',name:'Reverse text',subtitle:'Reverse grapheme characters',kind:'text',icon:'swap-horizontal-outline',catalog:297,color:'#9162DB'},
+  {id:'text-normalize',name:'Normalize Unicode',subtitle:'Normalize text to NFC',kind:'text',icon:'text-outline',catalog:298,color:'#9162DB'},
+  {id:'text-accents',name:'Remove accents',subtitle:'Remove combining diacritics',kind:'text',icon:'language-outline',catalog:299,color:'#9162DB'},
+  {id:'text-line-numbers',name:'Number text lines',subtitle:'Add a number to each line',kind:'text',icon:'list-outline',catalog:300,color:'#9162DB'},
+  {id:'url-decode',name:'URL decoder',subtitle:'Decode URL percent encoding',kind:'text',icon:'link-outline',catalog:315,color:'#9162DB'},
+  {id:'html-encode',name:'HTML entity encoder',subtitle:'Escape markup characters',kind:'text',icon:'code-outline',catalog:316,color:'#9162DB'},
+  {id:'html-decode',name:'HTML entity decoder',subtitle:'Decode common HTML entities',kind:'text',icon:'code-outline',catalog:317,color:'#9162DB'},
+  {id:'text-slug',name:'Generate URL slug',subtitle:'Create URL-safe slugs',kind:'text',icon:'link-outline',color:'#9162DB'},
+  {id:'safe-filename',name:'Safe filename',subtitle:'Remove invalid filename characters',kind:'text',icon:'document-outline',catalog:371,color:'#9162DB'},
+  {id:'number-base',name:'Binary/Hex/Octal',subtitle:'Convert integer to multiple bases',kind:'text',icon:'calculator-outline',catalog:376,color:'#9162DB'},
+  {id:'storage-convert',name:'Byte size converter',subtitle:'Convert decimal and binary file units',kind:'text',icon:'calculator-outline',catalog:398,color:'#9162DB'},
+  {id:'percentage-calc',name:'Percentage calculator',subtitle:'Enter value,percentage',kind:'text',icon:'calculator-outline',catalog:381,color:'#9162DB'},
+  {id:'discount-calc',name:'Discount calculator',subtitle:'Enter price,discount percent',kind:'text',icon:'calculator-outline',catalog:382,color:'#9162DB'},
+  {id:'temp-convert',name:'Temperature converter',subtitle:'Enter e.g. 100 C or 212 F',kind:'text',icon:'thermometer-outline',catalog:393,color:'#9162DB'},
+  {id:'date-difference',name:'Days between dates',subtitle:'Enter YYYY-MM-DD,YYYY-MM-DD',kind:'text',icon:'calendar-outline',catalog:388,color:'#9162DB'},
+  {id:'csv-json',name:'CSV to JSON',subtitle:'Convert simple CSV rows to objects',kind:'text',icon:'code-outline',color:'#9162DB'},
+  {id:'json-csv',name:'JSON to CSV',subtitle:'Convert JSON array of objects',kind:'text',icon:'code-outline',color:'#9162DB'},
+  {id:'text-frequency',name:'Character frequency',subtitle:'Count characters and symbols',kind:'text',icon:'stats-chart-outline',color:'#9162DB'},
+  {id:'text-to-binary',name:'Text to Binary',subtitle:'Convert ASCII letters to binary',kind:'text',icon:'code-outline',catalog:376,color:'#9162DB'},
+  {id:'binary-to-text',name:'Binary to Text',subtitle:'Decode 8-bit ASCII binary bytes',kind:'text',icon:'code-outline',catalog:376,color:'#9162DB'},
   {id:'invoice-builder',name:'Invoice maker',subtitle:'Create a printable invoice',kind:'template',icon:'receipt-outline',catalog:421,color:'#D18A32'}
 ];
 export const byId = (id:string): MobileTool|undefined => tools.find(tool=>tool.id===id);

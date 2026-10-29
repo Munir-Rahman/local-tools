@@ -6,6 +6,7 @@ import {
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
+import { File as NativeFile } from 'expo-file-system';
 import * as Clipboard from 'expo-clipboard';
 import * as Crypto from 'expo-crypto';
 import QRCode from 'qrcode';
@@ -76,7 +77,7 @@ function Main(){
   const {width}=useWindowDimensions();const isWide=width>=440;
   const [tab,setTab]=useState<Tab>('home');const [tool,setTool]=useState<MobileTool|null>(null);
   const [settingsOpen,setSettingsOpen]=useState(false);const [catalogOpen,setCatalogOpen]=useState(false);
-  const [theme,setTheme]=useState<ThemeSetting>('light');const [accent,setAccent]=useState('#EF892C');
+  const [theme,setTheme]=useState<ThemeSetting>('light');const [accent,setAccent]=useState('#EF892C');const [profileName,setProfileName]=useState('');
   const [systemMode,setSystemMode]=useState(Appearance.getColorScheme()==='dark');
   const darkMode=theme==='dark'||(theme==='system'&&systemMode);const p=darkMode?dark:light;
   const [favorites,setFavorites]=useState<string[]>([]);const [recent,setRecent]=useState<RecentItem[]>([]);
@@ -89,7 +90,7 @@ function Main(){
   const [qrSvg,setQrSvg]=useState('');const [dbState,setDbState]=useState('');
   const [ready,setReady]=useState(false);
   const hydrate=useCallback(async()=>{
-    try{const data=await loadState();setFavorites(data.favorites);setRecent(data.recent);setTheme(data.theme);setAccent(data.accent);}catch(e){setDbState(`SQLite unavailable: ${String(e)}`);}finally{setReady(true);}
+    try{const data=await loadState();setFavorites(data.favorites);setRecent(data.recent);setTheme(data.theme);setAccent(data.accent);setProfileName(data.userName);}catch(e){setDbState(`SQLite unavailable: ${String(e)}`);}finally{setReady(true);}
   },[]);
   useEffect(()=>{void hydrate();const listener=Appearance.addChangeListener(({colorScheme})=>setSystemMode(colorScheme==='dark'));return()=>listener.remove();},[hydrate]);
   useEffect(()=>{if(!tool||tool.id!=='qr-generator'){setQrSvg('');return;}let active=true;const t=setTimeout(()=>QRCode.toString(options.inputText||'https://example.com',{type:'svg',margin:1,width:240,color:{dark:accent,light:'#FFFFFF'}}).then(svg=>{if(active)setQrSvg(svg)}).catch(()=>setQrSvg('')),240);return()=>{active=false;clearTimeout(t);};},[tool,options.inputText,accent]);
@@ -114,11 +115,21 @@ function Main(){
     try{await setFavorite(id,on);}catch(e){setFavorites(prev=>on?prev.filter(x=>x!==id):[...prev,id]);Alert.alert('Could not save favorite',String(e));}
   };
   const done=async(id:string,name:string,description:string)=>{try{await recordUse(id,name,description);const state=await loadState();setRecent(state.recent);}catch(e){Alert.alert('History could not be saved',String(e));}};
-  const choose=async()=>{
+  const choose=async(systemPicker=false)=>{
     if(!tool)return;
     const multiple=['merge-pdf','images-to-pdf'].includes(tool.id);
     const image=tool.kind==='image'||tool.id==='images-to-pdf';
     try{
+      if(systemPicker&&Platform.OS==='android'){
+        // Android alternative: Expo's own SAF picker for provider-specific URI problems.
+        const picked=multiple
+          ? await NativeFile.pickFileAsync({mimeTypes:image?'image/*':'application/pdf',multipleFiles:true})
+          : await NativeFile.pickFileAsync({mimeTypes:image?'image/*':'application/pdf'});
+        if(picked.canceled)return;
+        const selected=Array.isArray(picked.result)?picked.result:[picked.result];
+        const files=await Promise.all(selected.map(async file=>({uri:await importPickedFile(file.uri,file.name),name:file.name,size:file.size||undefined})));
+        setSelectedFiles(files);setResult(null);setError('');return;
+      }
       const picked=await DocumentPicker.getDocumentAsync({type:image?'image/*':'application/pdf',multiple,copyToCacheDirectory:true});
       if(picked.canceled)return;
       const files=await Promise.all(picked.assets.map(async a=>({uri:await importPickedFile(a.uri,a.name),name:a.name,size:a.size,mimeType:a.mimeType||undefined})));setSelectedFiles(files);setResult(null);setError('');
@@ -144,6 +155,7 @@ function Main(){
   const catalogMap=useMemo(()=>new Map(tools.filter(t=>t.catalog).map(t=>[t.catalog!,t])),[]);
   const headerTitle=tool?tool.name:settingsOpen?'Settings':catalogOpen?'5,000-action roadmap':tab==='home'?'Workspace':tab==='explore'?'All tools':tab==='saved'?'Favorites':'Recent activity';
   const saveDraftNow=async()=>{if(!tool)return;try{await saveDraft(tool.id,tool.id==='cv-builder'?resume:invoice);Alert.alert('Saved locally','Your template draft is saved in SQLite on this device.');}catch(e){Alert.alert('Cannot save draft',String(e));}};
+  const saveProfile=async()=>{try{await savePreference('userName',profileName.trim().slice(0,80));Alert.alert('Saved on this device','Your display name was saved locally.');}catch(e){Alert.alert('Could not save name',String(e));}};
   const changeTheme=(next:ThemeSetting)=>{setTheme(next);void savePreference('theme',next).catch(e=>Alert.alert('Theme not saved',String(e)));};
   const changeAccent=(next:string)=>{setAccent(next);void savePreference('accent',next).catch(e=>Alert.alert('Accent not saved',String(e)));};
   const pdfOrImage=tool&&(tool.kind==='pdf'||tool.kind==='image');
@@ -168,6 +180,7 @@ function Main(){
         <View style={[s.panel,{backgroundColor:p.surface,borderColor:p.border}]}>
           {pdfOrImage&&<><Text style={[s.panelHeading,{color:p.text}]}>1. Select your {tool.kind==='pdf'?'documents':'image'}</Text>
             <Pressable accessibilityRole="button" onPress={()=>void choose()} style={[s.dropzone,{borderColor:accent+'80',backgroundColor:p.subtle}]}><View style={[s.uploadCircle,{backgroundColor:accent+'18'}]}><Glyph name="cloud-upload-outline" color={accent} size={28}/></View><Text style={{color:p.text,fontWeight:'800',fontSize:14}}>Choose files from device</Text><Text style={{color:p.muted,fontSize:12,marginTop:5}}>No uploads · Files are processed locally</Text></Pressable>
+            {Platform.OS==='android'&&<View style={{marginBottom:12}}><SecondaryButton label="Try alternate Android file picker" icon="folder-open-outline" p={p} accent={accent} onPress={()=>void choose(true)}/></View>}
             {selectedFiles.map((f,i)=><View key={f.uri+i} style={[s.pickedFile,{borderColor:p.border}]}><Glyph name="document-attach-outline" color={accent}/><View style={{flex:1}}><Text style={{color:p.text,fontWeight:'700',fontSize:12}} numberOfLines={1}>{f.name}</Text><Text style={{color:p.muted,fontSize:10}}>{f.size?`${(f.size/1024/1024).toFixed(2)} MB`: 'Selected file'}</Text></View></View>)}
           </>}
           {tool.id==='extract-pages'&&<InputField label="Page range" placeholder="1-3,5" value={options.pages} onChange={v=>setOptions({...options,pages:v})} p={p}/>}
@@ -214,6 +227,12 @@ function Main(){
         <Text style={[s.privacyFoot,{color:p.muted}]}><Glyph name="shield-checkmark-outline" color="#19AA7D" size={14}/> Files are processed in app storage; sharing a file to another app is your choice.</Text>
       </>:settingsOpen?<>
         <Heading eyebrow="PREFERENCES" title="Make it yours" subtitle="Saved privately on this device." p={p}/>
+        <View style={[s.panel,{backgroundColor:p.surface,borderColor:p.border,marginBottom:14}]}>
+          <Text style={[s.panelHeading,{color:p.text}]}>Personal · Your workspace</Text>
+          <InputField label="Display name (local only)" placeholder="Your name" value={profileName} onChange={setProfileName} p={p}/>
+          <SecondaryButton label="Save personal preferences" icon="save-outline" p={p} accent={accent} onPress={()=>void saveProfile()}/>
+          <Text style={{color:p.muted,fontSize:11,marginTop:9}}>No account or network required. This name never leaves device storage through this feature.</Text>
+        </View>
         <View style={[s.panel,{backgroundColor:p.surface,borderColor:p.border}]}><Text style={[s.panelHeading,{color:p.text}]}>Appearance</Text><View style={s.chips}>{(['light','dark','system'] as const).map(t=><Pressable key={t} onPress={()=>changeTheme(t)} style={[s.chip,{backgroundColor:theme===t?accent+'19':p.surface,borderColor:theme===t?accent:p.border}]}><Text style={{color:theme===t?accent:p.text,fontWeight:'700'}}>{t.charAt(0).toUpperCase()+t.slice(1)}</Text></Pressable>)}</View>
         <Text style={[s.panelHeading,{color:p.text,marginTop:20}]}>Accent color</Text><View style={s.chips}>{accentChoices.map(c=><Pressable accessibilityLabel={`Choose color ${c}`} key={c} onPress={()=>changeAccent(c)} style={[s.colorSwatch,{backgroundColor:c,borderWidth:accent===c?3:0,borderColor:p.text}]}>{accent===c&&<Glyph name="checkmark" color="#fff" size={20}/>}</Pressable>)}</View></View>
         <View style={[s.panel,{backgroundColor:p.surface,borderColor:p.border,marginTop:13}]}><Text style={[s.panelHeading,{color:p.text}]}>Storage and privacy</Text><Text style={[s.subtitle,{color:p.muted,marginBottom:14}]}>Favorites, recent activity and document drafts are stored in SQLite. Source files and outputs are not uploaded by ToolNest.</Text><SecondaryButton label="Test local SQLite" icon="server-outline" p={p} accent={accent} onPress={()=>void testPersistence().then(()=>Alert.alert('SQLite ready','Database write/read test passed.')).catch(e=>Alert.alert('SQLite failed',String(e)))}/><View style={{height:10}}/><SecondaryButton label="Clear activity history" icon="trash-outline" p={p} accent={accent} onPress={()=>Alert.alert('Clear history?','Your favorites and document drafts will remain.',[{text:'Cancel',style:'cancel'},{text:'Clear',style:'destructive',onPress:()=>void clearActivity().then(()=>setRecent([])).catch(e=>Alert.alert('Error',String(e)))}])}/></View>
@@ -226,7 +245,7 @@ function Main(){
         {catalogueResults.slice(catalogPage*40,catalogPage*40+40).map(entry=>{const mapped=catalogMap.get(entry.number);return <Pressable key={entry.number} onPress={()=>mapped&&void openTool(mapped)} style={[s.catalogRow,{backgroundColor:p.surface,borderColor:p.border}]}><Text style={{fontSize:11,fontWeight:'800',color:accent,minWidth:33}}>{String(entry.number).padStart(3,'0')}</Text><View style={{flex:1}}><Text style={{fontSize:13,fontWeight:'700',color:p.text}}>{entry.name}</Text><Text style={{fontSize:10,color:p.muted,marginTop:4}}>{entry.category}</Text></View><Text style={{fontSize:10,fontWeight:'700',color:mapped?'#179D7D':p.muted}}>{mapped?'OPEN':'PLANNED'}</Text></Pressable>})}
         <View style={[s.pageControls,{justifyContent:'space-between'}]}><SecondaryButton label="Previous" icon="chevron-back" p={p} accent={accent} onPress={()=>setCatalogPage(Math.max(0,catalogPage-1))}/><Text style={{color:p.muted,fontSize:12}}>{catalogPage+1}/{Math.max(1,Math.ceil(catalogueResults.length/40))}</Text><SecondaryButton label="Next" icon="chevron-forward" p={p} accent={accent} onPress={()=>setCatalogPage(Math.min(Math.ceil(catalogueResults.length/40)-1,catalogPage+1))}/></View>
       </>:tab==='home'?<>
-        <View style={[s.hero,{backgroundColor:p.hero}]}><View style={s.heroOrbOne}/><View style={s.heroOrbTwo}/><View style={s.heroText}><View style={s.heroBadge}><Glyph name="shield-checkmark" color="#7DF1C7" size={12}/><Text style={{color:'#B8FBE2',fontSize:10,fontWeight:'800',letterSpacing:1}}>PRIVATE WORKSPACE</Text></View><Text style={s.heroHeadline}>Your files.{"\n"}<Text style={{color:'#92F2D0'}}>Your device.</Text></Text><Text style={{color:p.heroMuted,fontSize:12,lineHeight:18,marginTop:11,maxWidth:245}}>Powerful PDF, image and document tools. Zero uploads, even when offline.</Text><Pressable onPress={()=>go('explore')} style={[s.heroCta,{backgroundColor:'#FFFFFF'}]}><Text style={{color:'#20355F',fontWeight:'800',fontSize:12}}>Explore all tools</Text><Glyph name="arrow-forward" color="#20355F" size={17}/></Pressable></View><View style={s.heroArt}><View style={s.heroDocument}><Glyph name="document-text-outline" color="#EF5660" size={35}/><View style={{height:6,width:65,backgroundColor:'#E7EAF1',marginTop:14,borderRadius:4}}/><View style={{height:6,width:53,backgroundColor:'#E7EAF1',marginTop:6,borderRadius:4}}/></View><View style={s.heroLock}><Glyph name="lock-closed" color="#18A77E" size={22}/></View></View></View>
+        <View style={[s.hero,{backgroundColor:p.hero}]}><View style={s.heroOrbOne}/><View style={s.heroOrbTwo}/><View style={s.heroText}><View style={s.heroBadge}><Glyph name="shield-checkmark" color="#7DF1C7" size={12}/><Text style={{color:'#B8FBE2',fontSize:10,fontWeight:'800',letterSpacing:1}}>PRIVATE WORKSPACE</Text></View><Text style={s.heroHeadline}>{profileName.trim()?`Hello, ${profileName.trim().slice(0,22)}!\n`:''}Your files.{"\n"}<Text style={{color:'#92F2D0'}}>Your device.</Text></Text><Text style={{color:p.heroMuted,fontSize:12,lineHeight:18,marginTop:11,maxWidth:245}}>Powerful PDF, image and document tools. Zero uploads, even when offline.</Text><Pressable onPress={()=>go('explore')} style={[s.heroCta,{backgroundColor:'#FFFFFF'}]}><Text style={{color:'#20355F',fontWeight:'800',fontSize:12}}>Explore all tools</Text><Glyph name="arrow-forward" color="#20355F" size={17}/></Pressable></View><View style={s.heroArt}><View style={s.heroDocument}><Glyph name="document-text-outline" color="#EF5660" size={35}/><View style={{height:6,width:65,backgroundColor:'#E7EAF1',marginTop:14,borderRadius:4}}/><View style={{height:6,width:53,backgroundColor:'#E7EAF1',marginTop:6,borderRadius:4}}/></View><View style={s.heroLock}><Glyph name="lock-closed" color="#18A77E" size={22}/></View></View></View>
         <View style={[s.adSlot,{backgroundColor:p.surface,borderColor:p.border}]}><Glyph name="megaphone-outline" color={p.muted} size={17}/><View style={{flex:1}}><Text style={{fontSize:11,color:p.muted,fontWeight:'700'}}>Advertisement</Text><Text style={{fontSize:10,color:p.muted}}>AdMob placement reserved · no ad request in this build</Text></View></View>
         <View style={[s.statsRow,{marginTop:17}]}>{[{value:String(tools.length),label:'Mobile tools',icon:'grid-outline'},{value:String(favorites.length),label:'Favorites',icon:'star-outline'},{value:String(recent.length),label:'Recent',icon:'time-outline'}].map(o=><View key={o.label} style={[s.statCard,{backgroundColor:p.surface,borderColor:p.border}]}><Glyph name={o.icon} color={accent} size={17}/><Text style={{fontSize:19,fontWeight:'900',color:p.text,marginTop:7}}>{o.value}</Text><Text style={{fontSize:10,color:p.muted,marginTop:2}}>{o.label}</Text></View>)}</View>
         <View style={s.sectionHeader}><View><Text style={[s.sectionTitle,{color:p.text}]}>Popular tools</Text><Text style={{color:p.muted,fontSize:12,marginTop:4}}>Fast, private and always with you</Text></View><Pressable onPress={()=>go('explore')}><Text style={{color:accent,fontSize:12,fontWeight:'800'}}>View all →</Text></Pressable></View>
@@ -235,10 +254,11 @@ function Main(){
         <View style={s.categoryGrid}>{categories.filter(c=>c.id!=='all').map(c=><Pressable key={c.id} onPress={()=>{setFilter(c.id);go('explore');setFilter(c.id);}} style={[s.categoryTile,{backgroundColor:p.surface,borderColor:p.border}]}><Glyph name={c.icon} color={accent} size={22}/><Text style={{color:p.text,fontSize:12,fontWeight:'700',marginTop:8}}>{c.label}</Text><Glyph name="chevron-forward" color={p.muted} size={14}/></Pressable>)}</View>
         <Pressable onPress={()=>{setCatalogOpen(true);setQuery('');}} style={[s.roadmapBanner,{backgroundColor:p.surface,borderColor:p.border}]}><View style={[s.largeIcon,{backgroundColor:'#9170DB22'}]}><Glyph name="library-outline" color="#9170DB" size={24}/></View><View style={{flex:1}}><Text style={{color:p.text,fontSize:14,fontWeight:'800'}}>5,000-action roadmap</Text><Text style={{color:p.muted,fontSize:11,marginTop:5}}>Explore upcoming tools for every platform</Text></View><Glyph name="chevron-forward" color={accent}/></Pressable>
       </>:tab==='explore'?<>
-        <Heading eyebrow="ALL OFFLINE TOOLS" title="Your private toolbox" subtitle="Choose a utility and process files right on your phone." p={p}/>
+        <Heading eyebrow="ALL OFFLINE TOOLS" title="Your private toolbox" subtitle="Run a verified local tool below, or browse all 5,000 planned and available actions." p={p}/>
         <View style={[s.searchBox,{backgroundColor:p.surface,borderColor:p.border}]}><Glyph name="search-outline" color={p.muted}/><TextInput placeholder="Search PDF, image, text…" placeholderTextColor={p.muted} value={query} onChangeText={setQuery} style={[s.searchInput,{color:p.text}]}/>{query!==''&&<Pressable onPress={()=>setQuery('')}><Glyph name="close-circle" color={p.muted}/></Pressable>}</View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.categoryChips}>{categories.map(c=><Pressable key={c.id} onPress={()=>setFilter(c.id)} style={[s.filterChip,{borderColor:filter===c.id?accent:p.border,backgroundColor:filter===c.id?accent:p.surface}]}><Text style={{color:filter===c.id?'white':p.text,fontWeight:'700',fontSize:12}}>{c.label}</Text></Pressable>)}</ScrollView>
-        <Text style={{color:p.muted,fontSize:12,marginBottom:14}}>{toolSearch.length} tools available on Android / iOS</Text>
+        <Pressable accessibilityRole="button" onPress={()=>{setCatalogOpen(true);setCatalogPage(0);setQuery('');}} style={[s.roadmapBanner,{backgroundColor:p.surface,borderColor:p.border,marginTop:0,marginBottom:14}]}><Glyph name="library-outline" color={accent}/><View style={{flex:1}}><Text style={{fontWeight:'800',color:p.text}}>Browse all 5,000 actions</Text><Text style={{fontSize:11,color:p.muted}}>Planned entries are labeled, not simulated.</Text></View><Glyph name="chevron-forward" color={accent}/></Pressable>
+        <Text style={{color:p.muted,fontSize:12,marginBottom:14}}>{toolSearch.length} working tools on this device · {catalog.length.toLocaleString()} roadmap actions</Text>
         <View style={s.tileGrid}>{toolSearch.map(t=><ToolTile key={t.id} tool={t} p={p} accent={accent} isSaved={favorites.includes(t.id)} onSave={()=>void favorite(t.id)} onOpen={()=>void openTool(t)}/>)}</View>
       </>:tab==='saved'?<>
         <Heading eyebrow="PERSONAL COLLECTION" title="Your favorites" subtitle="One-tap access to the tools you use most." p={p}/>

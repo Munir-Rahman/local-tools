@@ -31,7 +31,7 @@ import BusinessTemplates, {businessTemplates} from './BusinessTemplates';
 import MediaWorkbench, {mediaTools} from './MediaWorkbench';
 import OfficeWorkbench, {officeTools} from './OfficeWorkbench';
 
-type Page='dashboard'|'all'|'favorites'|'recent'|'catalog'|'templates'|'settings'|'privacy'|'about'|'faq'|'contact';
+type Page='dashboard'|'all'|'favorites'|'recent'|'catalog'|'templates'|'settings'|'privacy'|'about'|'faq'|'contact'|'personal';
 type ToolItem={id:string;name:string;description:string;category:string;featured?:boolean};
 const allTools:ToolItem[]=[
   ...pdfTools.map(t=>({id:t.id,name:t.name,description:t.description,category:t.category,featured:t.featured})),
@@ -72,6 +72,8 @@ export default function App(){
   const [history,setHistory]=useState<ActivityEntry[]>([]);
   const [theme,setTheme]=useState<'dark'|'light'|'system'>('light');
   const [accent,setAccent]=useState('#ef892c');
+  const [displayName,setDisplayName]=useState('');
+  const [profileStatus,setProfileStatus]=useState('');
   const [systemDark,setSystemDark]=useState(true);
   const [sideOpen,setSideOpen]=useState(false);
   const [storageError,setStorageError]=useState('');
@@ -87,7 +89,7 @@ export default function App(){
     let live=true;
     readLocalState().then(data=>{
       if(!live)return;
-      setFavorites(data.favorites);setHistory(data.history);
+      setFavorites(data.favorites);setHistory(data.history);setDisplayName((data.preferences.displayName||'').slice(0,80));
       if(['light','dark','system'].includes(data.preferences.theme))setTheme(data.preferences.theme as typeof theme);
       if(/^#[0-9a-f]{6}$/i.test(data.preferences.accent||''))setAccent(data.preferences.accent);
       setLoaded(true);
@@ -109,11 +111,12 @@ export default function App(){
     window.history.pushState({tn:true,page:p,selected:null},'',`#${p}`);
     setSelected(null);setPage(p);setSideOpen(false);setSearch('');setGroup('All');window.scrollTo(0,0);
   }
+  async function saveProfile(){try{await setPreference('displayName',displayName.trim().slice(0,80));setProfileStatus('Your name has been saved in local SQLite storage.');}catch(e){setProfileStatus('Cannot save display name: '+String(e));}}
   function back(){if(window.history.state?.tn)window.history.back();else{setSelected(null);setPage('all');}}
   useEffect(()=>{
     const raw=decodeURIComponent(location.hash.replace(/^#/,''));
     const selectedFromHash=raw.startsWith('tool/')?raw.slice(5):null;
-    const pageFromHash=(['dashboard','all','favorites','recent','catalog','templates','settings','privacy','about','faq','contact'] as Page[]).includes(raw as Page)?raw as Page:'dashboard';
+    const pageFromHash=(['dashboard','all','favorites','recent','catalog','templates','settings','privacy','about','faq','contact','personal'] as Page[]).includes(raw as Page)?raw as Page:'dashboard';
     window.history.replaceState({tn:true,page:pageFromHash,selected:selectedFromHash},'',location.pathname+location.search+(location.hash||'#dashboard'));
     setPage(pageFromHash);setSelected(selectedFromHash);
     const restore=(e:PopStateEvent)=>{setSelected(e.state?.selected||null);setPage(e.state?.page||'dashboard');setSideOpen(false);window.scrollTo(0,0)};
@@ -190,7 +193,7 @@ export default function App(){
       <div className="v2-navbottom"><div className="v2-safety"><ShieldCheck size={20}/><strong>No uploads</strong><small>Your files stay on your device.</small></div>
         <button className={`v2-navlink ${page==='settings'&&!selected?'active':''}`} onClick={()=>go('settings')}><Settings2 size={18}/>Settings</button>
         <button className={`v2-navlink ${page==='privacy'&&!selected?'active':''}`} onClick={()=>go('privacy')}><CircleHelp size={18}/>Privacy & help</button>
-        <div className="v2-local"><span/> Local processing · v0.7</div>
+        <div className="v2-local"><span/> Local processing · v0.8</div>
       </div>
     </aside>
     <div className="v2-main"><header className="v2-topbar"><div className="v2-top-left"><button className="v2-mobile-menu" onClick={()=>setSideOpen(true)} aria-label="Open menu"><Menu size={21}/></button><span className="v2-breadcrumb">Workspace <ChevronRight size={15}/> <strong>{selected?(allTools.find(x=>x.id===selected)?.name||'Tool') : page==='catalog'?'5,000-action catalog':page==='recent'?'Recent activity':page==='all'?'All tools':page.charAt(0).toUpperCase()+page.slice(1)}</strong></span></div>
@@ -214,7 +217,7 @@ export default function App(){
         selectedUtil?<Utilities key={selectedUtil.id} id={selectedUtil.id as UtilityId} onBack={back} onCompleted={(name,result)=>{void activity(selectedUtil.id,name,'Text / local input',result)}}/>:
         selectedTemplate?<Templates key={selected} id={selected as TemplateId} onBack={back} onCompleted={(name,result)=>{void activity(selected,name,'Local template',result)}}/>:
         page==='dashboard'?<>
-          <div className="v2-headingrow"><div><h1>Welcome to your workspace <span className="v2-wave">✦</span></h1><p>Private file tools, offline-ready. No account or document upload required.</p></div><div className="v2-operational"><span/> Your device is the processor</div></div>
+          <div className="v2-headingrow"><div><h1>{displayName.trim()?`Welcome, ${displayName.trim().slice(0,40)}`:'Welcome to your workspace'} <span className="v2-wave">✦</span></h1><p>Private file tools, offline-ready. No account or document upload required.</p></div><div className="v2-operational"><span/> Your device is the processor</div></div>
           <div className="v2-searchwrap"><Search size={20}/><input value={search} ref={searchRef} onChange={e=>setSearch(e.target.value)} onFocus={()=>{}} placeholder="Search tools like 'Merge PDF', 'QR code' or 'Resume'..."/><kbd>Ctrl K</kbd></div>
           <div className="v2-tabs">{groups.map(g=><button key={g} className={group===g?'selected':''} onClick={()=>setGroup(g)}>{g}</button>)}</div>
           <div className="v2-overview"><div><span className="v2-stat-icon"><Files size={18}/></span><strong>{allTools.length}</strong><small>Tool routes (some simplified)</small></div><div><span className="v2-stat-icon"><Star size={18}/></span><strong>{favorites.length}</strong><small>Saved favorites</small></div><div><span className="v2-stat-icon"><Activity size={18}/></span><strong>{history.length}</strong><small>Recent operations stored locally</small></div><div><span className="v2-stat-icon"><BookMarked size={18}/></span><strong>5,000</strong><small>Feature ideas in roadmap</small></div></div>
@@ -250,8 +253,9 @@ export default function App(){
           ['Why does Android report a file permission problem?','Select the document using the Android system document picker. The app should process its cached copy; a signed build must still be tested with your specific Android version and file provider.'],
           ['Are advertisements part of the file?','No. Ads live in page layouts, not generated PDF, CV, image, or other downloaded outputs.']
         ].map(([q,a])=><details className="v7-faq-item" key={q}><summary>{q}</summary><p>{a}</p></details>)}<AdSlot placement="article"/></section>:
+        page==='personal'?<section className="v7-information"><span className="v2-kicker">YOUR LOCAL WORKSPACE</span><h1>Personal preferences</h1><p>No account needed. Your display name stays inside this browser's local SQLite data and can be cleared at any time.</p><label htmlFor="tn-personal-name" style={{display:'block',fontWeight:700,marginTop:20}}>Your display name</label><input id="tn-personal-name" className="v7-profile-input" maxLength={80} value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="Enter your name"/><div className="v2-result-actions"><button className="v2-primary" onClick={()=>void saveProfile()}>Save locally</button><button className="v2-secondary" onClick={()=>{setDisplayName('');void setPreference('displayName','').then(()=>setProfileStatus('Local name cleared.')).catch(e=>setProfileStatus(String(e)))}}>Clear name</button></div><p role="status">{profileStatus}</p><div className="v7-personal-links"><button onClick={()=>go('favorites')}>Favorites</button><button onClick={()=>go('recent')}>Recent activity</button><button onClick={()=>go('faq')}>FAQ</button><button onClick={()=>go('contact')}>Contact</button></div></section>:
         page==='contact'?<section className="v7-information"><span className="v2-kicker">GET IN TOUCH</span><h1>Contact ToolNest</h1><p>Report a problem, request a new tool, or share feedback. Include the tool name, platform (web, Android, iOS, or desktop), and steps to reproduce the issue. Never send private files or passwords in a bug report.</p><p>{import.meta.env.VITE_CONTACT_EMAIL ? <a className="v2-primary" href={`mailto:${import.meta.env.VITE_CONTACT_EMAIL}?subject=ToolNest%20feedback`}>Email support</a>: 'Support email has not been configured. Set VITE_CONTACT_EMAIL in the deployed web environment.'}</p><AdSlot placement="article"/></section>:null}
-      </main><AdSlot placement="footer"/><footer className="v7-footer no-print"><div className="v7-footer-grid"><section><img src="/brand-icon.png" alt="" width="54" height="54"/><h3>ToolNest</h3><p>Your independent productivity suite. Local-first tools, clear results and a growing roadmap.</p></section><section><h3>Explore</h3><button onClick={()=>go('all')}>All tools</button><button onClick={()=>go('templates')}>CV & document templates</button><button onClick={()=>go('catalog')}>5,000-action roadmap</button><button onClick={()=>{go('all');setGroup('Video')}}>Video tools</button><button onClick={()=>{go('all');setGroup('Audio')}}>Audio tools</button></section><section><h3>Company</h3><button onClick={()=>go('about')}>About us</button><button onClick={()=>go('contact')}>Contact us</button><button onClick={()=>go('faq')}>Frequently asked questions</button><button onClick={()=>go('privacy')}>Privacy & security</button></section><section><h3>Important information</h3><p>Ads may use external network services. Files selected for local conversion are not sold to advertisers.</p><p>Google AdSense placements are web-only. Desktop releases use no AdSense code.</p></section></div><div className="v7-footer-bottom">© {new Date().getFullYear()} ToolNest · Independent software · {allTools.length} tool interfaces · 5,000 cataloged actions</div></footer>
+      </main><AdSlot placement="footer"/><footer className="v7-footer no-print"><div className="v7-footer-grid"><section><img src="/brand-icon.png" alt="" width="54" height="54"/><h3>ToolNest</h3><p>Your independent productivity suite. Local-first tools, clear results and a growing roadmap.</p></section><section><h3>Explore</h3><button onClick={()=>go('all')}>All tools</button><button onClick={()=>go('templates')}>CV & document templates</button><button onClick={()=>go('catalog')}>5,000-action roadmap</button><button onClick={()=>{go('all');setGroup('Video')}}>Video tools</button><button onClick={()=>{go('all');setGroup('Audio')}}>Audio tools</button></section><section><h3>Personal</h3><button onClick={()=>go('personal')}>Your name & preferences</button><button onClick={()=>go('favorites')}>Favorites</button><button onClick={()=>go('recent')}>Recent tools</button><button onClick={()=>go('settings')}>Theme settings</button></section><section><h3>Company</h3><button onClick={()=>go('about')}>About us</button><button onClick={()=>go('contact')}>Contact us</button><button onClick={()=>go('faq')}>Frequently asked questions</button><button onClick={()=>go('privacy')}>Privacy & security</button></section><section><h3>Important information</h3><p>Ads may use external network services. Files selected for local conversion are not sold to advertisers.</p><p>Google AdSense placements are web-only. Desktop releases use no AdSense code.</p></section></div><div className="v7-footer-bottom">© {new Date().getFullYear()} ToolNest · Independent software · {allTools.length} tool interfaces · 5,000 cataloged actions</div></footer>
     </div>
   </div>;
 }

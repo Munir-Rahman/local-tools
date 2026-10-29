@@ -25,8 +25,10 @@ jobs:
           node-version: '22'
       - name: Install Expo / React Native dependencies
         run: npm install --workspace @local-tools/mobile --workspace @local-tools/core --include-workspace-root --no-audit --no-fund
-      - name: Validate all 480 catalog entries
+      - name: Validate mobile catalog metadata
         run: npm run test:catalog --workspace @local-tools/mobile
+      - name: Test additional offline text converters
+        run: node --experimental-strip-types --test apps/mobile/tests/textEngines.test.mjs
       - name: Typecheck native mobile source
         run: npm run typecheck --workspace @local-tools/mobile
       - name: Validate Expo configuration

@@ -1,7 +1,7 @@
 {
   "name": "local-tools",
   "private": true,
-  "version": "0.7.0",
+  "version": "0.8.0",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -13,7 +13,9 @@
     "typecheck": "npm run typecheck --workspace @local-tools/web",
     "test": "node --experimental-strip-types --test apps/web/tests/*.test.mjs",
     "desktop:run": "npm run build && npm run start --workspace @local-tools/desktop",
-    "desktop:win": "npm run build && npm run dist:win --workspace @local-tools/desktop"
+    "desktop:win": "npm run build && npm run dist:win --workspace @local-tools/desktop",
+    "desktop:check": "node --test apps/desktop/tests/*.test.cjs",
+    "windows:diagnose": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/diagnose-windows.ps1"
   },
   "engines": {
     "node": ">=20.19.0"

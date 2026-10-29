@@ -16,6 +16,8 @@ jobs:
           node-version: '22'
       - name: Install dependencies
         run: npm install --workspace @local-tools/web --workspace @local-tools/core --include-workspace-root --no-audit --no-fund
+      - name: Test desktop local server
+        run: npm run desktop:check
       - name: Test offline utility engines
         run: npm test
       - name: Test local utility engine

@@ -1,3 +1,5 @@
+**ToolNest v0.8 fixes:** See [README_v08.md](README_v08.md) and [WINDOWS_SETUP.md](WINDOWS_SETUP.md) for Android file URI, PowerShell and ENOSPC solutions.
+
 # ToolNest v0.7 — Web + Native Mobile + Desktop source
 
 **Current status:** upgraded source release; NOT a fully device-tested signed release. The original 5,000-item master catalog is searchable on web and mobile (and through the desktop-shared web UI), but most entries are a roadmap, not 5,000 verified processors.
