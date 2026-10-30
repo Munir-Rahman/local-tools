@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {normalizeDocumentName,pickerMimeType,EXTENSIONS_BY_MIME} from '../src/pickerUtils.ts';
+import {normalizeDocumentName,pickerMimeType,EXTENSIONS_BY_MIME,extensionFromHeader} from '../src/pickerUtils.ts';
 
 test('Android images with extensionless names retain a usable JPEG/PNG extension',()=>{
   assert.equal(normalizeDocumentName('image 4377','image/jpeg'),'image 4377.jpg');
@@ -30,6 +30,15 @@ test('All mapped MIME types provide usable extensions',()=>{
     assert.ok(mime.includes('/'));
     assert.match(normalizeDocumentName('example',mime),new RegExp('\\.'+extension+'$'));
   }
+});
+test('Magic-byte identification when Android provides neither MIME nor extension',()=>{
+  assert.equal(extensionFromHeader(Uint8Array.from([0xff,0xd8,0xff,0xe0])),'jpg');
+  assert.equal(extensionFromHeader(Uint8Array.from([137,80,78,71,13,10,26,10])),'png');
+  assert.equal(extensionFromHeader(Uint8Array.from([37,80,68,70,45])),'pdf');
+  assert.equal(extensionFromHeader(Uint8Array.from([80,75,3,4])),'zip');
+  assert.equal(extensionFromHeader(Uint8Array.from([82,73,70,70,0,0,0,0,87,69,66,80])),'webp');
+  assert.equal(extensionFromHeader(Uint8Array.from([0,0,0,24,102,116,121,112,104,101,105,99])),'heic');
+  assert.equal(extensionFromHeader(Uint8Array.from([1,2,3])),undefined);
 });
 test('Regression guards for repeated Android READ permission failures',()=>{
   const engine=readFileSync(new URL('../src/engine.ts',import.meta.url),'utf8');
