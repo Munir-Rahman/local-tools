@@ -27,24 +27,49 @@ async function getBytes(f:PickedFile){
   }
 }
 export async function importPickedFile(uri:string,name:string):Promise<string>{
-  // Explicitly copy to our own app cache while the picker grants us access.
-  // This avoids content:// URI grants expiring between the picker and PDF processing.
-  const safe=name.replace(/[^a-zA-Z0-9._-]/g,'_').slice(-80)||'document';
-  const dest=new File(Paths.cache,`picked-${Date.now()}-${Math.floor(Math.random()*1e6)}-${safe}`);
-  // DocumentPicker(copyToCacheDirectory:true) already returns an app-readable file:// copy.
-  // Do not re-copy it via a restricted document provider; that triggered the READ permission error.
-  if(uri.startsWith('file://')){
-    try {const f=new File(uri);if(f.exists && f.size>=0){await f.bytes();return f.uri;}}catch{/* fall back to copy */}
+  // DocumentPicker(copyToCacheDirectory:true) already creates an app-owned file.
+  // Never copy a content:// URI again: Android's transient provider grant is not
+  // equivalent to a filesystem READ permission.
+  if(!uri.startsWith('file://')){
+    throw Error('Android did not provide a readable cached file for '+name+'. Use Android Files and choose a local copy from Downloads.');
   }
-  try{ await new File(uri).copy(dest); if(!dest.exists)throw Error('No cached file created'); return dest.uri; }
-  catch(err){throw Error(`Cannot access this document through the selected Android provider. Open Android Files, select the file using its system picker, and try again. No broad storage permission is required. Details: ${String(err)}`); }
+  const source=new File(uri);
+  if(!source.exists)throw Error('The selected file '+name+' is unavailable. Choose it again from Android Files or Downloads.');
+  if(source.size>MAX_BYTES)throw Error('Maximum size is 35 MB per file on mobile.');
+  return source.uri;
 }
 
-function resultName(base:string,extension:string){return `${base}-${Date.now()}.${extension}`;}
+function resultName(base:string,extension:string){return `${base}-${Date.now()}-${Math.floor(Math.random()*100000)}.${extension}`;}
 async function store(name:string,data:string|Uint8Array,mime:string):Promise<EngineOutput>{
   const file=new File(Paths.document,name);file.create({overwrite:true});await file.write(data);
   return {kind:'file',name,uri:file.uri,mime};
 }
+/**
+ * Save generated documents if the native producer allows copying; otherwise
+ * keep its existing app-local file for immediate share/save. This is especially
+ * important for expo-print on Android, whose URI is not always copyable by
+ * FileSystemFile.copy().
+ */
+export async function persistGeneratedFile(uri:string,name:string,mime:string):Promise<EngineOutput>{
+  if(!uri.startsWith('file://'))throw Error('The generated file is not in app-local storage.');
+  const target=new File(Paths.document,name);
+  try{
+    await LegacyFS.copyAsync({from:uri,to:target.uri});
+    if(target.exists)return {kind:'file',name,uri:target.uri,mime};
+  }catch{ /* Fall back to read/write below. */ }
+  try{
+    const data=await new File(uri).bytes();
+    target.create({overwrite:true});
+    await target.write(data);
+    if(target.exists)return {kind:'file',name,uri:target.uri,mime};
+  }catch{ /* The originating app-local file may still be usable. */ }
+  // Do not discard a successfully generated PDF merely because persisting
+  // the printer's temporary output is denied by Android.
+  const source=new File(uri);
+  if(source.exists)return {kind:'file',name,uri:source.uri,mime};
+  throw Error('The PDF was generated but Android denied reading its output file. Try updating Expo Go or installing a standalone APK.');
+}
+
 function pageIndices(source:string,count:number){
   if(!source.trim())throw Error('Enter a page range, for example: 1-3,5.');
   const result:number[]=[];
@@ -159,8 +184,7 @@ async function imageTask(id:ToolId,files:PickedFile[],o:EngineOptions):Promise<E
   const rendered=await ctx.renderAsync();
   const result=await rendered.saveAsync({format:id==='convert-image'&&o.format==='png'?ImageManipulator.SaveFormat.PNG:ImageManipulator.SaveFormat.JPEG,compress:id==='compress-image'?o.quality/100:.92});
   const outputName=resultName('image',id==='convert-image'&&o.format==='png'?'png':'jpg');
-  const persisted=new File(Paths.document,outputName);await new File(result.uri).copy(persisted);
-  return {kind:'file',uri:persisted.uri,name:outputName,mime:id==='convert-image'&&o.format==='png'?'image/png':'image/jpeg'};
+  return persistGeneratedFile(result.uri,outputName,id==='convert-image'&&o.format==='png'?'image/png':'image/jpeg');
 }
 export function runTextTool(id:ToolId,o:EngineOptions):string{
   const s=o.inputText;
@@ -225,7 +249,11 @@ export async function shareResult(result:EngineOutput){
   if(!(await Sharing.isAvailableAsync()))throw Error('File sharing is not available on this device.');
   const original=new File(result.uri);
   // Share the actual app-owned file. Copying back to temporary cache caused stale URIs.
-  if(!result.uri.startsWith('file://') || !original.exists)throw Error('Generated file is missing or inaccessible. Generate it again.');
+  if(!result.uri.startsWith('file://'))throw Error('Generated output must be a local app file.');
+  if(!original.exists){
+    const info=await LegacyFS.getInfoAsync(result.uri).catch(()=>null);
+    if(!info?.exists)throw Error('Generated file is missing or inaccessible. Generate it again.');
+  }
   try { await Sharing.shareAsync(original.uri,{dialogTitle:'Share ToolNest output',mimeType:result.mime}); }
   catch(err){throw Error(`Android could not open the share sheet. Try saving to a folder. ${String(err)}`);}
 }
@@ -238,7 +266,10 @@ export async function saveResultToFolder(result:EngineOutput):Promise<boolean>{
   // SAF requires writing to the user-authorized content URI, using base64 for binary data.
   let b64:string;
   try { b64=await new File(result.uri).base64(); }
-  catch(err){throw Error(`The generated output cannot be read. Make a fresh output first; if this is an older APK, install the updated build. ${String(err)}`);}
+  catch{
+    try{b64=await LegacyFS.readAsStringAsync(result.uri,{encoding:LegacyFS.EncodingType.Base64});}
+    catch(err){throw Error(`The generated output cannot be read for saving. ${String(err)}`);}
+  }
   await LegacyFS.writeAsStringAsync(target,b64,{encoding:LegacyFS.EncodingType.Base64});
   return true;
 }

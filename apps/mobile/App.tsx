@@ -6,7 +6,7 @@ import {
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import { File as NativeFile } from 'expo-file-system';
+import { File as NativeFile, FileMode } from 'expo-file-system';
 import * as Clipboard from 'expo-clipboard';
 import * as Crypto from 'expo-crypto';
 import QRCode from 'qrcode';
@@ -16,6 +16,7 @@ import type { MobileTool, ToolId } from './src/tools';
 import { loadState, setFavorite, recordUse, clearActivity, savePreference, testPersistence, loadDraft, saveDraft } from './src/storage';
 import type { RecentItem } from './src/storage';
 import { processTool, shareResult, generateQr, importPickedFile, saveResultToFolder } from './src/engine';
+import { pickerMimeType, normalizeDocumentName, extensionFromHeader } from './src/pickerUtils';
 import type { PickedFile, EngineOutput, EngineOptions } from './src/engine';
 import { defaultInvoice, defaultResume, exportTemplatePdf, exportStickerPdf, resumeLayouts } from './src/templates';
 import type { ResumeData, InvoiceData } from './src/templates';
@@ -127,26 +128,38 @@ function Main(){
     try{await setFavorite(id,on);}catch(e){setFavorites(prev=>on?prev.filter(x=>x!==id):[...prev,id]);Alert.alert('Could not save favorite',String(e));}
   };
   const done=async(id:string,name:string,description:string)=>{try{await recordUse(id,name,description);const state=await loadState();setRecent(state.recent);}catch(e){Alert.alert('History could not be saved',String(e));}};
-  const choose=async(systemPicker=false)=>{
+  const choose=async(allFiles=false)=>{
     if(!tool)return;
     const multiple=['merge-pdf','images-to-pdf','zip-files','compare-files'].includes(tool.id);
-    const image=tool.kind==='image'||tool.id==='images-to-pdf';
-    const mime=image?'image/*':tool.kind==='file'?'*/*':'application/pdf';
+    // Both choices use the Android document picker with an app-owned cache copy.
+    // Passing content:// to File.copy() caused READ permission failures on some phones.
+    const type=pickerMimeType(tool.id,tool.kind,allFiles);
     try{
-      if(systemPicker&&Platform.OS==='android'){
-        // Android alternative: Expo's own SAF picker for provider-specific URI problems.
-        const picked=multiple
-          ? await NativeFile.pickFileAsync({mimeTypes:mime,multipleFiles:true})
-          : await NativeFile.pickFileAsync({mimeTypes:mime});
-        if(picked.canceled)return;
-        const selected=Array.isArray(picked.result)?picked.result:[picked.result];
-        const files=await Promise.all(selected.map(async file=>({uri:await importPickedFile(file.uri,file.name),name:file.name,size:file.size||undefined})));
-        setSelectedFiles(files);setResult(null);setError('');return;
-      }
-      const picked=await DocumentPicker.getDocumentAsync({type:mime,multiple,copyToCacheDirectory:true});
+      const picked=await DocumentPicker.getDocumentAsync({type,multiple,copyToCacheDirectory:true});
       if(picked.canceled)return;
-      const files=await Promise.all(picked.assets.map(async a=>({uri:await importPickedFile(a.uri,a.name),name:a.name,size:a.size,mimeType:a.mimeType||undefined})));setSelectedFiles(files);setResult(null);setError('');
-    }catch(e){Alert.alert('File picker error',String(e));}
+      const files:PickedFile[]=[];
+      for(const asset of picked.assets){
+        let name=normalizeDocumentName(asset.name,asset.mimeType);
+        const uri=await importPickedFile(asset.uri,name);
+        // Some Android gallery/document providers return "image 4377" with no
+        // extension or useful MIME type. Inspect just the first 16 local bytes.
+        if(!/\.[a-z0-9]{1,12}$/i.test(name)){
+          try{
+            const handle=new NativeFile(uri).open(FileMode.ReadOnly);
+            try{
+              const guess=extensionFromHeader(await handle.readBytes(16));
+              if(guess)name=name+'.'+guess;
+            }finally{handle.close();}
+          }catch{ /* The engine reports a meaningful unsupported-type error. */ }
+        }
+        files.push({uri,name,size:asset.size,mimeType:asset.mimeType||undefined});
+      }
+      setSelectedFiles(files);setResult(null);setError('');
+    }catch(e){
+      const detail=e instanceof Error?e.message:String(e);
+      setError(detail);
+      Alert.alert('Could not open the selected file',detail+'\n\nTry Android Files or move the file to Downloads and choose it there.');
+    }
   };
   const run=async()=>{
     if(!tool||busy)return;setBusy(true);setError('');setResult(null);
@@ -203,7 +216,7 @@ function Main(){
         <View style={[s.panel,{backgroundColor:p.surface,borderColor:p.border}]}>
           {pdfOrImage&&<><Text style={[s.panelHeading,{color:p.text}]}>1. Select your {tool.kind==='pdf'?'PDF documents':tool.kind==='file'?'files':'image'}</Text>
             <Pressable accessibilityRole="button" onPress={()=>void choose()} style={[s.dropzone,{borderColor:accent+'80',backgroundColor:p.subtle}]}><View style={[s.uploadCircle,{backgroundColor:accent+'18'}]}><Glyph name="cloud-upload-outline" color={accent} size={28}/></View><Text style={{color:p.text,fontWeight:'800',fontSize:14}}>Choose files from device</Text><Text style={{color:p.muted,fontSize:12,marginTop:5}}>No uploads · Files are processed locally</Text></Pressable>
-            {Platform.OS==='android'&&<View style={{marginBottom:12}}><SecondaryButton label="Try alternate Android file picker" icon="folder-open-outline" p={p} accent={accent} onPress={()=>void choose(true)}/></View>}
+            {Platform.OS==='android'&&<View style={{marginBottom:12}}><SecondaryButton label="Open Android Files (all file types)" icon="folder-open-outline" p={p} accent={accent} onPress={()=>void choose(true)}/></View>}
             {selectedFiles.map((f,i)=><View key={f.uri+i} style={[s.pickedFile,{borderColor:p.border}]}><Glyph name="document-attach-outline" color={accent}/><View style={{flex:1}}><Text style={{color:p.text,fontWeight:'700',fontSize:12}} numberOfLines={1}>{f.name}</Text><Text style={{color:p.muted,fontSize:10}}>{f.size?`${(f.size/1024/1024).toFixed(2)} MB`: 'Selected file'}</Text></View></View>)}
           </>}
           {['extract-pages','remove-pdf-pages','reorder-pdf-pages','duplicate-pdf-pages'].includes(tool.id)&&<InputField label={tool.id==='reorder-pdf-pages'?'New page order, e.g. 3,1,2':tool.id==='remove-pdf-pages'?'Pages to remove':tool.id==='duplicate-pdf-pages'?'Pages to duplicate':'Page range'} placeholder="1-3,5" value={options.pages} onChange={v=>setOptions({...options,pages:v})} p={p}/>}

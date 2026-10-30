@@ -1,5 +1,5 @@
 import * as Print from 'expo-print';
-import { File, Paths } from 'expo-file-system';
+import { persistGeneratedFile } from './engine';
 import type { EngineOutput } from './engine';
 
 export type ResumeLayout=typeof resumeLayouts[number];
@@ -42,8 +42,7 @@ export async function exportTemplatePdf(type:'resume'|'invoice',data:ResumeData|
  const html=type==='resume'?resumeHtml(data as ResumeData):invoiceHtml(data as InvoiceData);
  const {uri}=await Print.printToFileAsync({html,width:595,height:842});
  const name=`toolnest-${type}-${Date.now()}.pdf`;
- const permanent=new File(Paths.document,name);await new File(uri).copy(permanent);
- return {kind:'file',name,uri:permanent.uri,mime:'application/pdf'};
+ return persistGeneratedFile(uri,name,'application/pdf');
 }
 
 export async function exportStickerPdf(title:string,emoji:string,accent:string):Promise<EngineOutput>{
@@ -51,5 +50,5 @@ export async function exportStickerPdf(title:string,emoji:string,accent:string):
  const symbol=escape(emoji.trim().slice(0,8)||'✨');
  const tiles=Array.from({length:12},(_,i)=>`<div class="sticker v${i%6}"><div class="symbol">${symbol}</div><strong>${safeTitle}</strong><small>Made with ToolNest</small></div>`).join('');
  const html=`<!doctype html><html><head><meta charset="UTF-8"><style>@page{size:A4;margin:10mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;margin:0}.sheet{display:grid;grid-template-columns:repeat(3,1fr);gap:9mm}.sticker{height:53mm;border-radius:20px;border:2px dashed ${color(accent)};display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;background:#f0f6ff;padding:12px}.symbol{font-size:34px}.sticker strong{font-size:12px;margin-top:7px}.sticker small{font-size:7px;color:#71809c;margin-top:5px}.v1{background:#fff0ed}.v2{background:#f7eefe}.v3{background:#e9faef}.v4{background:#fff8df}.v5{background:#e7f9ff}</style></head><body><div class="sheet">${tiles}</div></body></html>`;
- const {uri}=await Print.printToFileAsync({html});const name=`toolnest-stickers-${Date.now()}.pdf`;const permanent=new File(Paths.document,name);await new File(uri).copy(permanent);return {kind:'file',name,uri:permanent.uri,mime:'application/pdf'};
+ const {uri}=await Print.printToFileAsync({html});const name=`toolnest-stickers-${Date.now()}.pdf`;return persistGeneratedFile(uri,name,'application/pdf');
 }

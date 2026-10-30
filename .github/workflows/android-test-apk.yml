@@ -1,0 +1,67 @@
+name: Android APK - Device Testing
+
+# Build an installable internal test APK on GitHub-hosted infrastructure.
+# This is NOT a production signing pipeline; Android Expo EAS should manage
+# a permanent keystore for published builds and upgrades.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/mobile/**'
+      - '.github/workflows/android-test-apk.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/mobile/**'
+      - '.github/workflows/android-test-apk.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  android-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+      - name: Install mobile dependencies
+        run: npm install --workspace @local-tools/mobile --workspace @local-tools/core --include-workspace-root --no-audit --no-fund
+      - name: Validate MIME selection, Android permissions and TypeScript
+        run: |
+          node --experimental-strip-types --test apps/mobile/tests/filePicker.test.mjs
+          npm run mobile:verify
+      - name: Generate native Android build project
+        working-directory: apps/mobile
+        run: npx expo prebuild --platform android --non-interactive --clean
+      - name: Build bundled JS + Android test release APK
+        working-directory: apps/mobile/android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :app:assembleRelease --no-daemon
+      - name: Verify that the APK exists and has a valid signature
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=$(find apps/mobile/android/app/build/outputs/apk/release -name '*.apk' -type f | head -1)
+          test -n "$APK"
+          BUILD_TOOLS=$(find "$ANDROID_HOME/build-tools" -maxdepth 1 -mindepth 1 -type d | sort -V | tail -1)
+          "$BUILD_TOOLS/apksigner" verify "$APK"
+          ls -lh "$APK"
+      - name: Upload installable APK for internal device testing
+        uses: actions/upload-artifact@v4
+        with:
+          name: ToolNest-Android-Test-APK
+          path: apps/mobile/android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+          retention-days: 14
