@@ -4,6 +4,7 @@ export type ToolId =
   | `unit-${string}`
   | 'merge-pdf'|'split-pdf'|'extract-pages'|'rotate-pdf'|'number-pdf'|'watermark-pdf'|'images-to-pdf'|'pdf-info'
   | 'remove-pdf-pages'|'reverse-pdf-pages'|'reorder-pdf-pages'|'duplicate-pdf-pages'|'blank-pdf-page'|'odd-pdf-pages'|'even-pdf-pages'|'flatten-pdf-forms'|'pdf-set-title'|'pdf-set-author'|'pdf-stamp-date'
+  | 'calendar-gregorian'|'calendar-solar-hijri'|'calendar-islamic-hijri'|'zakat-estimator'|'salary-tax-estimator'
   | 'zip-files'|'zip-inspect'|'file-info'|'file-hex'|'compare-files'
   | 'resize-image'|'compress-image'|'convert-image'|'rotate-image'|'flip-image'
   | 'json-format'|'word-count'|'text-case'|'text-clean'|'url-encode'|'uuid-generator'
@@ -12,6 +13,11 @@ export type ToolId =
 export type MobileTool = {id:ToolId;name:string;subtitle:string;kind:ToolKind;icon:string;catalog?:number;popular?:boolean;color:string};
 export const tools:MobileTool[] = [
   ...unitConversions.map((conversion):MobileTool=>({id:conversion.id as `unit-${string}`,name:conversion.name,subtitle:`${conversion.family.name} · ${conversion.from.label} → ${conversion.to.label}`,kind:'unit',icon:'swap-horizontal-outline',color:'#DC8638'})),
+  {id:'zakat-estimator',name:'Zakat estimate',subtitle:'Net wealth and your nisab value (2.5%)',kind:'text',icon:'cash-outline',color:'#1C9F87'},
+  {id:'salary-tax-estimator',name:'Salary tax percentage',subtitle:'Use your own rate; not a legal tax schedule',kind:'text',icon:'calculator-outline',color:'#1C9F87'},
+  {id:'calendar-gregorian',name:'Gregorian calendar converter',subtitle:'Gregorian → Afghan Shamsi and Islamic Hijri',kind:'text',icon:'calendar-outline',color:'#E58B37'},
+  {id:'calendar-solar-hijri',name:'Afghan Solar Hijri converter',subtitle:'Shamsi → Gregorian and Islamic Hijri',kind:'text',icon:'calendar-outline',color:'#E58B37',popular:true},
+  {id:'calendar-islamic-hijri',name:'Islamic Hijri converter',subtitle:'Calculated civil Hijri → Gregorian and Shamsi',kind:'text',icon:'moon-outline',color:'#E58B37'},
   {id:'zip-files',name:'Create ZIP archive',subtitle:'Compress files into ZIP',kind:'file',icon:'archive-outline',color:'#2595CF'},
   {id:'zip-inspect',name:'List ZIP contents',subtitle:'Show file names inside ZIP',kind:'file',icon:'list-outline',color:'#2595CF'},
   {id:'file-info',name:'File information',subtitle:'Size, extension and bytes',kind:'file',icon:'information-circle-outline',color:'#2595CF'},

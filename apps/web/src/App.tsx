@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Activity, ArrowRight, BookMarked, Check, CheckCircle2, ChevronDown, ChevronRight, CircleHelp,
   Clock3, Database, FileCode2, FileText, Files, FolderHeart, Heart, Image, FileImage, FileArchive, Film, Headphones, Calculator, Laptop, Grid2X2,
-  LayoutDashboard, Moon, Palette, Printer, Search, Settings2, ShieldCheck,
+  LayoutDashboard, CalendarDays, UserRound, Mail, Moon, Palette, Printer, Search, Settings2, ShieldCheck,
   Sparkles, Star, Sun, WandSparkles, X, Zap, QrCode, ScanBarcode, Type, Braces, Code2 } from 'lucide-react';
 import { tools as pdfTools } from '@local-tools/core';
 import type { ToolId } from '@local-tools/core';
@@ -10,6 +10,10 @@ import { catalog, catalogSupported } from './catalog';
 import masterCatalog from './masterCatalog';
 import AdSlot from './AdSlot';
 import ToolNestHeader from './ToolNestHeader';
+import CalendarWorkbench, {calendarToolDefs} from './CalendarWorkbench';
+import type {CalendarToolId} from './CalendarWorkbench';
+import FinanceWorkbench, {financeTools} from './FinanceWorkbench';
+import type {FinanceToolId} from './FinanceWorkbench';
 import StickerStudio from './StickerStudio';
 import { utilityDefs } from './Utilities';
 import type { UtilityId } from './Utilities';
@@ -39,6 +43,8 @@ type ToolItem={id:string;name:string;description:string;category:string;featured
 const allTools:ToolItem[]=[
   ...pdfTools.map(t=>({id:t.id,name:t.name,description:t.description,category:t.category,featured:t.featured})),
   ...utilityDefs.map(t=>({...t,featured:['json-tool','word-counter','qr-generator','barcode-generator'].includes(t.id)})),
+  ...calendarToolDefs.map(t=>({...t,featured:t.id==='calendar-solar-hijri'})),
+  ...financeTools.map(t=>({...t})),
   {id:'cv-builder',name:'CV & Resume Builder',description:'Build a professional resume using editable templates and print it as a PDF.',category:'Templates',featured:true},
   {id:'invoice-builder',name:'Invoice Generator',description:'Create detailed invoices with multiple items, discounts and printable bills.',category:'Templates',featured:true},
   {id:'sticker-studio',name:'Sticker & Emoji Studio',description:'Make colorful printable stickers and SVG sheets with emoji and captions.',category:'Design',featured:true},
@@ -154,6 +160,8 @@ export default function App(){
   const selectedCore=pdfTools.find(t=>t.id===selected);
   const selectedUnit=selected?.startsWith('unit-')?selected:null;
   const selectedUtil=utilityDefs.find(t=>t.id===selected);
+  const selectedCalendar=calendarToolDefs.find(t=>t.id===selected);
+  const selectedFinance=financeTools.find(t=>t.id===selected);
   const selectedTemplate=selected==='cv-builder'||selected==='invoice-builder';
   const selectedExtra=selected?.startsWith('action-')?Number(selected.slice(7)):null;
   const selectedImage=selected?.startsWith('image-')?Number(selected.slice(6)):null;
@@ -224,6 +232,8 @@ export default function App(){
         selected==='sticker-studio'?<StickerStudio onBack={back} onCompleted={(name,result)=>{void activity(selected,name,'Local text',result)}}/>:
         selectedCore?<PdfWorkspace key={selectedCore.id} initialToolId={selectedCore.id as ToolId} onBack={back} onCompleted={(id,name,file,result)=>{void activity(id,name,file,result)}}/>:
         selectedUtil?<Utilities key={selectedUtil.id} id={selectedUtil.id as UtilityId} onBack={back} onCompleted={(name,result)=>{void activity(selectedUtil.id,name,'Text / local input',result)}}/>:
+        selectedCalendar?<CalendarWorkbench key={selectedCalendar.id} id={selectedCalendar.id as CalendarToolId} onBack={back} onCompleted={(name,result)=>{void activity(selectedCalendar.id,name,'Local date input',result)}}/>:
+        selectedFinance?<FinanceWorkbench key={selectedFinance.id} id={selectedFinance.id as FinanceToolId} onBack={back} onCompleted={(name,result)=>{void activity(selectedFinance.id,name,'Local finance inputs',result)}}/>:
         selectedTemplate?<Templates key={selected} id={selected as TemplateId} onBack={back} onCompleted={(name,result)=>{void activity(selected,name,'Local template',result)}}/>:
         page==='dashboard'?<>
           <section className="tn-hero" aria-label="ToolNest introductory banner">
@@ -279,7 +289,17 @@ export default function App(){
         page==='personal'?<section className="v7-information"><span className="v2-kicker">YOUR LOCAL WORKSPACE</span><h1>Personal preferences</h1><p>No account needed. Your display name stays inside this browser's local SQLite data and can be cleared at any time.</p><label htmlFor="tn-personal-name" style={{display:'block',fontWeight:700,marginTop:20}}>Your display name</label><input id="tn-personal-name" className="v7-profile-input" maxLength={80} value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="Enter your name"/><div className="v2-result-actions"><button className="v2-primary" onClick={()=>void saveProfile()}>Save locally</button><button className="v2-secondary" onClick={()=>{setDisplayName('');void setPreference('displayName','').then(()=>setProfileStatus('Local name cleared.')).catch(e=>setProfileStatus(String(e)))}}>Clear name</button></div><p role="status">{profileStatus}</p><div className="v7-personal-links"><button onClick={()=>go('favorites')}>Favorites</button><button onClick={()=>go('recent')}>Recent activity</button><button onClick={()=>go('faq')}>FAQ</button><button onClick={()=>go('contact')}>Contact</button></div></section>:
         page==='contact'?<section className="v7-information"><span className="v2-kicker">GET IN TOUCH</span><h1>Contact ToolNest</h1><p>Report a problem, request a new tool, or share feedback. Include the tool name, platform (web, Android, iOS, or desktop), and steps to reproduce the issue. Never send private files or passwords in a bug report.</p><p><strong>Developer:</strong> Eng.Munir Rahman Rahmani</p><p lang="ps" dir="rtl">دا وړیا پروګرام د خلکو د کارونو د آسانولو لپاره په مینه جوړ سوی دئ. د پوښتنو او وړاندیزونو لپاره راسره اړیکه ونیسئ.</p><p><a href="mailto:munirrahmanrahmani0@gmail.com?subject=ToolNest%20feedback" className="v2-primary">Email: munirrahmanrahmani0@gmail.com</a></p><AdSlot placement="article"/></section>:null}
         {selected&&<div className="tn-tool-after-ad"><AdSlot placement="tools"/></div>}
-      </main><AdSlot placement="footer"/><footer className="v7-footer no-print"><div className="v7-footer-grid"><section><img src="/brand-icon.png" alt="" width="54" height="54"/><h3>ToolNest</h3><p>Free tools to make everyday work easier. Developed with ❤ by Eng.Munir Rahman Rahmani.</p><p lang="ps" dir="rtl">د خلکو د کارونو د آسانولو لپاره وړیا جوړ سوی دئ.</p><p><a href="mailto:munirrahmanrahmani0@gmail.com">munirrahmanrahmani0@gmail.com</a></p></section><section><h3>Explore</h3><button onClick={()=>go('all')}>All tools</button><button onClick={()=>go('templates')}>CV & document templates</button><button onClick={()=>go('catalog')}>5,000-action roadmap</button><button onClick={()=>{go('all');setGroup('Video')}}>Video tools</button><button onClick={()=>{go('all');setGroup('Audio')}}>Audio tools</button></section><section><h3>Personal</h3><button onClick={()=>go('personal')}>Your name & preferences</button><button onClick={()=>go('favorites')}>Favorites</button><button onClick={()=>go('recent')}>Recent tools</button><button onClick={()=>go('settings')}>Theme settings</button></section><section><h3>Company</h3><button onClick={()=>go('about')}>About us</button><button onClick={()=>go('contact')}>Contact us</button><button onClick={()=>go('faq')}>Frequently asked questions</button><button onClick={()=>go('privacy')}>Privacy & security</button></section><section><h3>Important information</h3><p>Ads may use external network services. Files selected for local conversion are not sold to advertisers.</p><p>Google AdSense placements are web-only. Desktop releases use no AdSense code.</p></section></div><div className="v7-footer-bottom">© {new Date().getFullYear()} ToolNest · Developed with ❤ by Eng.Munir Rahman Rahmani · {allTools.length} tool interfaces · 5,000 cataloged actions</div></footer>
+      </main><AdSlot placement="footer"/><footer className="v7-footer tn-footer no-print">
+      <div className="tn-footer-topline"><div><ShieldCheck size={20}/><span>Private local processing for supported tools</span></div><div><Heart size={20}/><span>Free tools, no credits or paywall</span></div><div><CalendarDays size={20}/><span>Gregorian · Shamsi · civil Hijri calendars</span></div></div>
+      <div className="v7-footer-grid">
+      <section className="tn-footer-brand"><img src="/brand-icon.png" alt="ToolNest logo" width="54" height="54"/><h3>ToolNest</h3><p>Everyday PDF, image, document and development tools, built around privacy and access.</p><p>Developed with ❤ by Eng. Munir Rahman Rahmani.</p><p lang="ps" dir="rtl">د خلکو د کارونو د آسانولو لپاره وړیا جوړ سوی دئ.</p><a className="tn-footer-email" href="mailto:munirrahmanrahmani0@gmail.com"><Mail size={15}/> Contact developer</a></section>
+      <section><h3>Document & image</h3><button onClick={()=>{go('all');setGroup('PDF')}}><FileText size={14}/> PDF tools</button><button onClick={()=>{go('all');setGroup('Images')}}><FileImage size={14}/> Image tools</button><button onClick={()=>{go('all');setGroup('Office')}}><Files size={14}/> Office tools</button><button onClick={()=>{go('all');setGroup('Audio')}}><Headphones size={14}/> Audio tools</button><button onClick={()=>{go('all');setGroup('Video')}}><Film size={14}/> Video tools</button></section>
+      <section><h3>Explore tools</h3><button onClick={()=>go('all')}><Grid2X2 size={14}/> All working tools</button><button onClick={()=>openTool('calendar-solar-hijri')}><CalendarDays size={14}/> Afghan date converter</button><button onClick={()=>openTool('calendar-islamic-hijri')}><Moon size={14}/> Islamic Hijri converter</button><button onClick={()=>go('templates')}><BookMarked size={14}/> CV & business templates</button><button onClick={()=>go('catalog')}><BookMarked size={14}/> 5,000-action roadmap</button></section>
+      <section><h3>Workspace</h3><button onClick={()=>go('personal')}><UserRound size={14}/> Local profile</button><button onClick={()=>go('favorites')}><Heart size={14}/> Favorite tools</button><button onClick={()=>go('recent')}><Clock3 size={14}/> Recent tools</button><button onClick={()=>go('settings')}><Settings2 size={14}/> Theme settings</button><button onClick={()=>go('privacy')}><ShieldCheck size={14}/> Privacy & security</button></section>
+      <section><h3>About & help</h3><button onClick={()=>go('about')}><CircleHelp size={14}/> About ToolNest</button><button onClick={()=>go('contact')}><Mail size={14}/> Contact support</button><button onClick={()=>go('faq')}><CircleHelp size={14}/> Help and FAQ</button><p className="tn-footer-privacy">No account is needed for supported local tools. Web advertisements, if enabled, require network access and appropriate consent. No ads are served inside the desktop app.</p></section>
+      </div>
+      <div className="v7-footer-bottom"><span>© {new Date().getFullYear()} ToolNest · Eng. Munir Rahman Rahmani</span><span>{allTools.length} available tool routes · 5,000 catalog ideas (not all implemented)</span><span>Web · Android source · iOS source · Windows · macOS/Linux build targets</span></div>
+    </footer>
     </div>
   </div>;
 }

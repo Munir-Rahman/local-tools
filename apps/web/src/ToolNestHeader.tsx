@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
-import { ArrowRight, BookOpen, ChevronDown, FileText, FileImage, Film, Headphones, Grid2X2, Heart, Menu, Moon, Search, Settings2, ShieldCheck, Sparkles, Sun, UserRound } from 'lucide-react';
+import { ArrowRight, BookOpen, ChevronDown, CircleHelp, Clock3, FileText, FileImage, Film, Headphones, Grid2X2, Heart, Info, Mail, Menu, Moon, Palette, Search, Settings2, ShieldCheck, Sparkles, Sun, UserRound } from 'lucide-react';
 import './toolnest-refresh.css';
 
 type ToolLink = { id:string; name:string; category:string; description:string };
@@ -12,6 +12,7 @@ const menus:{id:MenuId;label:string;headline:string;description:string;categorie
   {id:'more',label:'Other tools',headline:'Explore more tools',description:'Developer utilities, calculators, templates and science tools.',categories:['Developer','Text','Calculators','Computer','Physics','Chemistry','Electrical','Engineering','Converters','Templates'],keywords:['json','word','calculator','convert','unit','cv','invoice','qr','base64']},
 ];
 const menuIcons=[FileText,FileImage,Grid2X2,BookOpen,Film,Headphones,Sparkles,ShieldCheck];
+const accountIcons={personal:UserRound,favorites:Heart,recent:Clock3,settings:Palette,about:Info,contact:Mail,faq:CircleHelp} as const;
 export default function ToolNestHeader({tools,onOpenTool,onCategory,onPage,onToggleTheme,isDark,onOpenMobile,favoriteCount}:{
   tools:ToolLink[];onOpenTool:(id:string)=>void;onCategory:(category:string)=>void;onPage:(page:'dashboard'|'all'|'favorites'|'recent'|'templates'|'catalog'|'about'|'faq'|'contact'|'personal'|'settings')=>void;
   onToggleTheme:()=>void;isDark:boolean;onOpenMobile:()=>void;favoriteCount:number;
@@ -51,7 +52,7 @@ export default function ToolNestHeader({tools,onOpenTool,onCategory,onPage,onTog
       </div>
     </div>
     {(selected||menu==='account')&&<div id="tn-mega-panel" className={`tn-mega ${menu==='account'?'tn-mega-account':''}`} onMouseLeave={()=>setMenu(null)}>
-      {menu==='account'?<div className="tn-account-grid"><strong>My workspace</strong>{(['personal','favorites','recent','settings','about','contact','faq'] as const).map(p=><button key={p} onClick={()=>navigate(()=>onPage(p))}><UserRound size={16}/>{({personal:'Personal profile',favorites:'Favorites',recent:'Recent tools',settings:'Appearance',about:'About us',contact:'Contact',faq:'FAQ'} as Record<string,string>)[p]}</button>)}</div>:<>
+      {menu==='account'?<div className="tn-account-grid"><strong>My workspace</strong>{(['personal','favorites','recent','settings','about','contact','faq'] as const).map(p=>{const Icon=accountIcons[p];return <button key={p} onClick={()=>navigate(()=>onPage(p))}><Icon size={18} aria-hidden="true"/>{({personal:'Personal profile',favorites:'Favorites',recent:'Recent tools',settings:'Appearance',about:'About ToolNest',contact:'Contact & support',faq:'Help & FAQ'} as Record<string,string>)[p]}</button>})}</div>:<>
         <aside className="tn-mega-feature"><span className="tn-mega-eyebrow">TOOLNEST WORKSPACE</span><h2>{selected?.headline}</h2><p>{selected?.description}</p><div className="tn-mega-featurelinks">{selected?.categories.slice(0,4).map((g,i)=>{const Icon=menuIcons[i];return <button key={g} onClick={()=>navigate(()=>onCategory(g))}><span><Icon size={20}/></span>{g} tools<ArrowRight size={14}/></button>})}</div><button className="tn-mega-view" onClick={()=>navigate(()=>onPage('all'))}>Browse all tools <ArrowRight size={17}/></button></aside>
         <div className="tn-mega-directory"><div className="tn-mega-directoryhead"><strong>Popular tools</strong><button onClick={()=>navigate(()=>onPage('all'))}>View all available <ArrowRight size={15}/></button></div><div className="tn-mega-links">{tools.filter(t=>selected?.categories.includes(t.category)).sort((a,b)=>Number(selected?.keywords.some(k=>b.name.toLowerCase().includes(k)))-Number(selected?.keywords.some(k=>a.name.toLowerCase().includes(k)))).slice(0,24).map((tool,i)=>{const Icon=menuIcons[i%menuIcons.length];return <button key={tool.id} onClick={()=>navigate(()=>onOpenTool(tool.id))}><span className={`tn-menu-icon tn-menu-icon-${i%6}`}><Icon size={21}/></span><span>{tool.name}</span></button>})}</div></div>
         <div className="tn-mega-bottom"><ShieldCheck size={16}/> Local processing for supported tools <span>·</span> No sign-in required <span>·</span> No credits or paywall</div>

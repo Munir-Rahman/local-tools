@@ -3,17 +3,17 @@
     "name": "ToolNest",
     "slug": "toolnest",
     "scheme": "toolnest",
-    "version": "0.1.0",
+    "version": "0.9.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#fffaf5",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.localtools.private"
+      "bundleIdentifier": "com.toolnest.app"
     },
     "android": {
-      "package": "com.localtools.private",
+      "package": "com.toolnest.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#fff4e9"

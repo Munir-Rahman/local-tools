@@ -41,6 +41,10 @@ jobs:
         run: npm run test:unit-conversions --workspace @local-tools/mobile
       - name: Test Android picker, MIME mapping and permission regressions
         run: node --experimental-strip-types --test apps/mobile/tests/filePicker.test.mjs
+      - name: Test Gregorian, Shamsi and civil Hijri conversions
+        run: node --experimental-strip-types --test apps/mobile/tests/calendarEngine.test.mjs
+      - name: Validate offline financial formulas
+        run: node --experimental-strip-types --test apps/mobile/tests/financeEngine.test.mjs
       - name: Typecheck native mobile source
         run: npm run typecheck --workspace @local-tools/mobile
       - name: Validate Expo configuration
