@@ -11,7 +11,7 @@ export type ToolId =
   | 'json-validate'|'json-minify'|'text-lowercase'|'text-titlecase'|'text-camel'|'text-snake'|'text-kebab'|'text-trim'|'text-unique'|'text-sort'|'text-reverse'|'text-normalize'|'text-accents'|'text-line-numbers'|'url-decode'|'html-encode'|'html-decode'|'text-slug'|'safe-filename'|'number-base'|'storage-convert'|'percentage-calc'|'discount-calc'|'temp-convert'|'date-difference'|'csv-json'|'json-csv'|'text-frequency'|'text-to-binary'|'binary-to-text';
 export type MobileTool = {id:ToolId;name:string;subtitle:string;kind:ToolKind;icon:string;catalog?:number;popular?:boolean;color:string};
 export const tools:MobileTool[] = [
-  ...unitConversions.map((conversion):MobileTool=>({id:conversion.id,name:conversion.name,subtitle:`${conversion.family.name} · ${conversion.from.label} → ${conversion.to.label}`,kind:'unit',icon:'swap-horizontal-outline',color:'#DC8638'})),
+  ...unitConversions.map((conversion):MobileTool=>({id:conversion.id as `unit-${string}`,name:conversion.name,subtitle:`${conversion.family.name} · ${conversion.from.label} → ${conversion.to.label}`,kind:'unit',icon:'swap-horizontal-outline',color:'#DC8638'})),
   {id:'zip-files',name:'Create ZIP archive',subtitle:'Compress files into ZIP',kind:'file',icon:'archive-outline',color:'#2595CF'},
   {id:'zip-inspect',name:'List ZIP contents',subtitle:'Show file names inside ZIP',kind:'file',icon:'list-outline',color:'#2595CF'},
   {id:'file-info',name:'File information',subtitle:'Size, extension and bytes',kind:'file',icon:'information-circle-outline',color:'#2595CF'},
