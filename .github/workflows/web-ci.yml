@@ -33,6 +33,28 @@ jobs:
           test -f apps/web/dist/manifest.webmanifest
           test -f apps/web/dist/ffmpeg/ffmpeg-core.js
           test -f apps/web/dist/ffmpeg/ffmpeg-core.wasm
+      - name: Bundle Python one-click web server with site artifact
+        run: |
+          cp scripts/local-web/run_toolnest.py apps/web/dist/
+          cp scripts/local-web/START_TOOLNEST_WINDOWS.bat apps/web/dist/
+          cp scripts/local-web/START_TOOLNEST_MAC_LINUX.sh apps/web/dist/
+          cp scripts/local-web/README_START_HERE.txt apps/web/dist/
+          chmod +x apps/web/dist/START_TOOLNEST_MAC_LINUX.sh
+      - name: Test one-click web artifact on localhost
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 apps/web/dist/run_toolnest.py --port 8765 --no-browser >/tmp/toolnest-server.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8765/ -o /tmp/toolnest-index.html; then break; fi
+            sleep 0.2
+          done
+          grep -q 'ToolNest' /tmp/toolnest-index.html
+          curl -fsSI http://127.0.0.1:8765/sw.js | grep -qi 'Content-Type: text/javascript'
+          curl -fsSI http://127.0.0.1:8765/ffmpeg/ffmpeg-core.wasm | grep -qi 'Content-Type: application/wasm'
+          echo "Local Python server successfully served ToolNest HTML, JS service worker and FFmpeg WASM."
       - name: Install Chromium for browser persistence tests
         run: npx playwright install --with-deps chromium
       - name: Test SQLite, favorites and local FFmpeg in Chromium
