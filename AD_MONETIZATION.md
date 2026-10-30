@@ -64,3 +64,20 @@ All placements use distinct label **Advertisement**, are hidden from printed exp
 Do not imitate AsliTools's exact brand assets, ad popups, or deceptive download-looking banners. Do not add your own interstitials or fixed ads. If you enable Google-controlled Auto ads, configure them through AdSense only after approval, reviewing Google's placement and format policies.
 
 Policy references: https://support.google.com/adsense/answer/1346295 and https://support.google.com/publisherpolicies/answer/11035030
+
+## Expo Go testing with 1,500+ unit conversions
+
+The new mobile app includes 1,520 direct, independently searchable local numeric conversions, plus PDF, ZIP, image, text, QR and editable template tools. Unit conversion uses pure TypeScript: no internet, no native modules, no APK required in Expo Go. The list renders 60 actions at a time and offers **Show 60 more**, keeping search and scroll responsive.
+
+Run from a fully updated checkout:
+
+```powershell
+cd D:\ToolNest-latest
+npm.cmd run test:unit-conversions --workspace @local-tools/mobile
+npm.cmd run typecheck --workspace @local-tools/mobile
+npm.cmd run start:clean --workspace @local-tools/mobile
+```
+
+**Expo Go advertising limitation:** Native Google AdMob does not exist inside Expo Go. Home, Explore and individual tool screens have carefully separated, clearly identified non-interactive ad placeholders; there are **no fake impressions** and **no ad revenue** in Expo Go. Do not load an AdMob native module into Expo Go. The eventual AdMob SDK requires a rebuilt native app, production publisher IDs, consent, test ads and on-device testing.
+
+The web application already has AdSense-ready slots. An additional slot appears below the individual tool workspace, not between input/process/download controls. AdSense remains inactive without a verified public HTTPS site, publisher/slot IDs and required certified CMP. The Windows desktop inherits all working browser conversion tools and intentionally **does not** load AdSense, following Google's desktop software placement restriction.
