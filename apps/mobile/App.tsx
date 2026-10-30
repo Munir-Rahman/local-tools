@@ -6,6 +6,7 @@ import {
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
+import { File as NativeFile, FileMode } from 'expo-file-system';
 import * as Clipboard from 'expo-clipboard';
 import * as Crypto from 'expo-crypto';
 import QRCode from 'qrcode';
@@ -15,7 +16,7 @@ import type { MobileTool, ToolId } from './src/tools';
 import { loadState, setFavorite, recordUse, clearActivity, savePreference, testPersistence, loadDraft, saveDraft } from './src/storage';
 import type { RecentItem } from './src/storage';
 import { processTool, shareResult, generateQr, importPickedFile, saveResultToFolder } from './src/engine';
-import { pickerMimeType, normalizeDocumentName } from './src/pickerUtils';
+import { pickerMimeType, normalizeDocumentName, extensionFromHeader } from './src/pickerUtils';
 import type { PickedFile, EngineOutput, EngineOptions } from './src/engine';
 import { defaultInvoice, defaultResume, exportTemplatePdf, exportStickerPdf, resumeLayouts } from './src/templates';
 import type { ResumeData, InvoiceData } from './src/templates';
@@ -138,8 +139,19 @@ function Main(){
       if(picked.canceled)return;
       const files:PickedFile[]=[];
       for(const asset of picked.assets){
-        const name=normalizeDocumentName(asset.name,asset.mimeType);
+        let name=normalizeDocumentName(asset.name,asset.mimeType);
         const uri=await importPickedFile(asset.uri,name);
+        // Some Android gallery/document providers return "image 4377" with no
+        // extension or useful MIME type. Inspect just the first 16 local bytes.
+        if(!/\.[a-z0-9]{1,12}$/i.test(name)){
+          try{
+            const handle=new NativeFile(uri).open(FileMode.ReadOnly);
+            try{
+              const guess=extensionFromHeader(await handle.readBytes(16));
+              if(guess)name=name+'.'+guess;
+            }finally{handle.close();}
+          }catch{ /* The engine reports a meaningful unsupported-type error. */ }
+        }
         files.push({uri,name,size:asset.size,mimeType:asset.mimeType||undefined});
       }
       setSelectedFiles(files);setResult(null);setError('');
