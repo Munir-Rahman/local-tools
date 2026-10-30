@@ -12,6 +12,8 @@ import AdSlot from './AdSlot';
 import ToolNestHeader from './ToolNestHeader';
 import CalendarWorkbench, {calendarToolDefs} from './CalendarWorkbench';
 import type {CalendarToolId} from './CalendarWorkbench';
+import FinanceWorkbench, {financeTools} from './FinanceWorkbench';
+import type {FinanceToolId} from './FinanceWorkbench';
 import StickerStudio from './StickerStudio';
 import { utilityDefs } from './Utilities';
 import type { UtilityId } from './Utilities';
@@ -42,6 +44,7 @@ const allTools:ToolItem[]=[
   ...pdfTools.map(t=>({id:t.id,name:t.name,description:t.description,category:t.category,featured:t.featured})),
   ...utilityDefs.map(t=>({...t,featured:['json-tool','word-counter','qr-generator','barcode-generator'].includes(t.id)})),
   ...calendarToolDefs.map(t=>({...t,featured:t.id==='calendar-solar-hijri'})),
+  ...financeTools.map(t=>({...t})),
   {id:'cv-builder',name:'CV & Resume Builder',description:'Build a professional resume using editable templates and print it as a PDF.',category:'Templates',featured:true},
   {id:'invoice-builder',name:'Invoice Generator',description:'Create detailed invoices with multiple items, discounts and printable bills.',category:'Templates',featured:true},
   {id:'sticker-studio',name:'Sticker & Emoji Studio',description:'Make colorful printable stickers and SVG sheets with emoji and captions.',category:'Design',featured:true},
@@ -158,6 +161,7 @@ export default function App(){
   const selectedUnit=selected?.startsWith('unit-')?selected:null;
   const selectedUtil=utilityDefs.find(t=>t.id===selected);
   const selectedCalendar=calendarToolDefs.find(t=>t.id===selected);
+  const selectedFinance=financeTools.find(t=>t.id===selected);
   const selectedTemplate=selected==='cv-builder'||selected==='invoice-builder';
   const selectedExtra=selected?.startsWith('action-')?Number(selected.slice(7)):null;
   const selectedImage=selected?.startsWith('image-')?Number(selected.slice(6)):null;
@@ -229,6 +233,7 @@ export default function App(){
         selectedCore?<PdfWorkspace key={selectedCore.id} initialToolId={selectedCore.id as ToolId} onBack={back} onCompleted={(id,name,file,result)=>{void activity(id,name,file,result)}}/>:
         selectedUtil?<Utilities key={selectedUtil.id} id={selectedUtil.id as UtilityId} onBack={back} onCompleted={(name,result)=>{void activity(selectedUtil.id,name,'Text / local input',result)}}/>:
         selectedCalendar?<CalendarWorkbench key={selectedCalendar.id} id={selectedCalendar.id as CalendarToolId} onBack={back} onCompleted={(name,result)=>{void activity(selectedCalendar.id,name,'Local date input',result)}}/>:
+        selectedFinance?<FinanceWorkbench key={selectedFinance.id} id={selectedFinance.id as FinanceToolId} onBack={back} onCompleted={(name,result)=>{void activity(selectedFinance.id,name,'Local finance inputs',result)}}/>:
         selectedTemplate?<Templates key={selected} id={selected as TemplateId} onBack={back} onCompleted={(name,result)=>{void activity(selected,name,'Local template',result)}}/>:
         page==='dashboard'?<>
           <section className="tn-hero" aria-label="ToolNest introductory banner">
