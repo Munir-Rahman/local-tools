@@ -33,6 +33,8 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
       - name: Install mobile dependencies
         run: npm install --workspace @local-tools/mobile --workspace @local-tools/core --include-workspace-root --no-audit --no-fund
       - name: Validate MIME selection, Android permissions and TypeScript
