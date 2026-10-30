@@ -15,7 +15,7 @@ test('PDF and ZIP documents with extensionless provider filenames are recognized
 });
 test('Existing extensions are retained and dangerous path characters removed',()=>{
   assert.equal(normalizeDocumentName('photo.JPEG','image/png'),'photo.JPEG');
-  assert.equal(normalizeDocumentName('folder/subfolder\\\\cv','application/pdf'),'folder_subfolder_cv.pdf');
+  assert.equal(normalizeDocumentName('folder/subfolder\\cv','application/pdf'),'folder_subfolder_cv.pdf');
   assert.equal(normalizeDocumentName('    '),'document');
 });
 test('Images-to-PDF selects only supported JPEG and PNG image MIME types',()=>{
@@ -28,7 +28,7 @@ test('Images-to-PDF selects only supported JPEG and PNG image MIME types',()=>{
 test('All mapped MIME types provide usable extensions',()=>{
   for(const [mime,extension] of Object.entries(EXTENSIONS_BY_MIME)){
     assert.ok(mime.includes('/'));
-    assert.match(normalizeDocumentName('example',mime),new RegExp('\\\\.'+extension+'$'));
+    assert.match(normalizeDocumentName('example',mime),new RegExp('\\.'+extension+'$'));
   }
 });
 test('Regression guards for repeated Android READ permission failures',()=>{
@@ -36,8 +36,8 @@ test('Regression guards for repeated Android READ permission failures',()=>{
   const app=readFileSync(new URL('../App.tsx',import.meta.url),'utf8');
   const templates=readFileSync(new URL('../src/templates.ts',import.meta.url),'utf8');
   assert.match(engine,/copyToCacheDirectory:true/);
-  assert.doesNotMatch(engine,/await new File\\(uri\\)\\.copy\\(/);
-  assert.doesNotMatch(templates,/await new File\\(uri\\)\\.copy\\(/);
-  assert.match(app,/normalizeDocumentName\\(asset.name,asset.mimeType\\)/);
+  assert.doesNotMatch(engine,/await new File\(uri\)\.copy\(/);
+  assert.doesNotMatch(templates,/await new File\(uri\)\.copy\(/);
+  assert.match(app,/normalizeDocumentName\(asset.name,asset.mimeType\)/);
   assert.match(app,/copyToCacheDirectory:true/);
 });
