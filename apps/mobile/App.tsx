@@ -20,6 +20,7 @@ import type { PickedFile, EngineOutput, EngineOptions } from './src/engine';
 import { defaultInvoice, defaultResume, exportTemplatePdf, exportStickerPdf, resumeLayouts } from './src/templates';
 import type { ResumeData, InvoiceData } from './src/templates';
 import catalog from './src/masterCatalog';
+import {convertUnit, getConversion} from './src/unitConversions';
 
 type Tab = 'home'|'explore'|'saved'|'activity';
 type ThemeSetting = 'light'|'dark'|'system';
@@ -63,7 +64,7 @@ function ToolTile({tool,p,accent,isSaved,onOpen,onSave,compact=false}:{tool:Mobi
       </Pressable></View>
     <Text numberOfLines={1} style={[s.tileName,{color:p.text}]}>{tool.name}</Text>
     <Text numberOfLines={2} style={[s.tileDescription,{color:p.muted}]}>{tool.subtitle}</Text>
-    <View style={s.tileFooter}><Text style={{color:tool.color,fontWeight:'700',fontSize:10}}>{tool.kind==='pdf'?'PDF':tool.kind==='image'?'IMAGE':tool.kind==='text'?'UTILITY':tool.kind==='qr'?'QR':'DOCUMENT'}</Text><Glyph name="arrow-forward" color={accent} size={17}/></View>
+    <View style={s.tileFooter}><Text style={{color:tool.color,fontWeight:'700',fontSize:10}}>{tool.kind==='pdf'?'PDF':tool.kind==='image'?'IMAGE':tool.kind==='text'?'UTILITY':tool.kind==='qr'?'QR':tool.kind==='unit'?'CONVERTER':'DOCUMENT'}</Text><Glyph name="arrow-forward" color={accent} size={17}/></View>
   </Pressable>;
 }
 function InputField({label,value,onChange,p,placeholder='',multiline=false,keyboardType}:{label:string;value:string;onChange:(next:string)=>void;p:Palette;placeholder?:string;multiline?:boolean;keyboardType?:'numeric'|'email-address'|'default'}){
@@ -73,6 +74,16 @@ function InputField({label,value,onChange,p,placeholder='',multiline=false,keybo
     style={[s.field,{backgroundColor:p.surface,borderColor:p.border,color:p.text},multiline&&{minHeight:95,paddingTop:12}]}
   /></View>;
 }
+
+// Expo Go cannot host the Google Mobile Ads native SDK. Reserve clearly labelled,
+// non-interactive layouts; activate AdMob only in a separately built native client.
+function MobileAdPlacement({placement,p}:{placement:'home'|'explore'|'tool';p:Palette}){
+ return <View accessibilityLabel={`Advertisement placement: ${placement}`} style={[s.adSlot,{backgroundColor:p.surface,borderColor:p.border,marginTop:placement==='home'?0:17,marginBottom:16}]}>
+   <Glyph name="megaphone-outline" color={p.muted} size={17}/>
+   <View style={{flex:1}}><Text style={{fontSize:11,color:p.muted,fontWeight:'700'}}>Advertisement</Text><Text style={{fontSize:10,color:p.muted}}>Reserved for AdMob · no live ads in Expo Go</Text></View>
+ </View>;
+}
+
 function Main(){
   const {width}=useWindowDimensions();const isWide=width>=440;
   const [tab,setTab]=useState<Tab>('home');const [tool,setTool]=useState<MobileTool|null>(null);
@@ -82,6 +93,7 @@ function Main(){
   const darkMode=theme==='dark'||(theme==='system'&&systemMode);const p=darkMode?dark:light;
   const [favorites,setFavorites]=useState<string[]>([]);const [recent,setRecent]=useState<RecentItem[]>([]);
   const [query,setQuery]=useState('');const [filter,setFilter]=useState('all');const [catalogPage,setCatalogPage]=useState(0);
+  const [visibleCount,setVisibleCount]=useState(60);
   const [selectedFiles,setSelectedFiles]=useState<PickedFile[]>([]);const [options,setOptions]=useState<EngineOptions>(defaultOptions);
   const [result,setResult]=useState<EngineOutput|null>(null);const [error,setError]=useState('');const [busy,setBusy]=useState(false);
   const [resume,setResume]=useState<ResumeData>(defaultResume);const [invoice,setInvoice]=useState<InvoiceData>(defaultInvoice);
@@ -95,7 +107,7 @@ function Main(){
   useEffect(()=>{void hydrate();const listener=Appearance.addChangeListener(({colorScheme})=>setSystemMode(colorScheme==='dark'));return()=>listener.remove();},[hydrate]);
   useEffect(()=>{if(!tool||tool.id!=='qr-generator'){setQrSvg('');return;}let active=true;const t=setTimeout(()=>QRCode.toString(options.inputText||'https://example.com',{type:'svg',margin:1,width:240,color:{dark:accent,light:'#FFFFFF'}}).then(svg=>{if(active)setQrSvg(svg)}).catch(()=>setQrSvg('')),240);return()=>{active=false;clearTimeout(t);};},[tool,options.inputText,accent]);
   const go=(next:Tab)=>{setTab(next);setTool(null);setCatalogOpen(false);setSettingsOpen(false);setQuery('');setError('');setResult(null);};
-  const openTool=async(next:MobileTool)=>{setToolOrigin({tab,catalog:catalogOpen});setTool(next);setCatalogOpen(false);setSettingsOpen(false);setSelectedFiles([]);setOptions(defaultOptions);setResult(null);setError('');
+  const openTool=async(next:MobileTool)=>{setToolOrigin({tab,catalog:catalogOpen});setTool(next);setCatalogOpen(false);setSettingsOpen(false);setSelectedFiles([]);setOptions({...defaultOptions,inputText:next.kind==='unit'?'1':''});setResult(null);setError('');
     if(next.id==='cv-builder'||next.id==='invoice-builder'){
       const saved=await loadDraft(next.id).catch(()=>null);
       if(saved && typeof saved==='object'){if(next.id==='cv-builder')setResume({...defaultResume,...saved as ResumeData});else setInvoice({...defaultInvoice,...saved as unknown as InvoiceData,items:Array.isArray((saved as unknown as InvoiceData).items)?(saved as unknown as InvoiceData).items:defaultInvoice.items});}
@@ -140,7 +152,15 @@ function Main(){
     if(!tool||busy)return;setBusy(true);setError('');setResult(null);
     try{
       let output:EngineOutput;
-      if(tool.id==='uuid-generator')output={kind:'text',text:Crypto.randomUUID()};
+      if(tool.kind==='unit'){
+        const source=options.inputText.trim();
+        if(!source)throw Error('Enter a numeric value.');
+        const converted=convertUnit(tool.id,Number(source));
+        const definition=getConversion(tool.id);
+        if(!definition)throw Error('Conversion does not exist.');
+        output={kind:'text',text:`${source} ${definition.from.label} = ${Number(converted.toPrecision(12))} ${definition.to.label}`};
+      }
+      else if(tool.id==='uuid-generator')output={kind:'text',text:Crypto.randomUUID()};
       else if(tool.id==='qr-generator'){
         const data=await generateQr(options.inputText,accent);if(data.kind!=='file')throw Error('QR export failed.');output={kind:'file',name:data.name,uri:data.uri,mime:data.mime};
       }
@@ -151,7 +171,9 @@ function Main(){
       setResult(output);await done(tool.id,tool.name,output.kind==='file'?output.name:'Text result');
     }catch(e){setError(e instanceof Error?e.message:String(e));}finally{setBusy(false);}
   };
+  useEffect(()=>setVisibleCount(60),[filter,query]);
   const toolSearch=useMemo(()=>tools.filter(t=>(filter==='all'||t.kind===filter)&&`${t.name} ${t.subtitle}`.toLowerCase().includes(query.toLowerCase())),[filter,query]);
+  const visibleToolSearch=useMemo(()=>toolSearch.slice(0,visibleCount),[toolSearch,visibleCount]);
   const catalogueResults=useMemo(()=>catalog.filter(x=>`${x.name} ${x.category}`.toLowerCase().includes(query.toLowerCase())),[query]);
   const catalogMap=useMemo(()=>new Map(tools.filter(t=>t.catalog).map(t=>[t.catalog!,t])),[]);
   const headerTitle=tool?tool.name:settingsOpen?'Settings':catalogOpen?'5,000-action roadmap':tab==='home'?'Workspace':tab==='explore'?'All tools':tab==='saved'?'Favorites':'Recent activity';
@@ -190,6 +212,7 @@ function Main(){
           {tool.id==='resize-image'&&<InputField label="Output width (pixels)" value={String(options.width)} onChange={v=>setOptions({...options,width:Number(v)})} p={p} keyboardType="numeric"/>}
           {tool.id==='compress-image'&&<InputField label="JPEG quality (20-100)" value={String(options.quality)} onChange={v=>setOptions({...options,quality:Math.min(100,Math.max(20,Number(v)))})} p={p} keyboardType="numeric"/>}
           {tool.id==='convert-image'&&<View style={{marginBottom:14}}><Text style={[s.fieldLabel,{color:p.text}]}>Format</Text><View style={s.chips}>{(['jpg','png'] as const).map(v=><Pressable key={v} onPress={()=>setOptions({...options,format:v})} style={[s.chip,{backgroundColor:options.format===v?accent+'18':p.surface,borderColor:options.format===v?accent:p.border}]}><Text style={{color:options.format===v?accent:p.text,fontWeight:'700'}}>{v.toUpperCase()}</Text></Pressable>)}</View></View>}
+          {tool.kind==='unit'&&<><InputField label={`Value in ${getConversion(tool.id)?.from.label||'source units'}`} value={options.inputText} onChange={v=>setOptions({...options,inputText:v})} p={p} placeholder="Enter a number, e.g. 12.5" keyboardType="numeric"/><Text style={{color:p.muted,fontSize:12,marginBottom:10}}>Output unit: {getConversion(tool.id)?.to.label}. Uses local unit factors; results may be rounded.</Text><SecondaryButton label="Swap source and target units" icon="swap-horizontal-outline" p={p} accent={accent} onPress={()=>{const spec=getConversion(tool.id);if(!spec)return;const opposite=byId(`unit-${spec.family.code}-${spec.to.code}-${spec.from.code}`);if(opposite)void openTool(opposite);}}/></>}
           {textTool&&tool.id!=='uuid-generator'&&<InputField label="Input text" value={options.inputText} onChange={v=>setOptions({...options,inputText:v})} p={p} placeholder={tool.id==='json-format'?'{"example":true}':'Enter or paste text'} multiline/>}
           {tool.kind==='qr'&&<><InputField label="URL or text" value={options.inputText} onChange={v=>setOptions({...options,inputText:v})} p={p} placeholder="https://example.com"/><View style={[s.qrPreview,{backgroundColor:'#FFFFFF',borderColor:p.border}]}>{qrSvg?<SvgXml xml={qrSvg} width={190} height={190}/>:<ActivityIndicator color={accent}/>}</View></>}
           {tool.id==='cv-builder'&&<>
@@ -221,11 +244,11 @@ function Main(){
             <Text style={[s.invoiceTotal,{color:p.text,marginTop:16}]}>Total: {invoice.currency} {(invoice.items||[]).reduce((sum,x)=>sum+(Math.max(0,Number(x.quantity)||0)*Math.max(0,Number(x.price)||0)),0).toFixed(2)}</Text>
           </>}
           {error!==''&&<View style={[s.message,{backgroundColor:darkMode?'#4A2730':'#FCE8EB'}]}><Glyph name="alert-circle-outline" color="#DE5362"/><Text style={{flex:1,color:darkMode?'#FFB0BC':'#9D3045',fontSize:12}}>{error}</Text></View>}
-          <FilledButton label={busy?'Processing locally…':tool.kind==='template'?'Generate PDF':tool.id==='qr-generator'?'Export QR as SVG':tool.kind==='text'?'Run utility':'Process files'} icon={busy?'hourglass-outline':'sparkles-outline'} accent={accent} disabled={Boolean(busy||(pdfOrImage&&selectedFiles.length===0))} onPress={()=>void run()}/>
+          <FilledButton label={busy?'Processing locally…':tool.kind==='template'?'Generate PDF':tool.id==='qr-generator'?'Export QR as SVG':tool.kind==='text'?'Run utility':tool.kind==='unit'?'Convert locally':'Process files'} icon={busy?'hourglass-outline':'sparkles-outline'} accent={accent} disabled={Boolean(busy||(pdfOrImage&&selectedFiles.length===0))} onPress={()=>void run()}/>
           {tool.kind==='template'&&<View style={{marginTop:10}}><SecondaryButton label="Save draft in SQLite" icon="save-outline" p={p} accent={accent} onPress={()=>void saveDraftNow()}/></View>}
         </View>
         {result&&<View style={[s.panel,{backgroundColor:p.surface,borderColor:p.border,marginTop:14}]}><View style={{flexDirection:'row',alignItems:'center',gap:9,marginBottom:11}}><Glyph name="checkmark-circle" color="#19AA7D" size={23}/><Text style={[s.panelHeading,{color:p.text,marginBottom:0}]}>Ready on this device</Text></View>{result.kind==='text'?<><Text selectable style={[s.outputText,{color:p.text,backgroundColor:p.subtle}]}>{result.text}</Text><FilledButton label="Copy result" icon="copy-outline" accent={accent} onPress={()=>void Clipboard.setStringAsync(result.text)}/></>:<><Text style={{color:p.muted,marginBottom:13,fontSize:12}}>{result.name}</Text><FilledButton label="Share or open file" icon="share-outline" accent={accent} onPress={()=>void shareResult(result).catch(e=>Alert.alert('Sharing unavailable',String(e)))}/>{Platform.OS==='android'&&<View style={{marginTop:12}}><SecondaryButton label="Save file to a folder" icon="download-outline" p={p} accent={accent} onPress={()=>void saveResultToFolder(result).then(saved=>{if(saved)Alert.alert('Saved to folder',result.name)}).catch(e=>Alert.alert('Could not save file',String(e)))}/></View>}</>}</View>}
-        <Text style={[s.privacyFoot,{color:p.muted}]}><Glyph name="shield-checkmark-outline" color="#19AA7D" size={14}/> Files are processed in app storage; sharing a file to another app is your choice.</Text>
+        <Text style={[s.privacyFoot,{color:p.muted}]}><Glyph name="shield-checkmark-outline" color="#19AA7D" size={14}/> Files are processed in app storage; sharing a file to another app is your choice.</Text><MobileAdPlacement placement="tool" p={p}/>
       </>:settingsOpen?<>
         <Heading eyebrow="PREFERENCES" title="Make it yours" subtitle="Saved privately on this device." p={p}/>
         <View style={[s.panel,{backgroundColor:p.surface,borderColor:p.border,marginBottom:14}]}>
@@ -247,7 +270,7 @@ function Main(){
         <View style={[s.pageControls,{justifyContent:'space-between'}]}><SecondaryButton label="Previous" icon="chevron-back" p={p} accent={accent} onPress={()=>setCatalogPage(Math.max(0,catalogPage-1))}/><Text style={{color:p.muted,fontSize:12}}>{catalogPage+1}/{Math.max(1,Math.ceil(catalogueResults.length/40))}</Text><SecondaryButton label="Next" icon="chevron-forward" p={p} accent={accent} onPress={()=>setCatalogPage(Math.min(Math.ceil(catalogueResults.length/40)-1,catalogPage+1))}/></View>
       </>:tab==='home'?<>
         <View style={[s.hero,{backgroundColor:p.hero}]}><View style={s.heroOrbOne}/><View style={s.heroOrbTwo}/><View style={s.heroText}><View style={s.heroBadge}><Glyph name="shield-checkmark" color="#7DF1C7" size={12}/><Text style={{color:'#B8FBE2',fontSize:10,fontWeight:'800',letterSpacing:1}}>PRIVATE WORKSPACE</Text></View><Text style={s.heroHeadline}>{profileName.trim()?`Hello, ${profileName.trim().slice(0,22)}!\n`:''}Your files.{"\n"}<Text style={{color:'#ffbd78'}}>Your device.</Text></Text><Text style={{color:p.heroMuted,fontSize:12,lineHeight:18,marginTop:11,maxWidth:245}}>Powerful PDF, image and document tools. Zero uploads, even when offline.</Text><Pressable onPress={()=>go('explore')} style={[s.heroCta,{backgroundColor:'#FFFFFF'}]}><Text style={{color:'#20355F',fontWeight:'800',fontSize:12}}>Explore all tools</Text><Glyph name="arrow-forward" color="#20355F" size={17}/></Pressable></View><View style={s.heroArt}><View style={s.heroDocument}><Glyph name="document-text-outline" color="#EF5660" size={35}/><View style={{height:6,width:65,backgroundColor:'#E7EAF1',marginTop:14,borderRadius:4}}/><View style={{height:6,width:53,backgroundColor:'#E7EAF1',marginTop:6,borderRadius:4}}/></View><View style={s.heroLock}><Glyph name="lock-closed" color="#18A77E" size={22}/></View></View></View>
-        <View style={[s.adSlot,{backgroundColor:p.surface,borderColor:p.border}]}><Glyph name="megaphone-outline" color={p.muted} size={17}/><View style={{flex:1}}><Text style={{fontSize:11,color:p.muted,fontWeight:'700'}}>Advertisement</Text><Text style={{fontSize:10,color:p.muted}}>AdMob placement reserved · no ad request in this build</Text></View></View>
+        <MobileAdPlacement placement="home" p={p}/>
         <View style={[s.statsRow,{marginTop:17}]}>{[{value:String(tools.length),label:'Mobile tools',icon:'grid-outline'},{value:String(favorites.length),label:'Favorites',icon:'star-outline'},{value:String(recent.length),label:'Recent',icon:'time-outline'}].map(o=><View key={o.label} style={[s.statCard,{backgroundColor:p.surface,borderColor:p.border}]}><Glyph name={o.icon} color={accent} size={17}/><Text style={{fontSize:19,fontWeight:'900',color:p.text,marginTop:7}}>{o.value}</Text><Text style={{fontSize:10,color:p.muted,marginTop:2}}>{o.label}</Text></View>)}</View>
         <View style={s.sectionHeader}><View><Text style={[s.sectionTitle,{color:p.text}]}>Popular tools</Text><Text style={{color:p.muted,fontSize:12,marginTop:4}}>Fast, private and always with you</Text></View><Pressable onPress={()=>go('explore')}><Text style={{color:accent,fontSize:12,fontWeight:'800'}}>View all →</Text></Pressable></View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{gap:12,paddingRight:18}}>{tools.filter(t=>t.popular).map(t=><ToolTile key={t.id} tool={t} compact p={p} accent={accent} isSaved={favorites.includes(t.id)} onSave={()=>void favorite(t.id)} onOpen={()=>void openTool(t)}/>)}</ScrollView>
@@ -255,12 +278,12 @@ function Main(){
         <View style={s.categoryGrid}>{categories.filter(c=>c.id!=='all').map(c=><Pressable key={c.id} onPress={()=>{setFilter(c.id);go('explore');setFilter(c.id);}} style={[s.categoryTile,{backgroundColor:p.surface,borderColor:p.border}]}><View style={{width:46,height:46,alignItems:'center',justifyContent:'center',backgroundColor:accent+'15',borderRadius:12}}><Glyph name={c.icon} color={accent} size={26}/></View><Text style={{color:p.text,fontSize:13,fontWeight:'800',marginTop:9}}>{c.label}</Text><Glyph name="chevron-forward" color={p.muted} size={14}/></Pressable>)}</View>
         <Pressable onPress={()=>{setCatalogOpen(true);setQuery('');}} style={[s.roadmapBanner,{backgroundColor:p.surface,borderColor:p.border}]}><View style={[s.largeIcon,{backgroundColor:'#9170DB22'}]}><Glyph name="library-outline" color="#9170DB" size={24}/></View><View style={{flex:1}}><Text style={{color:p.text,fontSize:14,fontWeight:'800'}}>5,000-action roadmap</Text><Text style={{color:p.muted,fontSize:11,marginTop:5}}>Explore upcoming tools for every platform</Text></View><Glyph name="chevron-forward" color={accent}/></Pressable>
       </>:tab==='explore'?<>
-        <Heading eyebrow="ALL OFFLINE TOOLS" title="Your private toolbox" subtitle="Run a verified local tool below, or browse all 5,000 planned and available actions." p={p}/>
+        <Heading eyebrow="ALL OFFLINE TOOLS" title="Your private toolbox" subtitle="PDF, file and 1,500+ offline unit conversions. The 5,000-action catalog contains planned tools too." p={p}/><MobileAdPlacement placement="explore" p={p}/>
         <View style={[s.searchBox,{backgroundColor:p.surface,borderColor:p.border}]}><Glyph name="search-outline" color={p.muted}/><TextInput placeholder="Search PDF, image, text…" placeholderTextColor={p.muted} value={query} onChangeText={setQuery} style={[s.searchInput,{color:p.text}]}/>{query!==''&&<Pressable onPress={()=>setQuery('')}><Glyph name="close-circle" color={p.muted}/></Pressable>}</View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.categoryChips}>{categories.map(c=><Pressable key={c.id} onPress={()=>setFilter(c.id)} style={[s.filterChip,{borderColor:filter===c.id?accent:p.border,backgroundColor:filter===c.id?accent:p.surface}]}><Text style={{color:filter===c.id?'white':p.text,fontWeight:'700',fontSize:12}}>{c.label}</Text></Pressable>)}</ScrollView>
         <Pressable accessibilityRole="button" onPress={()=>{setCatalogOpen(true);setCatalogPage(0);setQuery('');}} style={[s.roadmapBanner,{backgroundColor:p.surface,borderColor:p.border,marginTop:0,marginBottom:14}]}><Glyph name="library-outline" color={accent}/><View style={{flex:1}}><Text style={{fontWeight:'800',color:p.text}}>Browse all 5,000 actions</Text><Text style={{fontSize:11,color:p.muted}}>Planned entries are labeled, not simulated.</Text></View><Glyph name="chevron-forward" color={accent}/></Pressable>
         <Text style={{color:p.muted,fontSize:12,marginBottom:14}}>{toolSearch.length} working tools on this device · {catalog.length.toLocaleString()} roadmap actions</Text>
-        <View style={s.tileGrid}>{toolSearch.map(t=><ToolTile key={t.id} tool={t} p={p} accent={accent} isSaved={favorites.includes(t.id)} onSave={()=>void favorite(t.id)} onOpen={()=>void openTool(t)}/>)}</View>
+        <View style={s.tileGrid}>{visibleToolSearch.map(t=><ToolTile key={t.id} tool={t} p={p} accent={accent} isSaved={favorites.includes(t.id)} onSave={()=>void favorite(t.id)} onOpen={()=>void openTool(t)}/>)}</View>{visibleToolSearch.length<toolSearch.length&&<View style={{marginTop:16}}><SecondaryButton label={`Show 60 more (${toolSearch.length-visibleToolSearch.length} remaining)`} icon="chevron-down-outline" p={p} accent={accent} onPress={()=>setVisibleCount(n=>n+60)}/></View>}
       </>:tab==='saved'?<>
         <Heading eyebrow="PERSONAL COLLECTION" title="Your favorites" subtitle="One-tap access to the tools you use most." p={p}/>
         {favorites.length===0?<View style={[s.emptyState,{backgroundColor:p.surface,borderColor:p.border}]}><Glyph name="star-outline" color={accent} size={38}/><Text style={[s.sectionTitle,{color:p.text,marginTop:14}]}>Nothing starred yet</Text><Text style={{color:p.muted,textAlign:'center',marginTop:6}}>Tap the star on any tool to keep it here.</Text><FilledButton label="Explore tools" accent={accent} icon="grid-outline" onPress={()=>go('explore')}/></View>:<View style={s.tileGrid}>{tools.filter(t=>favorites.includes(t.id)).map(t=><ToolTile key={t.id} tool={t} p={p} accent={accent} isSaved onSave={()=>void favorite(t.id)} onOpen={()=>void openTool(t)}/>)}</View>}

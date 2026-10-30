@@ -37,6 +37,8 @@ jobs:
         run: npm run test:full-catalog --workspace @local-tools/mobile
       - name: Test additional offline text converters
         run: node --experimental-strip-types --test apps/mobile/tests/textEngines.test.mjs
+      - name: Verify real offline unit conversions
+        run: npm run test:unit-conversions --workspace @local-tools/mobile
       - name: Typecheck native mobile source
         run: npm run typecheck --workspace @local-tools/mobile
       - name: Validate Expo configuration
