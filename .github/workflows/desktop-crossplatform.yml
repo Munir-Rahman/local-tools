@@ -1,0 +1,71 @@
+name: ToolNest Linux and macOS Packages
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/desktop/**'
+      - 'apps/web/**'
+      - 'packages/core/**'
+      - '.github/workflows/desktop-crossplatform.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/desktop/**'
+      - 'apps/web/**'
+      - '.github/workflows/desktop-crossplatform.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: linux
+            artifact: ToolNest-Linux-AppImage
+          - os: macos-latest
+            target: mac
+            artifact: ToolNest-macOS-DMG-Unsigned
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 55
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install web, core and desktop workspaces
+        run: npm install --workspace @local-tools/web --workspace @local-tools/core --workspace @local-tools/desktop --include-workspace-root --no-audit --no-fund
+      - name: Verify Electron startup and browser application tests
+        run: |
+          npm run desktop:check
+          npm run typecheck
+      - name: Build browser assets for offline desktop
+        run: npm run build
+      - name: Build local desktop package
+        run: npm run dist:${{ matrix.target }} --workspace @local-tools/desktop
+      - name: Verify output file exists
+        shell: bash
+        run: |
+          if [ "${{ matrix.target }}" = "linux" ]; then
+            find releases -type f -name '*.AppImage' | grep -q .
+          else
+            find releases -type f -name '*.dmg' | grep -q .
+          fi
+      - name: Upload desktop release candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            releases/**/*.AppImage
+            releases/**/*.dmg
+            releases/*.AppImage
+            releases/*.dmg
+          retention-days: 14
+          if-no-files-found: error
