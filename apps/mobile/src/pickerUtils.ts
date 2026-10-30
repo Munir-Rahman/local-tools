@@ -22,3 +22,16 @@ export function normalizeDocumentName(name:string|undefined,mimeType?:string|nul
   const extension=EXTENSIONS_BY_MIME[mime];
   return extension?clean+'.'+extension:clean;
 }
+
+/** Detect a file type from only its first 16 bytes if a provider omits MIME/name. */
+export function extensionFromHeader(header:Uint8Array):string|undefined{
+  const has=(...numbers:number[])=>numbers.every((v,i)=>header[i]===v);
+  if(has(0x25,0x50,0x44,0x46,0x2d))return 'pdf';
+  if(has(0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a))return 'png';
+  if(has(0xff,0xd8,0xff))return 'jpg';
+  if(has(0x50,0x4b,0x03,0x04))return 'zip';
+  const ascii=(from:number,to:number)=>String.fromCharCode(...header.slice(from,to));
+  if(header.length>=12&&ascii(0,4)==='RIFF'&&ascii(8,12)==='WEBP')return 'webp';
+  if(header.length>=12&&ascii(4,8)==='ftyp'&&/^(heic|heix|hevc|mif1)/.test(ascii(8,12)))return 'heic';
+  return undefined;
+}
