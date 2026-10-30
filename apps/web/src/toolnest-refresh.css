@@ -35,3 +35,21 @@
 .v2-dark .tn-unit-view .v4-output{background:linear-gradient(120deg,#263242,#1a2533);color:#f8fafc;border-color:#3c4859}
 .tn-unit-view .v4-output strong{font-variant-numeric:tabular-nums;letter-spacing:-.6px}
 .tn-load-more{margin:16px auto 24px;display:flex}
+
+
+/* Accessible product footer shared by the web and desktop React UI. */
+.tn-footer{border-top:1px solid #35404b}
+.tn-footer-topline{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;padding:0 0 24px;margin:0 0 32px;border-bottom:1px solid #45434d}
+.tn-footer-topline>div{display:flex;gap:10px;align-items:center;color:#ece4de;font-size:12px;font-weight:650}
+.tn-footer-topline svg{color:#f5a35c}
+.tn-footer .v7-footer-grid{display:grid;grid-template-columns:minmax(220px,1.6fr) repeat(4,minmax(150px,1fr));column-gap:28px;row-gap:28px;max-width:1400px;margin:auto}
+.tn-footer .v7-footer-grid section{min-width:0}
+.tn-footer .v7-footer-grid button{display:flex;align-items:center;gap:9px;text-align:left;line-height:1.6;min-height:30px;padding:5px 0}
+.tn-footer .v7-footer-grid button svg{flex:0 0 auto;color:#f4b178}
+.tn-footer .v7-footer-grid button:hover{color:#f4b178}
+.tn-footer-brand img{display:block;margin-bottom:10px;object-fit:contain}
+.tn-footer-email{display:inline-flex;align-items:center;gap:7px;color:#f5b171;text-decoration:none;overflow-wrap:anywhere}
+.tn-footer-privacy{font-size:12px;line-height:1.8;color:#bbb9c4;padding-top:12px}
+.tn-footer .v7-footer-bottom{display:flex;align-items:center;justify-content:space-between;gap:13px;flex-wrap:wrap;margin-top:35px;border-top:1px solid #45434d;padding-top:22px;font-size:11px}
+@media(max-width:1150px){.tn-footer .v7-footer-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.tn-footer-brand{grid-column:span 1}}
+@media(max-width:670px){.tn-footer .v7-footer-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:28px 20px}.tn-footer-brand{grid-column:span 2}.tn-footer-topline{flex-direction:column}.tn-footer .v7-footer-bottom{display:block}.tn-footer .v7-footer-bottom span{display:block;margin:8px 0}}
