@@ -24,6 +24,7 @@ import catalog from './src/masterCatalog';
 import {convertUnit, getConversion} from './src/unitConversions';
 import {convertCalendar} from './src/calendarEngine';
 import type {CalendarSystem} from './src/calendarEngine';
+import {estimateZakat,estimateSalaryTax} from './src/financeEngine';
 
 type Tab = 'home'|'explore'|'saved'|'activity';
 type ThemeSetting = 'light'|'dark'|'system';
@@ -180,6 +181,18 @@ function Main(){
         const data=convertCalendar(options.inputText,source);
         output={kind:'text',text:'Gregorian: '+data.gregorian+'\nAfghan Solar Hijri: '+data.solarHijri+'\nIslamic Hijri (civil): '+data.islamicHijri+'\nWeekday: '+data.weekday+'\nNote: Islamic dates can differ from local moon sightings.'};
       }
+      else if(tool.id==='zakat-estimator'){
+        const values=options.inputText.split(',').map(x=>Number(x.trim()));
+        if(values.length!==3||options.inputText.split(',').some(x=>!x.trim()))throw Error('Enter: assets, liabilities, nisab threshold — separated by commas. Use the same currency for all three.');
+        const x=estimateZakat(values[0],values[1],values[2]);
+        output={kind:'text',text:'Net wealth: '+x.netAssets.toFixed(2)+'\nNisab threshold met: '+(x.aboveThreshold?'Yes':'No')+'\nEstimated annual 2.5%: '+x.estimatedAmount.toFixed(2)+'\nAssumes assets are eligible and held for the required period. Confirm locally.'};
+      }
+      else if(tool.id==='salary-tax-estimator'){
+        const values=options.inputText.split(',').map(x=>Number(x.trim()));
+        if(values.length!==2||options.inputText.split(',').some(x=>!x.trim()))throw Error('Enter: gross salary, rate percentage — separated by commas.');
+        const x=estimateSalaryTax(values[0],values[1]);
+        output={kind:'text',text:'Gross salary: '+x.gross.toFixed(2)+'\nYour rate: '+x.ratePercent+'%\nTax estimate: '+x.tax.toFixed(2)+'\nNet estimate: '+x.net.toFixed(2)+'\nNo legal brackets or deductions applied.'};
+      }
       else if(tool.id==='uuid-generator')output={kind:'text',text:Crypto.randomUUID()};
       else if(tool.id==='qr-generator'){
         const data=await generateQr(options.inputText,accent);if(data.kind!=='file')throw Error('QR export failed.');output={kind:'file',name:data.name,uri:data.uri,mime:data.mime};
@@ -233,7 +246,7 @@ function Main(){
           {tool.id==='compress-image'&&<InputField label="JPEG quality (20-100)" value={String(options.quality)} onChange={v=>setOptions({...options,quality:Math.min(100,Math.max(20,Number(v)))})} p={p} keyboardType="numeric"/>}
           {tool.id==='convert-image'&&<View style={{marginBottom:14}}><Text style={[s.fieldLabel,{color:p.text}]}>Format</Text><View style={s.chips}>{(['jpg','png'] as const).map(v=><Pressable key={v} onPress={()=>setOptions({...options,format:v})} style={[s.chip,{backgroundColor:options.format===v?accent+'18':p.surface,borderColor:options.format===v?accent:p.border}]}><Text style={{color:options.format===v?accent:p.text,fontWeight:'700'}}>{v.toUpperCase()}</Text></Pressable>)}</View></View>}
           {tool.kind==='unit'&&<><InputField label={`Value in ${getConversion(tool.id)?.from.label||'source units'}`} value={options.inputText} onChange={v=>setOptions({...options,inputText:v})} p={p} placeholder="Enter a number, e.g. 12.5" keyboardType="numeric"/><Text style={{color:p.muted,fontSize:12,marginBottom:10}}>Output unit: {getConversion(tool.id)?.to.label}. Uses local unit factors; results may be rounded.</Text><SecondaryButton label="Swap source and target units" icon="swap-horizontal-outline" p={p} accent={accent} onPress={()=>{const spec=getConversion(tool.id);if(!spec)return;const opposite=byId(`unit-${spec.family.code}-${spec.to.code}-${spec.from.code}`);if(opposite)void openTool(opposite);}}/></>}
-          {textTool&&tool.id!=='uuid-generator'&&<><InputField label={tool.id.startsWith('calendar-')?'Date (YYYY-MM-DD)':'Input text'} value={options.inputText} onChange={v=>setOptions({...options,inputText:v})} p={p} placeholder={tool.id.startsWith('calendar-')?'YYYY-MM-DD':tool.id==='json-format'?'{"example":true}':'Enter or paste text'} multiline={!tool.id.startsWith('calendar-')}/>{tool.id.startsWith('calendar-')&&<Text style={{color:p.muted,fontSize:12,marginBottom:10}}>Offline Gregorian, Afghan Shamsi and calculated civil Hijri dates (1900–2100 Gregorian). Local moon sightings may differ.</Text>}</>}
+          {textTool&&tool.id!=='uuid-generator'&&<><InputField label={tool.id.startsWith('calendar-')?'Date (YYYY-MM-DD)':'Input text'} value={options.inputText} onChange={v=>setOptions({...options,inputText:v})} p={p} placeholder={tool.id.startsWith('calendar-')?'YYYY-MM-DD':tool.id==='json-format'?'{"example":true}':'Enter or paste text'} multiline={!tool.id.startsWith('calendar-')}/>{tool.id.startsWith('calendar-')&&<Text style={{color:p.muted,fontSize:12,marginBottom:10}}>Offline Gregorian, Afghan Shamsi and calculated civil Hijri dates (1900–2100 Gregorian). Local moon sightings may differ.</Text>}{(tool.id==='zakat-estimator'||tool.id==='salary-tax-estimator')&&<Text style={{color:p.muted,fontSize:12,marginBottom:10}}>{tool.id==='zakat-estimator'?'Enter assets,liabilities,nisab threshold. Example: 10000,2000,6000. This is a simplified estimate, not a religious ruling.':'Enter gross salary,tax percentage. Example: 5000,10. This is not a local tax schedule.'}</Text>}</>}
           {tool.kind==='qr'&&<><InputField label="URL or text" value={options.inputText} onChange={v=>setOptions({...options,inputText:v})} p={p} placeholder="https://example.com"/><View style={[s.qrPreview,{backgroundColor:'#FFFFFF',borderColor:p.border}]}>{qrSvg?<SvgXml xml={qrSvg} width={190} height={190}/>:<ActivityIndicator color={accent}/>}</View></>}
           {tool.id==='cv-builder'&&<>
             <Text style={[s.panelHeading,{color:p.text}]}>Build your resume</Text>
