@@ -13,6 +13,9 @@ function toNumber(value:string,label:string){
  if(!Number.isFinite(n))throw Error('Enter a valid number for '+label+'.');
  return n;
 }
+function Field({title,value,onChange,help}:{title:string;value:string;onChange:(x:string)=>void;help?:string}){
+  return <label>{title}<input type="number" step="any" min="0" value={value} onChange={e=>onChange(e.target.value)}/>{help&&<small>{help}</small>}</label>;
+ }
 export default function FinanceWorkbench({id,onBack,onCompleted}:{id:FinanceToolId;onBack:()=>void;onCompleted:(name:string,result:string)=>void}){
  const zakat=id==='zakat-estimator';
  const [assets,setAssets]=useState('0'),[liabilities,setLiabilities]=useState('0'),[threshold,setThreshold]=useState('');
@@ -32,9 +35,6 @@ export default function FinanceWorkbench({id,onBack,onCompleted}:{id:FinanceTool
     }
     setResult(output);onCompleted(title,'Local calculation');
   }catch(e){setError(e instanceof Error?e.message:String(e))}
- }
- function Field({title,value,onChange,help}:{title:string;value:string;onChange:(x:string)=>void;help?:string}){
-  return <label>{title}<input type="number" step="any" min="0" value={value} onChange={e=>onChange(e.target.value)}/>{help&&<small>{help}</small>}</label>;
  }
  return <div className="tn-finance-page"><button className="tn-finance-back" onClick={onBack}><ArrowLeft size={17}/> All tools</button>
    <header><span><Calculator size={31}/></span><div><small>LOCAL FINANCIAL UTILITIES</small><h1>{title}</h1><p>{zakat?'Your figures and locally confirmed nisab threshold. No market data is fetched.':'A simple percentage estimate, not a jurisdiction-specific payroll tax schedule.'}</p></div></header>
