@@ -41,6 +41,10 @@ jobs:
         run: |
           node --experimental-strip-types --test apps/mobile/tests/filePicker.test.mjs
           npm run mobile:verify
+      - name: Verify Android package identifier is not a Java keyword
+        run: node -e "const p=require('./apps/mobile/app.json').expo.android.package; if(/\\b(private|public|class|package|static|new)\\b/.test(p))process.exit(1);console.log(p)"
+      - name: Verify calendar conversions in native bundle inputs
+        run: node --experimental-strip-types --test apps/mobile/tests/calendarEngine.test.mjs
       - name: Generate native Android build project
         working-directory: apps/mobile
         run: npx expo prebuild --platform android --non-interactive --clean
