@@ -33,7 +33,10 @@ app.whenReady().then(async()=>{
   mainWindow.webContents.setWindowOpenHandler(({url})=>{if(url.startsWith('https://'))void shell.openExternal(url);return {action:'deny'}});
   // Desktop has no AdSense integration. Third-party advertising may require a separate approved provider.
   session.defaultSession.webRequest.onBeforeRequest({urls:['*://pagead2.googlesyndication.com/*','*://googleads.g.doubleclick.net/*']},(details,callback)=>callback({cancel:true}));
+  // Register before loading: ready-to-show can fire while loadURL is pending.
+  mainWindow.once('ready-to-show',()=>{if(!mainWindow.isDestroyed())mainWindow.show();});
   await mainWindow.loadURL(`${local.url}/?desktop=1#dashboard`);
-  mainWindow.once('ready-to-show',()=>mainWindow.show());
+  // Fallback if the ready-to-show event was suppressed on a Windows GPU/driver.
+  if(!mainWindow.isDestroyed()&&!mainWindow.isVisible())mainWindow.show();
 }).catch(error=>{dialog.showErrorBox('ToolNest could not start',`The local application could not open. ${String(error)}\nPlease reinstall the latest ToolNest setup.`);app.quit();});
 app.on('window-all-closed',()=>{if(server)server.close();if(process.platform!=='darwin')app.quit()});
