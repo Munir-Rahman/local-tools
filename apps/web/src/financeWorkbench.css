@@ -1,0 +1,23 @@
+.tn-finance-page{max-width:1130px;margin:auto;padding:20px 18px 75px;color:var(--v2-text,#222)}
+.tn-finance-page header{display:flex;gap:20px;align-items:center;margin:14px 0 28px}
+.tn-finance-page header>span{display:grid;place-items:center;background:#fff1e6;color:#e7892b;width:64px;height:64px;border-radius:16px;flex-shrink:0}
+.tn-finance-page header small{color:#df7c2d;font-weight:800;letter-spacing:.11em}
+.tn-finance-page h1{margin:4px 0;font-size:clamp(25px,4vw,38px)}
+.tn-finance-page header p{margin:0;color:var(--v2-muted,#666)}
+.tn-finance-back{display:flex;align-items:center;gap:8px;border:none;background:transparent;color:var(--v2-muted,#666);padding:12px 0}
+.tn-finance-columns{display:grid;grid-template-columns:1fr 1fr;gap:23px}
+.tn-finance-columns>section{background:var(--v2-card,#fff);border:1px solid var(--v2-border,#eee);border-radius:18px;padding:26px;box-shadow:0 10px 28px #00000008}
+.tn-finance-columns h2{font-size:19px;margin:0 0 24px}
+.tn-finance-columns label{display:flex;flex-direction:column;font-size:13px;font-weight:700;gap:7px;margin-bottom:17px}
+.tn-finance-columns input,.tn-finance-columns select{background:var(--v2-field,#fff);border:1px solid var(--v2-border,#ddd);border-radius:10px;color:var(--v2-text,#222);padding:12px}
+.tn-finance-columns small{font-weight:400;color:var(--v2-muted,#666);line-height:1.6}
+.tn-finance-action{background:#f28a28;border:0;border-radius:11px;padding:14px 18px;width:100%;font-weight:800;color:#20180f}
+.tn-finance-resulthead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.tn-finance-resulthead button{display:flex;align-items:center;gap:6px;background:transparent;border:1px solid var(--v2-border,#ddd);border-radius:9px;padding:9px;color:var(--v2-text,#222)}
+.tn-finance-result pre{background:var(--v2-fade,#fff8ef);border-radius:12px;padding:20px;line-height:2;font-size:14px;white-space:pre-wrap;word-wrap:break-word}
+.tn-finance-result>p{color:var(--v2-muted,#666);padding:25px 0}
+.tn-finance-result aside{border-top:1px solid var(--v2-border,#ddd);margin-top:25px;padding-top:20px;display:flex;gap:12px;color:var(--v2-muted,#666)}
+.tn-finance-result aside svg{flex-shrink:0;color:#1f9c74}
+.tn-finance-result aside p{line-height:1.7;font-size:12px}
+.tn-finance-error{color:#b62d00;padding:11px;border-radius:9px;background:#fff0e5}
+@media(max-width:740px){.tn-finance-columns{grid-template-columns:1fr}.tn-finance-columns>section{padding:20px}}
