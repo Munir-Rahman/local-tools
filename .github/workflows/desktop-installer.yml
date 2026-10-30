@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - 'apps/desktop/**'
+      - 'apps/mobile/**' # Rebuild both installers when a mobile repair release is published
       - 'apps/web/**'
       - 'packages/core/**'
       - '.github/workflows/desktop-installer.yml'
