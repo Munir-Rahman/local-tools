@@ -1,3 +1,19 @@
+## October 2026: expanded offline tool set and advertising-ready layout
+
+**ToolNest Web / Windows:** More than 1,500 real unit-conversion routes built into the React web frontend, alongside implemented PDF, image, text, ZIP, media, Office and template operations (support depends on format and engine). The Windows desktop uses that same web frontend when rebuilt in the Windows NSIS installer. **Not every one of the 5,000 roadmap catalog entries is implemented.**
+
+**ToolNest Android / Expo Go:** 1,520 offline numeric conversion routes with input, unit swap, rounding and copyable results, plus native PDF/ZIP/file/image/text/QR/template tools. The Explore screen paginates by 60 entries to avoid rendering thousands of cards simultaneously. The mobile app runs in Expo Go for development; native file pickers still require on-phone verification.
+
+After downloading the current repository and installing mobile workspace dependencies, run this **single verification-and-launch command** from the repository root:
+
+```powershell
+npm.cmd run mobile:go
+```
+
+It executes catalog, full catalog, unit-conversion, and TypeScript checks before starting Expo with a clear Metro cache. Keep computer and phone on the same Wi-Fi and scan the QR using a compatible Expo Go.
+
+**Advertising:** Web AdSense has labeled placements but requires a public approved HTTPS domain, publisher/slot IDs, and appropriate consent management before revenue is possible. Android reserves labeled ad spaces for later AdMob native integration; **AdMob does not work in Expo Go** and no live ads are requested. Google AdSense is disabled in the packaged Windows desktop app under Google's desktop-software placement rules. See [AD_MONETIZATION.md](AD_MONETIZATION.md).
+
 **ToolNest v0.8 fixes:** See [README_v08.md](README_v08.md) and [WINDOWS_SETUP.md](WINDOWS_SETUP.md) for Android file URI, PowerShell and ENOSPC solutions.
 
 # ToolNest v0.7 — Web + Native Mobile + Desktop source
