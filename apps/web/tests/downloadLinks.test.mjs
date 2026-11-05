@@ -61,9 +61,14 @@ test('installer links and download page exist in React and workbox bypasses down
  const head=readFileSync(new URL('../src/ToolNestHeader.tsx',import.meta.url),'utf8');
  const site=readFileSync(new URL('../src/DownloadApps.tsx',import.meta.url),'utf8');
  const vite=readFileSync(new URL('../vite.config.ts',import.meta.url),'utf8');
- assert.match(app,/page==='downloads'\?<DownloadApps/);
+ assert.match(app,/\(page==='dashboard'\|\|page==='downloads'\)\?<>/);
+ assert.match(app,/<div id="tn-downloads" className="tn-home-downloads"><DownloadApps\/><\/div>/);
+ assert.doesNotMatch(app,/page==='downloads'\?<DownloadApps\/>/);
+ assert.equal((app.match(/<DownloadApps\/>/g)||[]).length,1);
+ assert.ok(app.indexOf('id="tn-downloads"')>app.indexOf('Explore roadmap <ArrowRight'),'download section must follow the original tool list and roadmap');
+ assert.match(app,/scrollIntoView\(\{behavior:'smooth',block:'start'\}\)/);
  assert.match(app,/\['downloads','dashboard','all'/);
- assert.match(app,/<DownloadApps compact\/>/);
+ assert.doesNotMatch(app,/<DownloadApps compact\/>/);
  assert.match(head,/onPage\('downloads'\)/);
  assert.match(site,/href=\{url\(platform\.id\)\}/);
  assert.match(vite,/navigateFallbackDenylist/);
