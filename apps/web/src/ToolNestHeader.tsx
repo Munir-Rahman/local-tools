@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
-import { ArrowRight, BookOpen, ChevronDown, CircleHelp, Clock3, FileText, FileImage, Film, Headphones, Grid2X2, Heart, Info, Mail, Menu, Moon, Palette, Search, Settings2, ShieldCheck, Sparkles, Sun, UserRound } from 'lucide-react';
+import { ArrowRight, BookOpen, Download, ChevronDown, CircleHelp, Clock3, FileText, FileImage, Film, Headphones, Grid2X2, Heart, Info, Mail, Menu, Moon, Palette, Search, Settings2, ShieldCheck, Sparkles, Sun, UserRound } from 'lucide-react';
 import './toolnest-refresh.css';
 
 type ToolLink = { id:string; name:string; category:string; description:string };
@@ -14,7 +14,7 @@ const menus:{id:MenuId;label:string;headline:string;description:string;categorie
 const menuIcons=[FileText,FileImage,Grid2X2,BookOpen,Film,Headphones,Sparkles,ShieldCheck];
 const accountIcons={personal:UserRound,favorites:Heart,recent:Clock3,settings:Palette,about:Info,contact:Mail,faq:CircleHelp} as const;
 export default function ToolNestHeader({tools,onOpenTool,onCategory,onPage,onToggleTheme,isDark,onOpenMobile,favoriteCount}:{
-  tools:ToolLink[];onOpenTool:(id:string)=>void;onCategory:(category:string)=>void;onPage:(page:'dashboard'|'all'|'favorites'|'recent'|'templates'|'catalog'|'about'|'faq'|'contact'|'personal'|'settings')=>void;
+  tools:ToolLink[];onOpenTool:(id:string)=>void;onCategory:(category:string)=>void;onPage:(page:'downloads'|'dashboard'|'all'|'favorites'|'recent'|'templates'|'catalog'|'about'|'faq'|'contact'|'personal'|'settings')=>void;
   onToggleTheme:()=>void;isDark:boolean;onOpenMobile:()=>void;favoriteCount:number;
 }){
   const [menu,setMenu]=useState<MenuId|null>(null);
@@ -38,6 +38,7 @@ export default function ToolNestHeader({tools,onOpenTool,onCategory,onPage,onTog
       <nav className="tn-header-navigation" aria-label="Main navigation">
         <button onClick={()=>navigate(()=>onPage('all'))}>All tools</button>
         <button onClick={()=>navigate(()=>onPage('templates'))}>Templates</button>
+        <button className="tn-header-download" onClick={()=>navigate(()=>onPage('downloads'))}><Download size={16}/> Download apps</button>
         <button className="tn-roadmap-link" onClick={()=>navigate(()=>onPage('catalog'))}>5,000-action catalog</button>
         {menus.map(item=><div className="tn-nav-entry" key={item.id} onMouseEnter={()=>{setMenu(item.id);setSearchOpen(false)}} onMouseLeave={()=>{}}><button className={menu===item.id?'open':''} aria-haspopup="true" aria-expanded={menu===item.id} aria-controls="tn-mega-panel" onFocus={()=>setMenu(item.id)} onClick={()=>setMenu(x=>x===item.id?null:item.id)}>{item.label}<ChevronDown size={15}/></button></div>)}
       </nav>
@@ -59,6 +60,6 @@ export default function ToolNestHeader({tools,onOpenTool,onCategory,onPage,onTog
         <div className="tn-mega-bottom"><ShieldCheck size={16}/> Local processing for supported tools <span>·</span> No sign-in required <span>·</span> No credits or paywall</div>
       </>}
     </div>}
-    <div className="tn-mobile-links"><button onClick={()=>navigate(()=>onPage('all'))}><Grid2X2 size={16}/> All tools</button><button onClick={()=>navigate(()=>onCategory('PDF'))}><FileText size={16}/> PDF</button><button onClick={()=>navigate(()=>onCategory('Images'))}><FileImage size={16}/> Images</button><button onClick={()=>navigate(()=>onCategory('Audio'))}><Headphones size={16}/> Audio</button><button onClick={()=>navigate(()=>onPage('templates'))}><BookOpen size={16}/> Templates</button><button onClick={()=>navigate(()=>onPage('contact'))}><Mail size={16}/> Contact</button></div>
+    <div className="tn-mobile-links"><button onClick={()=>navigate(()=>onPage('all'))}><Grid2X2 size={16}/> All tools</button><button onClick={()=>navigate(()=>onCategory('PDF'))}><FileText size={16}/> PDF</button><button onClick={()=>navigate(()=>onCategory('Images'))}><FileImage size={16}/> Images</button><button onClick={()=>navigate(()=>onCategory('Audio'))}><Headphones size={16}/> Audio</button><button onClick={()=>navigate(()=>onPage('templates'))}><BookOpen size={16}/> Templates</button><button onClick={()=>navigate(()=>onPage('contact'))}><Mail size={16}/> Contact</button><button onClick={()=>navigate(()=>onPage('downloads'))}><Download size={16}/> Apps</button></div>
   </header>;
 }
