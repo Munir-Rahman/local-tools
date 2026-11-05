@@ -53,3 +53,47 @@
 .tn-footer .v7-footer-bottom{display:flex;align-items:center;justify-content:space-between;gap:13px;flex-wrap:wrap;margin-top:35px;border-top:1px solid #45434d;padding-top:22px;font-size:11px}
 @media(max-width:1150px){.tn-footer .v7-footer-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.tn-footer-brand{grid-column:span 1}}
 @media(max-width:670px){.tn-footer .v7-footer-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:28px 20px}.tn-footer-brand{grid-column:span 2}.tn-footer-topline{flex-direction:column}.tn-footer .v7-footer-bottom{display:block}.tn-footer .v7-footer-bottom span{display:block;margin:8px 0}}
+
+
+/* 2026-11-05: Fix whole-page horizontal overflow on 1366-1920px browsers.
+ * All 20 category filters now wrap within their own container rather than
+ * stretching the document. Keep tool grids and header flex children shrinkable. */
+.v2,.v2-main,.v2-content,.tn-sitehead,.tn-sitehead-inner{min-width:0;max-width:100%}
+.v2,.v2-main{width:100%}
+.v2 .v2-content{width:100%;box-sizing:border-box}
+.v2 .v2-content>.v2-searchwrap,
+.v2 .v2-content>.v2-tabs,
+.v2 .v2-content>.v2-overview,
+.v2 .v2-content>.v2-cardgrid{min-width:0;max-width:100%}
+.v2 .v2-tabs{display:flex;flex-wrap:wrap;align-items:center;gap:8px;overflow:visible;width:100%;padding:14px 0 4px}
+.v2 .v2-tabs button{flex:0 0 auto;max-width:100%;padding:8px 13px}
+.v2 .v2-overview,.v2 .v2-cardgrid{width:100%;min-width:0}
+.v2 .v2-overview>div,.v2 .v2-cardgrid>.v2-card{min-width:0}
+.v2 .v2-overview small,.v2 .v2-card h3,.v2 .v2-card p{overflow-wrap:anywhere}
+.tn-sitehead-inner,.tn-header-navigation,.tn-header-tools{min-width:0}
+.tn-header-navigation{flex:1 1 auto}
+.tn-header-tools{flex:0 1 auto}
+.tn-header-search{flex:0 1 clamp(150px,15vw,245px);min-width:0}
+@media(max-width:1280px){
+  .tn-sitehead-inner{height:70px;gap:11px;padding-inline:clamp(12px,2vw,24px)}
+  .tn-header-navigation{display:none}
+  .tn-header-mobile{display:flex}
+  .tn-sitehead .tn-mobile-links{display:flex;max-width:100%;min-width:0;overflow-x:auto;white-space:nowrap;gap:6px;border-top:1px solid #f1e7dd;padding:6px 13px;scrollbar-width:thin}
+  .tn-mobile-links button{flex-shrink:0;display:flex;align-items:center;gap:5px;font-size:11px;color:var(--v2-text);background:transparent;border:0;border-radius:8px;padding:7px 10px}
+  .v2 .v2-content{padding:24px clamp(14px,3.2vw,35px) 65px}
+  .v2 .v2-overview{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:760px){
+  .v2 .v2-cardgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .v2 .v2-overview{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .v2 .v2-tabs{gap:6px}
+  .v2 .v2-tabs button{padding:7px 11px;font-size:11px}
+}
+@media(max-width:480px){
+  .v2 .v2-cardgrid{grid-template-columns:minmax(0,1fr)}
+  .v2 .v2-content{padding:18px 12px 55px}
+  .v2 .v2-overview>div{padding:11px 9px}
+  .v2 .v2-overview strong{font-size:19px}
+  .v2 .v2-tabs{gap:5px}
+  .v2 .v2-tabs button{font-size:10px;padding:6px 9px}
+}
