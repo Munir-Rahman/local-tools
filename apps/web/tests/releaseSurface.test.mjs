@@ -28,3 +28,21 @@ test('desktop AdSense remains disabled in web ad component',()=>{
   assert.match(ad,/has\('desktop'\)/);
   assert.match(ad,/location\.protocol==='https:'/);
 });
+
+
+test('support email is visible and actionable in profile menu, about, contact page and footer',()=>{
+  const app=read('../src/App.tsx'),header=read('../src/ToolNestHeader.tsx');
+  const email='munirrahmanrahmani0@gmail.com';
+  for(const [surface,source,marker] of [
+    ['account menu',header,'tn-account-contact'],
+    ['contact card',app,'tn-contact-card'],
+    ['about page',app,'tn-about-contact'],
+    ['footer',app,'tn-footer-email'],
+  ]){
+    assert.ok(source.includes(marker),surface+' is missing');
+    const position=source.indexOf(marker);
+    assert.ok(source.slice(position,position+1200).includes(email),surface+' must include the real support address');
+  }
+  assert.match(header,/aria-label="Contact ToolNest support by email"/);
+  assert.match(app,/href="mailto:munirrahmanrahmani0@gmail.com\?subject=ToolNest%20Support"/);
+});
