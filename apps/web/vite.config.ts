@@ -27,6 +27,8 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,webmanifest,wasm}'],
         maximumFileSizeToCacheInBytes: 40 * 1024 * 1024,
         navigateFallback: '/index.html',
+        // Do not intercept API downloads with the SPA's offline fallback.
+        navigateFallbackDenylist: [/^\/api\//],
         cleanupOutdatedCaches: true
       }
     })
