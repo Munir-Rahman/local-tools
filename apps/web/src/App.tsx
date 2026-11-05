@@ -127,7 +127,7 @@ export default function App(){
   useEffect(()=>{
     const raw=decodeURIComponent(location.hash.replace(/^#/,''));
     const selectedFromHash=raw.startsWith('tool/')?raw.slice(5):null;
-    const pageFromHash=(['dashboard','all','favorites','recent','catalog','templates','settings','privacy','about','faq','contact','personal'] as Page[]).includes(raw as Page)?raw as Page:'dashboard';
+    const pageFromHash=(['downloads','dashboard','all','favorites','recent','catalog','templates','settings','privacy','about','faq','contact','personal'] as Page[]).includes(raw as Page)?raw as Page:'dashboard';
     window.history.replaceState({tn:true,page:pageFromHash,selected:selectedFromHash},'',location.pathname+location.search+(location.hash||'#dashboard'));
     setPage(pageFromHash);setSelected(selectedFromHash);
     const restore=(e:PopStateEvent)=>{setSelected(e.state?.selected||null);setPage(e.state?.page||'dashboard');setSideOpen(false);window.scrollTo(0,0)};
