@@ -1,0 +1,29 @@
+/* Install ToolNest without navigating through GitHub pages. */
+.tn-downloads{max-width:1210px;margin:0 auto;color:var(--v2-text,#26222b);min-width:0}
+.tn-downloads-full{padding:15px 0 50px}
+.tn-downloads-compact{padding:20px 0 34px}
+.tn-downloads-heading{margin:0 0 23px}
+.tn-downloads-eyebrow{color:#db7823;font-weight:800;font-size:11px;letter-spacing:.12em}
+.tn-downloads-heading h2{font-size:clamp(22px,3vw,34px);margin:5px 0 7px;line-height:1.2}
+.tn-downloads-heading p{color:var(--v2-muted,#80726e);font-size:13px;line-height:1.7;margin:0;max-width:820px}
+.tn-downloads-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+.tn-download-tile{min-width:0;background:var(--v2-card,#fff);border:1px solid var(--v2-border,#e9ded2);border-radius:15px;padding:18px;display:flex;flex-direction:column;gap:11px;box-shadow:0 4px 19px #47301808}
+.tn-download-title{display:flex;align-items:center;gap:10px;min-width:0}
+.tn-download-icon{flex:0 0 43px;width:43px;height:43px;border-radius:11px;background:#fff0df;color:#df7b23;display:grid;place-items:center}
+.tn-download-title>div{display:flex;flex-direction:column;gap:3px;min-width:0}
+.tn-download-title strong{font-size:15px;letter-spacing:-.02em}
+.tn-download-title small{font-size:11px;color:var(--v2-muted,#80726e)}
+.tn-download-tile>p{font-size:12px;color:var(--v2-muted,#80726e);line-height:1.55;margin:0;min-height:39px}
+.tn-download-action,.tn-download-unavailable{display:flex;align-items:center;justify-content:center;gap:7px;border-radius:10px;padding:11px 9px;min-height:43px;text-align:center;font-size:12px;font-weight:800;text-decoration:none;margin-top:auto}
+.tn-download-action{background:#ee8728;border:1px solid #e78222;color:#24180f;cursor:pointer}
+.tn-download-action:hover{background:#f59a44}
+.tn-download-action:focus-visible{outline:3px solid #3d8dde;outline-offset:3px}
+.tn-download-unavailable{background:var(--v2-fade,#f6f2ed);border:1px solid var(--v2-border,#e9ded2);color:var(--v2-muted,#80726e);cursor:not-allowed}
+.tn-download-size{font-size:10px;color:var(--v2-muted,#80726e);text-align:center}
+.tn-download-notes{margin-top:15px;padding:12px 16px;border-radius:12px;background:var(--v2-fade,#fff5ec);color:var(--v2-muted,#80726e);font-size:11px}
+.tn-download-notes p{display:flex;gap:10px;align-items:flex-start;margin:5px 0;line-height:1.65}
+.tn-download-notes svg{flex:none;color:#c87433;margin-top:1px}
+.tn-download-error{font-size:12px;color:#aa5c24;padding:11px 0}
+@media(max-width:1100px){.tn-downloads-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:570px){.tn-downloads-grid{grid-template-columns:minmax(0,1fr)}.tn-download-tile{padding:16px}.tn-download-tile>p{min-height:0}.tn-downloads-heading h2{font-size:24px}}
+@media print{.tn-downloads{display:none!important}}
