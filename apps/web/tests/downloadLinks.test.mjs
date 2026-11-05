@@ -62,6 +62,7 @@ test('installer links and download page exist in React and workbox bypasses down
  const site=readFileSync(new URL('../src/DownloadApps.tsx',import.meta.url),'utf8');
  const vite=readFileSync(new URL('../vite.config.ts',import.meta.url),'utf8');
  assert.match(app,/page==='downloads'\?<DownloadApps/);
+ assert.match(app,/\['downloads','dashboard','all'/);
  assert.match(app,/<DownloadApps compact\/>/);
  assert.match(head,/onPage\('downloads'\)/);
  assert.match(site,/href=\{url\(platform\.id\)\}/);
