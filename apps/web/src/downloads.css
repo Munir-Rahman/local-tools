@@ -27,3 +27,8 @@
 @media(max-width:1100px){.tn-downloads-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:570px){.tn-downloads-grid{grid-template-columns:minmax(0,1fr)}.tn-download-tile{padding:16px}.tn-download-tile>p{min-height:0}.tn-downloads-heading h2{font-size:24px}}
 @media print{.tn-downloads{display:none!important}}
+
+/* Downloads are placed AFTER the complete homepage (tools, activity, roadmap). */
+#tn-downloads{scroll-margin-top:115px;min-width:0;max-width:100%;margin-top:48px;padding-top:30px;border-top:1px solid var(--v2-border,#e9ded2)}
+.tn-home-downloads .tn-downloads-full{padding-bottom:25px}
+@media(max-width:670px){#tn-downloads{margin-top:32px;padding-top:24px;scroll-margin-top:100px}}
