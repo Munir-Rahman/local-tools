@@ -118,9 +118,18 @@ export default function App(){
     window.addEventListener('keydown',listener);return()=>window.removeEventListener('keydown',listener);
   },[]);
   const isDark=theme==='dark'||(theme==='system'&&systemDark);
+  // The downloads hash is an anchor within the complete homepage, not a separate page.
+  // Also works when opening a bookmarked /#downloads link for the first time.
+  useEffect(()=>{
+    if(page!=='downloads'||selected)return;
+    const frame=requestAnimationFrame(()=>document.getElementById('tn-downloads')?.scrollIntoView({behavior:'smooth',block:'start'}));
+    return()=>cancelAnimationFrame(frame);
+  },[page,selected]);
   function go(p:Page){
     window.history.pushState({tn:true,page:p,selected:null},'',`#${p}`);
-    setSelected(null);setPage(p);setSideOpen(false);setSearch('');setGroup('All');window.scrollTo(0,0);
+    setSelected(null);setPage(p);setSideOpen(false);setSearch('');setGroup('All');
+    if(p==='downloads')requestAnimationFrame(()=>document.getElementById('tn-downloads')?.scrollIntoView({behavior:'smooth',block:'start'}));
+    else window.scrollTo(0,0);
   }
   async function saveProfile(){try{await setPreference('displayName',displayName.trim().slice(0,80));setProfileStatus('Your name has been saved in local SQLite storage.');}catch(e){setProfileStatus('Cannot save display name: '+String(e));}}
   function back(){if(window.history.state?.tn)window.history.back();else{setSelected(null);setPage('all');}}
@@ -236,7 +245,7 @@ export default function App(){
         selectedCalendar?<CalendarWorkbench key={selectedCalendar.id} id={selectedCalendar.id as CalendarToolId} onBack={back} onCompleted={(name,result)=>{void activity(selectedCalendar.id,name,'Local date input',result)}}/>:
         selectedFinance?<FinanceWorkbench key={selectedFinance.id} id={selectedFinance.id as FinanceToolId} onBack={back} onCompleted={(name,result)=>{void activity(selectedFinance.id,name,'Local finance inputs',result)}}/>:
         selectedTemplate?<Templates key={selected} id={selected as TemplateId} onBack={back} onCompleted={(name,result)=>{void activity(selected,name,'Local template',result)}}/>:
-        page==='dashboard'?<>
+        (page==='dashboard'||page==='downloads')?<>
           <section className="tn-hero" aria-label="ToolNest introductory banner">
             <div className="tn-hero-left"><span className="tn-hero-brow"><ShieldCheck size={15}/> PRIVATE BY DESIGN · FREE TO USE</span>
               <h1>Powerful file tools.<br/><em>Simply yours.</em></h1>
@@ -245,7 +254,6 @@ export default function App(){
             </div>
             <div className="tn-hero-art" aria-hidden="true"><div className="tn-hero-document"><FileText size={34}/><span/><span/><span/><span/></div><div className="tn-hero-floating tn-float-a"><Image size={37}/></div><div className="tn-hero-floating tn-float-b"><Sparkles size={37}/></div><div className="tn-hero-floating tn-float-c"><FileArchive size={34}/></div></div>
           </section>
-          <DownloadApps compact/>
           <div className="tn-trust-band"><div><ShieldCheck size={24}/><span><strong>Private by default</strong><small>Files stay in local processing engines</small></span></div><div><Zap size={24}/><span><strong>Offline-capable tools</strong><small>Use supported cached tools without internet</small></span></div><div><Heart size={24}/><span><strong>Free and practical</strong><small>No credits or account required</small></span></div></div>
           <div className="tn-section-intro"><div><span className="tn-eyebrow">FIND THE RIGHT TOOL</span><h2>Browse by category</h2><p>Pick a category to explore compatible utilities.</p></div><button onClick={()=>go('all')}>View all tools <ArrowRight size={16}/></button></div>
           <div className="tn-category-tiles">{[
@@ -262,6 +270,7 @@ export default function App(){
           <div className="v2-sectiontitle v2-topspace"><h2>Recent activity</h2><button className="v2-link" onClick={()=>go('recent')}>View history <ArrowRight size={16}/></button></div>
           <HistoryTable entries={history.slice(0,5)} onOpen={openTool}/>
           <div className="v2-roadmap"><div><Sparkles size={24}/><strong>5,000 ideas cataloged, with verified and planned engines</strong><p>Explore the full backlog. Implemented web tools are available; Office fidelity, advanced security, offline AI and many media features still require separate engines.</p></div><button className="v2-primary" onClick={()=>go('catalog')}>Explore roadmap <ArrowRight size={16}/></button></div>
+          <div id="tn-downloads" className="tn-home-downloads"><DownloadApps/></div>
         </>:
         page==='all'||page==='favorites'?<><div className="v2-pagehead"><div><span className="v2-kicker">YOUR TOOLBOX</span><h1>{page==='favorites'?'Favorite tools':'All available tools'}</h1><p>{page==='favorites'?'Starred utilities, saved privately in local SQLite.':'Open any of the implemented offline-capable utilities below.'}</p></div></div>
           {page==='all'&&<><div className="v2-searchwrap"><Search size={19}/><input ref={searchRef} value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search working tools..."/><kbd>Ctrl K</kbd></div><div className="v2-tabs">{groups.map(g=><button key={g} className={group===g?'selected':''} onClick={()=>setGroup(g)}>{g}</button>)}</div></>}
@@ -278,7 +287,6 @@ export default function App(){
         </>:
         page==='settings'?<><div className="v2-pagehead"><div><span className="v2-kicker">PERSONALIZE</span><h1>Appearance & preferences</h1><p>Make the workspace comfortable. Your selections are stored in your browser's SQLite database. The light theme is the default on new installations.</p></div></div><div className="v2-settingscards"><section className="v2-panel"><h2><Palette size={20}/> Theme mode</h2><div className="v2-themeoptions">{(['dark','light','system'] as const).map(t=><button key={t} className={theme===t?'selected':''} onClick={()=>void updateTheme(t)}>{t==='dark'?<Moon size={22}/>:t==='light'?<Sun size={22}/>:<Settings2 size={22}/>}<strong>{t.charAt(0).toUpperCase()+t.slice(1)}</strong>{theme===t&&<CheckCircle2 size={17}/>}</button>)}</div></section><section className="v2-panel"><h2><WandSparkles size={20}/> Accent color</h2><div className="v2-accentchoices">{accentColors.map(c=><button key={c} aria-label={`Set accent ${c}`} style={{background:c}} className={accent===c?'selected':''} onClick={()=>void updateAccent(c)}>{accent===c&&<Check size={21}/>}</button>)}<label>Custom <input type="color" value={accent} onChange={e=>void updateAccent(e.target.value)}/></label></div></section></div><div className="v2-panel v2-settingnote"><Database size={27}/><div><strong>Private SQLite workspace</strong><p>Favorites, activity metadata, saved CV/invoice drafts, theme and accent color persist locally using SQLite WASM and IndexedDB. If you clear site data, this information is deleted. Use the controls below to verify persistence or export your database.</p></div></div><div className="v2-panel" style={{marginTop:16}}><h2>Local SQLite database health</h2><div className="v2-result-actions"><button className="v2-primary" onClick={()=>void checkStorage()}>Test SQLite persistence</button><button className="v2-secondary" onClick={()=>void downloadDatabase()}>Export SQLite backup</button></div><p role="status" className="v2-hint">{dbTest||'Favorites, history and saved drafts are stored locally.'}</p></div></>:
         page==='privacy'?<><div className="v2-pagehead"><div><span className="v2-kicker">PRIVACY FIRST</span><h1>Your documents stay in your workspace.</h1><p>Processing uses JavaScript, Canvas, PDF engines, and WebAssembly locally. Offline tools require cached assets. Optional advertisements use Google online services and may transmit ad-related data; document contents are not sent to ad providers.</p></div></div><div className="v2-privacygrid"><div className="v2-panel"><ShieldCheck size={27}/><h3>No document upload</h3><p>We do not transmit the files selected for conversion. No cloud conversion service is included.</p></div><div className="v2-panel"><Database size={27}/><h3>Browser-local SQLite</h3><p>Favorites, recent file-name metadata, preferences and template drafts stay in IndexedDB on this device.</p></div><div className="v2-panel"><Zap size={27}/><h3>Offline after install</h3><p>The service worker caches application assets for offline usage, subject to browser storage eviction. Test offline before relying on it.</p></div></div></>:
-        page==='downloads'?<DownloadApps/>:
         page==='about'?<section className="v7-information"><span className="v2-kicker">ABOUT OUR PRODUCT</span><h1>Everyday tools, in one place.</h1><p>ToolNest is an independently built productivity workspace for PDF, office, image, audio, video, text and document-generation tasks. Many tools can process files in your browser without uploading them.</p><h2>Created to make everyday work easier · د خلکو د کار د آسانولو لپاره</h2><p><strong>Developed with ❤ by Eng.Munir Rahman Rahmani.</strong> ToolNest is free to use. دا وړیا وسیلې د خلکو د کارونو د آسانولو لپاره جوړې سوي دي.</p><h2>How we build it</h2><p>We prioritize clear results, transparent implementation statuses and local-first handling. The searchable 5,000-action catalog is a development roadmap; it does not mean 5,000 processing engines are complete.</p><p className="tn-about-contact"><Mail size={18} aria-hidden="true"/> Need help or have an idea? <a href="mailto:munirrahmanrahmani0@gmail.com?subject=ToolNest%20Feedback">Email the ToolNest developer</a> or <button type="button" onClick={()=>go('contact')}>view contact details</button>.</p><AdSlot placement="article"/></section>:
         page==='faq'?<section className="v7-information"><span className="v2-kicker">HELP CENTER</span><h1>Frequently asked questions</h1>{[
           ['Is ToolNest free?','Yes. There is no ToolNest account or credit balance required for the local tools. Optional ads may appear when online.'],
