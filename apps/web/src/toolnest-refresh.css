@@ -97,3 +97,25 @@
   .v2 .v2-tabs{gap:5px}
   .v2 .v2-tabs button{font-size:10px;padding:6px 9px}
 }
+
+
+/* Easy-to-find support email across desktop, mobile, contact and footer. */
+.tn-account-contact{margin-top:8px;padding:14px 10px 7px;border-top:1px solid var(--v2-border,#e8dacc);min-width:0}
+.tn-account-contact>span{font-size:11px;font-weight:700;color:var(--v2-muted,#80726e);display:block;margin-bottom:7px}
+.tn-account-contact a{display:flex;align-items:center;gap:7px;color:#d77420;font-size:11px;font-weight:650;text-decoration:none;overflow-wrap:anywhere;word-break:break-word}
+.tn-account-contact a:hover,.tn-footer-email:hover,.tn-footer-support-link:hover{text-decoration:underline}
+.tn-contact-card{display:flex;flex-wrap:wrap;align-items:center;gap:18px;background:var(--v2-card,#fff);border:1px solid var(--v2-border,#eadfd0);border-radius:16px;padding:22px;margin:25px 0;box-shadow:0 7px 25px #2c1f1208;max-width:100%}
+.tn-contact-card>svg{flex:none;color:#e1842b}
+.tn-contact-card>div{min-width:0;flex:1 1 260px;display:flex;flex-direction:column;align-items:flex-start;gap:7px}
+.tn-contact-card strong{font-size:15px}
+.tn-contact-address{font-size:clamp(14px,1.7vw,20px);font-weight:750;color:#d7761d;overflow-wrap:anywhere;word-break:break-word;text-decoration:underline;text-underline-offset:3px}
+.tn-contact-card small{color:var(--v2-muted,#80726e);font-size:12px;line-height:1.6}
+.tn-contact-cta{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;padding:11px 15px;background:#f28b29;color:#251c15;text-decoration:none;font-weight:750;min-height:42px;white-space:nowrap}
+.tn-contact-cta:hover{background:#e77b1b}
+.tn-about-contact{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.tn-about-contact a,.tn-about-contact button{color:#d4771f}
+.tn-about-contact button{border:0;background:transparent;padding:0;text-decoration:underline;cursor:pointer}
+.tn-footer .tn-footer-email{font-size:clamp(12px,1.1vw,14px);display:inline-flex;align-items:center;gap:8px;max-width:100%;overflow-wrap:anywhere;word-break:break-word;line-height:1.6}
+.tn-footer .tn-footer-support-link{display:flex;align-items:center;gap:9px;color:#f5b171;text-decoration:none;font-size:12px;padding:7px 0}
+@media(max-width:1400px){.tn-header-contact{display:none}}
+@media(max-width:670px){.tn-contact-card{padding:17px}.tn-contact-cta{width:100%}}
