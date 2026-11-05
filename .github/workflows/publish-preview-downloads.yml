@@ -1,0 +1,104 @@
+name: Publish ToolNest Direct Download Previews
+
+# Publish verified GitHub Actions build artifacts as persistent public release
+# assets. This is a preview, not a notarized/signed production distribution.
+# The website redirects directly to the exact file (not the GitHub web UI).
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'api/download.js'
+      - 'apps/web/src/DownloadApps.tsx'
+      - '.github/workflows/publish-preview-downloads.yml'
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: toolnest-preview-release
+  cancel-in-progress: false
+
+jobs:
+  release-preview:
+    if: github.repository == 'Munir-Rahman/local-tools'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download latest successful main-branch installer artifacts
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p preview
+          download_platform() {
+            local workflow="$1" artifact="$2" extension="$3" output="$4"
+            local id
+            id="$(gh run list --workflow "$workflow" --branch main --status success --limit 12 --json databaseId --jq '.[0].databaseId' || true)"
+            if [[ -z "$id" ]]; then
+              echo "No successful main-branch $workflow run; $output not published."
+              return 0
+            fi
+            local tmp
+            tmp="$(mktemp -d)"
+            if gh run download "$id" --name "$artifact" --dir "$tmp"; then
+              local binary
+              binary="$(find "$tmp" -type f -name "*.$extension" | head -n 1)"
+              if [[ -n "$binary" && -s "$binary" ]]; then
+                cp "$binary" "preview/$output"
+                echo "$output sourced from workflow $workflow run $id"
+              else
+                echo "$output was not present/nonempty in artifact $artifact"
+              fi
+            else
+              echo "$artifact is expired or unavailable; skipping."
+            fi
+            rm -rf "$tmp"
+          }
+          download_platform android-test-apk.yml ToolNest-Android-Test-APK apk ToolNest-Android-Preview.apk
+          download_platform desktop-installer.yml ToolNest-Windows-Installer exe ToolNest-Windows-Setup.exe
+          download_platform desktop-crossplatform.yml ToolNest-Linux-AppImage AppImage ToolNest-Linux-Preview.AppImage
+          download_platform desktop-crossplatform.yml ToolNest-macOS-DMG-Unsigned dmg ToolNest-macOS-Preview.dmg
+          test "$(find preview -maxdepth 1 -type f | wc -l)" -gt 0 || { echo "::error::No successful, unexpired installable artifacts to publish"; exit 1; }
+          (cd preview && sha256sum ./* > SHA256SUMS.txt)
+          ls -lh preview
+
+      - name: Publish a stable preview release with direct file links
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG=downloads-preview
+          cat > /tmp/release-notes.md <<'EOF'
+          ## ToolNest preview installers — device testing
+
+          These are **preview and test builds**, not verified production installers.
+          Windows and macOS packages are currently **unsigned**; macOS is **not notarized**.
+          Android APKs may use a different signing key from Expo/EAS, and an existing
+          installation may need to be backed up before replacement. Do not delete
+          saved data without exporting it.
+
+          Each asset was copied from the most recent **successful main-branch**
+          GitHub Actions build for its platform. Different platforms may come
+          from different commits. Files that have no successful artifact are not
+          included. SHA-256 checksums are attached.
+
+          iOS installation requires a properly signed build distributed via
+          App Store or TestFlight. No iOS file is provided here.
+
+          The ToolNest website uses /api/download?platform=... to redirect to
+          these exact file assets without opening GitHub pages.
+          EOF
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --prerelease --target main --title "ToolNest — Preview direct downloads" --notes-file /tmp/release-notes.md
+          else
+            gh release edit "$TAG" --prerelease --notes-file /tmp/release-notes.md
+          fi
+          gh release upload "$TAG" preview/* --clobber
+          gh release view "$TAG" --json assets --jq '.assets[].name'
